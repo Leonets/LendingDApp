@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+  <title>Lending dApp</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <script type="module" src="index.js"></script>
+
+  <div class="maincontainer">
+    <div class="logo">
+      <img src="images/logo3b.jpg" width="600" />
+    </div>
+    <div class="connectBtn">
+      <radix-connect-button />
+    </div>
+  </div>
+
+
+  <br>
+  <p><button id="lendTokens">Supply Liquidity</button></p>
+  Supplying liquidity you will receive the same of LND token back and also an NFT
+  <div class="number">
+    <input type="text" placeholder="Number of Token" id="numberOfTokens">
+  </div>
+
+  
+  <br>
+  <p><button id="take_back">Withdraw (no NFT update)</button></p>
+  Withdraw liquidity you'll get back your original XRD amount plus a reward!
+  <div class="number">
+      <input type="text" placeholder="Number of Token" id="numberOfLndToken">
+  </div>
+
+
+  <br>
+  <p><button id="takes_back">Withdraw</button></p>
+  Withdraw liquidity you'll get back your original XRD amount plus a reward!
+  <div class="number">
+      <input type="text" placeholder="Number of Token" id="numberOfLndTokens">
+  </div>
+
+
+  <br>
+  <p><button id="fundDevelopment">Fund Development</button></p>
+  Funding development you'll receive only a NFT stating you're honorabling funding development for the project ! 
+  <div class="number">
+    <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
+  </div>
+
+
+</body>
+
+</html>

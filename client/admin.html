@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+  <title>Lending dApp Admin</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <script type="module" src="/admin.js"></script>
+
+  <div class="connectBtn">
+    <radix-connect-button />
+  </div>
+  <h1>Lending dApp Administration</h1>
+
+  <div class="container">
+    <p>Account Name:
+    <pre id="accountName"></pre>
+    </p>
+    <p>Account Address:
+    <pre id="accountAddress"></pre>
+    </p>
+  </div>
+
+
+  <h2>Instantiate Lending dApp</h2>
+  <input type="text" placeholder="Package address" id="packageAddress" />
+  <input type="text" placeholder="Lending Symbol" id="flavor">
+  <p><button id="instantiateComponent">Instantiate component</button></p>
+  <div class="container">
+    <p>Component Address: <span id="componentAddress">component_tdx_2_1cp8augrku3n8qtymn2sp7ftrg88j7z87lvdjv5j7ahnryqaed4zkn6</span></p>
+    <p>admin_badge address: <span id="admin_badge">resource_tdx_2_1t4c90u0tlr3mk5kaylz9zvsxxe4h7se6hhh83rx5lyxe3xnlfxfeyf</span></p>
+    <p>owner_badge address: <span id="owner_badge">resource_tdx_2_1thkd8742jed4wgngeu6u9eets8cyv04na9laxzv95ktahac8efx8ev</span></p>
+    <p>lnd_resource address: <span id="lnd_resourceAddress">resource_tdx_2_1thm5a8chndanjkh20qw5nrfg782f9annfzudjj653f8kyj94w6zcpg</span></p>
+    <p>lnd_token address: <span id="lnd_tokenAddress"></span></p>
+    <p>badge_resourceAddress: <span id="badge_resourceAddress"></span></p>
+  </div>
+
+
+  <p><button id="WithdrawEarnings">Withdraw Earnings</button></p>
+  <input type="text" placeholder="Number of Token" id="numberOfEarnedToken">
+  <div class="container">
+    <p>Receipt:<br>
+    <pre id="receiptWithdraw"></pre>
+    </p>
+  </div>
+
+
+
+</body>
+
+</html>
