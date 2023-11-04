@@ -25,18 +25,19 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   accountAddress = walletData.accounts[0].address
 })
 
-// Component Address: component_tdx_2_1cp8augrku3n8qtymn2sp7ftrg88j7z87lvdjv5j7ahnryqaed4zkn6
-// admin_badge address: resource_tdx_2_1t4c90u0tlr3mk5kaylz9zvsxxe4h7se6hhh83rx5lyxe3xnlfxfeyf
-// owner_badge address: resource_tdx_2_1thkd8742jed4wgngeu6u9eets8cyv04na9laxzv95ktahac8efx8ev
-// lnd_resource address: resource_tdx_2_1thm5a8chndanjkh20qw5nrfg782f9annfzudjj653f8kyj94w6zcpg
+// Component Address: component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf
+// admin_badge address: resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq
+// owner_badge address: resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc
+// lnd_resource address: resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2
 
 // Global states
-let componentAddress = "component_tdx_2_1cp8augrku3n8qtymn2sp7ftrg88j7z87lvdjv5j7ahnryqaed4zkn6" //LendingDApp component address on stokenet
-let lnd_resourceAddress = "resource_tdx_2_1thm5a8chndanjkh20qw5nrfg782f9annfzudjj653f8kyj94w6zcpg" // Stokenet BABYLON resource address
+let componentAddress = "component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1nt47w2ag5a9fl3mk86493rwnfy9q7lxdx9jwm87twg5694gvrslksy" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t4c90u0tlr3mk5kaylz9zvsxxe4h7se6hhh83rx5lyxe3xnlfxfeyf"
-let owner_badge = "resource_tdx_2_1thkd8742jed4wgngeu6u9eets8cyv04na9laxzv95ktahac8efx8ev"
+let admin_badge = "resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq"
+let owner_badge = "resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc"
 // You can use this address to skip package deployment step
 // Stokenet package_address = package_tdx_2_1p4ccyz5jtgg0ptgddex03vn068uaz937zucky3nyp9hd6nml4ypx9a
 
@@ -46,6 +47,7 @@ let owner_badge = "resource_tdx_2_1thkd8742jed4wgngeu6u9eets8cyv04na9laxzv95ktah
 document.getElementById('lendTokens').onclick = async function () {
   console.log("componentAddress", componentAddress)
   console.log("lnd_resourceAddress", lnd_resourceAddress)
+  console.log("lnd_tokenAddress", lnd_tokenAddress)
   console.log("admin_badge", admin_badge)
   console.log("owner_badge", owner_badge)
 
@@ -103,10 +105,10 @@ document.getElementById('take_back').onclick = async function () {
   CALL_METHOD
     Address("${accountAddress}")
     "withdraw"    
-    Address("${lnd_resourceAddress}")
+    Address("${lnd_tokenAddress}")
     Decimal("${numberOfLndToken}");
   TAKE_FROM_WORKTOP
-    Address("${lnd_resourceAddress}")
+    Address("${lnd_tokenAddress}")
     Decimal("${numberOfLndToken}")
     Bucket("loan");
   CALL_METHOD
@@ -143,34 +145,43 @@ document.getElementById('take_back').onclick = async function () {
 
 // *********** Takes Back ***********
 document.getElementById('takes_back').onclick = async function () {
-  let numberOfLndToken = document.getElementById('numberOfLndTokens').value
+  console.log("componentAddress", componentAddress)
+  console.log("lnd_resourceAddress", lnd_resourceAddress)
+  console.log("lnd_tokenAddress", lnd_tokenAddress)
+  console.log("admin_badge", admin_badge)
+  console.log("owner_badge", owner_badge)
+
+  console.log("accountName", accountAddress)
+  console.log("accountAddress", accountAddress)
+
+  let numberOfLndTokens = document.getElementById('numberOfLndTokens').value
   let manifest = `
   CALL_METHOD
     Address("${accountAddress}")
     "withdraw"    
-    Address("${lnd_resourceAddress}")
+    Address("${lnd_tokenAddress}")
     Decimal("${numberOfLndTokens}");
   TAKE_FROM_WORKTOP
-    Address("${lnd_resourceAddress}")
+    Address("${lnd_tokenAddress}")
     Decimal("${numberOfLndTokens}")
     Bucket("loan");
   CALL_METHOD
     Address("${accountAddress}")
     "withdraw"    
-    Address("${nft_resourceAddress}")
+    Address("${lnd_resourceAddress}")
     Decimal("1");
   TAKE_FROM_WORKTOP
-    Address("${nft_resourceAddress}")
+    Address("${lnd_resourceAddress}")
     Decimal("1")
     Bucket("nft");  
-    CALL_METHOD
+  CALL_METHOD
     Address("${componentAddress}")
     "takes_back"
     Bucket("loan")
     Bucket("nft");
   CALL_METHOD
     Address("${accountAddress}")
-    "try_deposit_batch_or_refund"
+    "deposit_batch"
     Expression("ENTIRE_WORKTOP");
     `
   console.log('takes_back manifest: ', manifest)

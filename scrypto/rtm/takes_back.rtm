@@ -6,27 +6,27 @@ CALL_METHOD
 CALL_METHOD
     Address("account_sim1c956qr3kxlgypxwst89j9yf24tjc7zxd4up38x37zr6q4jxdx9rhma")
     "withdraw"
-    Address("resource_sim1thy5axd89pl5vlgtw0zf9gwggvargm3rcfpkqmvv3qkwrw2kx9hkwq")
-    Decimal("3")
+    Address("resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr")
+    Decimal("5")
 ;
 TAKE_FROM_WORKTOP
-    Address("resource_sim1thy5axd89pl5vlgtw0zf9gwggvargm3rcfpkqmvv3qkwrw2kx9hkwq")
-    Decimal("3")
+    Address("resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr")
+    Decimal("5")
     Bucket("bucket1")
 ;
 CALL_METHOD
     Address("account_sim1c956qr3kxlgypxwst89j9yf24tjc7zxd4up38x37zr6q4jxdx9rhma")
     "withdraw"
-    Address("resource_sim1ngf4ensdx6xyrx0w62zhx255ys6hkvfgxtyju3hvy0j4yvhvday8h7")
+    Address("resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml")
     Decimal("1")
 ;
 TAKE_FROM_WORKTOP
-    Address("resource_sim1ngf4ensdx6xyrx0w62zhx255ys6hkvfgxtyju3hvy0j4yvhvday8h7")
+    Address("resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml")
     Decimal("1")
     Bucket("bucket2")
 ;
 CALL_METHOD
-    Address("component_sim1crvswta83frgfwrfr3e7l4zcswzl3zwvqv893qln4ymttrqxuhcm6m")
+    Address("component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p")
     "takes_back"
     Bucket("bucket1")
     Bucket("bucket2")

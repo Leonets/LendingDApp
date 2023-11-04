@@ -20,6 +20,22 @@ At this point we can instantiate our Lending dApp locally `resim run rtm/instant
 That file has been built with the following bash command:
 `$ resim call-function ${package} LendingDApp instantiate_lending_dapp 100 LND --manifest rtm/instantiate_lending_dapp.rtm`
 
+The output of the instantiate is the following resources builded:
+New Entities: 6
+└─ Component: component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p
+├─ Resource: resource_sim1th0fzfanrvjucld6yr798c52zxcpmcvz9aqmm75t2r9kzzwylqh6q0
+├─ Resource: resource_sim1t4tyehgwmxyrm60u07k7j8rt60z790c2k5m4z6qgvjv84wezct6uz9
+├─ Resource: resource_sim1ntrx9nqkpvta3qtqt7j88mq36dlug0t0r6w07u8lfnsksm4z7g807r
+├─ Resource: resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr
+└─ Resource: resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml
+
+where the order is the following:
+resource1 -> owner_badge
+resource2 -> admin_badge
+resource3 -> staff_badge
+resource4 -> lnd
+resource5 -> lnd_manager
+
 Store the returned component addres in the component environment variable `export component=<component_address>`
 
 Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable `export owner_badge=<resource_address>`
@@ -43,10 +59,11 @@ That file has been built with the following bash command:
 `resim call-method ${component} take_back $lending_token:10  --manifest rtm/take_back.rtm`
 
 ==============================
+
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} takes_back resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr:100 resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml:1 --manifest rtm/takes_back.rtm`
+`resim call-method ${component} takes_back $lnd:10 $lnd_resource_manager:1 --manifest rtm/takes_back.rtm`
 
 
 

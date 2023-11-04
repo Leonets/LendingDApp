@@ -16,7 +16,7 @@ TAKE_FROM_WORKTOP
 ;
 CALL_METHOD
     Address("component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p")
-    "lend_tokens"
+    "fund"
     Bucket("bucket1")
 ;
 CALL_METHOD
