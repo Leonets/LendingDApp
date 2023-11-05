@@ -1,4 +1,6 @@
 use scrypto::prelude::*;
+// use rand::Rng;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
@@ -237,5 +239,49 @@ mod lending_dapp {
             info!("Fund received token given back: {:?} ", xrds_funded);  
             self.collected_xrd.put(fund);
         }
+
+        pub fn lottery(&mut self, lottery: Bucket) -> Option<Bucket>  {
+            //take the XRD bucket for lottery
+            let ticket_price = lottery.amount();
+            info!("Ticket for the lottery received : {:?} ", ticket_price);  
+            self.collected_xrd.put(lottery);
+
+            let random_number = Self::custom_random();
+            let winning_probability = if ticket_price >= Decimal::from(0) && ticket_price <= Decimal::from(49) {
+                dec!("0.1")  // Low range tickets have a 10% chance of winning
+            } else if ticket_price >= Decimal::from(50) && ticket_price <= Decimal::from(99) {
+                dec!("0.3")  // Mid-range tickets have a 30% chance of winning
+            } else {
+                dec!("0.5")  // High range tickets have a 50% chance of winning
+            };
+
+            if Decimal::from(random_number) < winning_probability {
+                let payout_amount = (dec!("100.0") - winning_probability * dec!("100.0")) * ticket_price;
+                info!("You have won a price in the lottery of : {:?} ", payout_amount);  
+                Some(self.collected_xrd.take(payout_amount))
+            } else {
+                None // No payout for non-winning tickets
+            }
+        }
+
+        pub fn custom_random() -> u128 {
+            let random_decimal = Self::get_random_as_decimal(); // Use get_random_as_decimal to get a Decimal
+            random_decimal
+        }
+
+        pub fn get_random_as_decimal() -> u128 {
+            let value_bytes: [u8; 32] = Runtime::generate_ruid();
+
+            // Convert the [u8; 32] array to a u128
+            let mut value_u128: u128 = 0;
+            for i in 0..16 {
+                value_u128 |= (value_bytes[i] as u128) << (i * 8);
+            }
+            value_u128
+        }
+
+
     }
+
+
 }

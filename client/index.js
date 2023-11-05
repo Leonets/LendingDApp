@@ -25,19 +25,20 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   accountAddress = walletData.accounts[0].address
 })
 
-// Component Address: component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf
-// admin_badge address: resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq
-// owner_badge address: resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc
-// lnd_resource address: resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2
+// Component Address: component_tdx_2_1credlhqknawpk6ptdyuc8gdd5knvgpa3regjz38s6xxl5mag3he7mt
+// admin_badge address: resource_tdx_2_1t4cgrymrdmrs8pf8hwad9kv4l6smefnz74jeq0nfj7vp6asr2pcsmq
+// owner_badge address: resource_tdx_2_1t5lrtraxmw3hmm09e9npym055wh9n27hrqne7lg9dw4kx62tqw6q44
+// lnd_resource address: resource_tdx_2_1nfqca307xvwaj8kz7ukh23lmz9scemkccl0qu59lccspy9zc70uay7
+// lnd_token address: resource_tdx_2_1tkrcmvm4p09sxtxw8zk6s06h7z2heknsp48gv4ma4lueekmjurj2lw
 
 // Global states
-let componentAddress = "component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1nt47w2ag5a9fl3mk86493rwnfy9q7lxdx9jwm87twg5694gvrslksy" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1credlhqknawpk6ptdyuc8gdd5knvgpa3regjz38s6xxl5mag3he7mt" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1tkrcmvm4p09sxtxw8zk6s06h7z2heknsp48gv4ma4lueekmjurj2lw" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1nfqca307xvwaj8kz7ukh23lmz9scemkccl0qu59lccspy9zc70uay7" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq"
-let owner_badge = "resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc"
+let admin_badge = "resource_tdx_2_1t4cgrymrdmrs8pf8hwad9kv4l6smefnz74jeq0nfj7vp6asr2pcsmq"
+let owner_badge = "resource_tdx_2_1t5lrtraxmw3hmm09e9npym055wh9n27hrqne7lg9dw4kx62tqw6q44"
 // You can use this address to skip package deployment step
 // Stokenet package_address = package_tdx_2_1p4ccyz5jtgg0ptgddex03vn068uaz937zucky3nyp9hd6nml4ypx9a
 
@@ -97,51 +98,6 @@ document.getElementById('lendTokens').onclick = async function () {
 }
 
 
-
-// *********** Take Back ***********
-document.getElementById('take_back').onclick = async function () {
-  let numberOfLndToken = document.getElementById('numberOfLndToken').value
-  let manifest = `
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${lnd_tokenAddress}")
-    Decimal("${numberOfLndToken}");
-  TAKE_FROM_WORKTOP
-    Address("${lnd_tokenAddress}")
-    Decimal("${numberOfLndToken}")
-    Bucket("loan");
-  CALL_METHOD
-    Address("${componentAddress}")
-    "take_back"
-    Bucket("loan");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "deposit_batch"
-    Expression("ENTIRE_WORKTOP");
-    `
-  console.log('take_back manifest: ', manifest)
-
-  // Send manifest to extension for signing
-  const result = await rdt.walletApi
-    .sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    })
-  if (result.isErr()) throw result.error
-  console.log("Takes Back sendTransaction Result: ", result.value)
-
-  // Fetch the transaction status from the Gateway SDK
-  let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
-  console.log('Takes Back TransactionAPI transaction/status: ', transactionStatus)
-
-  // fetch commit reciept from gateway api 
-  let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
-  console.log('Takes Back Committed Details Receipt', getCommitReceipt)
-
-  // Show the receipt in the DOM
-  document.getElementById('receiptBack').innerText = JSON.stringify(getCommitReceipt);
-}
 
 // *********** Takes Back ***********
 document.getElementById('takes_back').onclick = async function () {
@@ -250,4 +206,50 @@ document.getElementById('fundDevelopment').onclick = async function () {
   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
   console.log('Fund Development Committed Details Receipt', getCommitReceipt)
 }
+
+
+
+
+// *********** Lottery ***********
+document.getElementById('tryLottery').onclick = async function () {
+
+  let numberOfToken = document.getElementById('lotteryTicket').value
+  let manifest = `
+  CALL_METHOD
+    Address("${accountAddress}")
+    "withdraw"    
+    Address("${xrdAddress}")
+    Decimal("${numberOfToken}");
+  TAKE_ALL_FROM_WORKTOP
+    Address("${xrdAddress}")
+    Bucket("xrd");
+  CALL_METHOD
+    Address("${componentAddress}")
+    "lottery"
+    Bucket("xrd");
+  CALL_METHOD
+    Address("${accountAddress}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP");
+    `
+  console.log("Lottery manifest", manifest)
+
+  // Send manifest to extension for signing
+  const result = await rdt.walletApi
+    .sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    })
+  if (result.isErr()) throw result.error
+  console.log("Lottery sendTransaction result: ", result.value)
+
+  // Fetch the transaction status from the Gateway SDK
+  let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
+  console.log('Lottery transaction status', transactionStatus)
+
+  // fetch commit reciept from gateway api 
+  let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
+  console.log('Lottery Committed Details Receipt', getCommitReceipt)
+}
+
 
