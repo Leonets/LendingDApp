@@ -19,8 +19,6 @@ rdt.walletApi.setRequestData(DataRequestBuilder.accounts().atLeast(1))
 // Subscribe to updates to the user's shared wallet data
 rdt.walletApi.walletData$.subscribe((walletData) => {
   console.log("subscription wallet data: ", walletData)
-  // document.getElementById('accountName').innerText = walletData.accounts[0].label
-  // document.getElementById('accountAddress').innerText = walletData.accounts[0].address
   accountName = walletData.accounts[0].label
   accountAddress = walletData.accounts[0].address
 })
@@ -39,10 +37,6 @@ let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxx
 // You receive this badge(your resource address will be different) when you instantiate the component
 let admin_badge = "resource_tdx_2_1t4cgrymrdmrs8pf8hwad9kv4l6smefnz74jeq0nfj7vp6asr2pcsmq"
 let owner_badge = "resource_tdx_2_1t5lrtraxmw3hmm09e9npym055wh9n27hrqne7lg9dw4kx62tqw6q44"
-// You can use this address to skip package deployment step
-// Stokenet package_address = package_tdx_2_1p4ccyz5jtgg0ptgddex03vn068uaz937zucky3nyp9hd6nml4ypx9a
-
-
 
 // *********** Lends Token ***********
 document.getElementById('lendTokens').onclick = async function () {
@@ -158,9 +152,6 @@ document.getElementById('takes_back').onclick = async function () {
   // fetch commit reciept from gateway api 
   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
   console.log('Takes Back Committed Details Receipt', getCommitReceipt)
-
-  // Show the receipt in the DOM
-  document.getElementById('receiptsBack').innerText = JSON.stringify(getCommitReceipt);
 }
 
 
@@ -206,50 +197,4 @@ document.getElementById('fundDevelopment').onclick = async function () {
   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
   console.log('Fund Development Committed Details Receipt', getCommitReceipt)
 }
-
-
-
-
-// *********** Lottery ***********
-document.getElementById('tryLottery').onclick = async function () {
-
-  let numberOfToken = document.getElementById('lotteryTicket').value
-  let manifest = `
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${xrdAddress}")
-    Decimal("${numberOfToken}");
-  TAKE_ALL_FROM_WORKTOP
-    Address("${xrdAddress}")
-    Bucket("xrd");
-  CALL_METHOD
-    Address("${componentAddress}")
-    "lottery"
-    Bucket("xrd");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "deposit_batch"
-    Expression("ENTIRE_WORKTOP");
-    `
-  console.log("Lottery manifest", manifest)
-
-  // Send manifest to extension for signing
-  const result = await rdt.walletApi
-    .sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    })
-  if (result.isErr()) throw result.error
-  console.log("Lottery sendTransaction result: ", result.value)
-
-  // Fetch the transaction status from the Gateway SDK
-  let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
-  console.log('Lottery transaction status', transactionStatus)
-
-  // fetch commit reciept from gateway api 
-  let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
-  console.log('Lottery Committed Details Receipt', getCommitReceipt)
-}
-
 

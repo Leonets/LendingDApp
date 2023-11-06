@@ -4,7 +4,7 @@ use scrypto::*;
 use scrypto_test::prelude::*;
 
 #[test]
-fn simple_radiswap_lend_tokens_test() -> Result<(), RuntimeError> {
+fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
@@ -30,11 +30,6 @@ fn simple_radiswap_lend_tokens_test() -> Result<(), RuntimeError> {
     // Act
     let (lnd_bucket, _nft_bucket) = lendingdapp.lend_tokens(bucket1, &mut env)?;
 
-    // Get the data associated with the Lending NFT and update the variable values (in_progress=false)
-    // let non_fungible: NonFungible<LendingTicket> = _nft_bucket.non_fungible();
-    // let mut lending_nft_data = non_fungible.data();
-    // // Get the NFT's data
-    // let lender_data: LenderData = _nft_bucket.data();
     // Verify that the NFT's amount matches the expected amount
     assert_eq!(_nft_bucket.amount(&mut env)?, dec!("1"));
 
@@ -48,7 +43,7 @@ fn simple_radiswap_lend_tokens_test() -> Result<(), RuntimeError> {
 
 
 #[test]
-fn simple_radiswap_takes_back_test() -> Result<(), RuntimeError> {
+fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
@@ -74,12 +69,8 @@ fn simple_radiswap_takes_back_test() -> Result<(), RuntimeError> {
     // Act
     let (lnd_bucket, _nft_bucket) = lendingdapp.lend_tokens(bucket1, &mut env)?;
 
-    // Get the data associated with the Lending NFT and update the variable values (in_progress=false)
-    // let non_fungible: NonFungible<LendingTicket> = _nft_bucket.non_fungible();
-    // let mut lending_nft_data = non_fungible.data();
-    // // Get the NFT's data
-    // let lender_data: LenderData = _nft_bucket.data();
-    // Verify that the NFT's amount matches the expected amount
+    // Verify that the received buckets amount matches the expected amount
+    // Assert
     assert_eq!(_nft_bucket.amount(&mut env)?, dec!("1"));
 
     info!("Nft: {:?} ", _nft_bucket);  

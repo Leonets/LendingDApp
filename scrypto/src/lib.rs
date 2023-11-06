@@ -1,10 +1,8 @@
 use scrypto::prelude::*;
-// use rand::Rng;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
-    employee_name: String,
+    username: String,
 }
 
 #[derive(ScryptoSbor, NonFungibleData)]
@@ -21,7 +19,6 @@ mod lending_dapp {
     //         staff => updatable_by: [admin, OWNER];
     //     },
     //     methods {
-    //         lend_token => PUBLIC;
     //         lend_tokens => PUBLIC;
     //         takes_back => PUBLIC;
     //         withdraw_earnings => restrict_to: [OWNER];
@@ -155,11 +152,11 @@ mod lending_dapp {
 
             self.collected_xrd.put(payment);
 
-            //give back lnd token plus reward %
-            // let mut value_backed = self.lendings.take((num_xrds).round(2,RoundingMode::ToPositiveInfinity));
+            //give back lnd token 
             let value_backed = self.lendings.take(num_xrds);
-            info!("Loan token received: {:?} ", num_xrds);   
+            info!("Amount of loan received: {:?} ", num_xrds);   
 
+            //mint an NFT for registering loan amount and starting epoch
             let lender_badge = self.lenders_badge_manager
             .mint_ruid_non_fungible(
                 LenderData {
@@ -171,20 +168,6 @@ mod lending_dapp {
             (value_backed, lender_badge)
         }
 
-        pub fn take_back(&mut self, refund: Bucket) -> Bucket {
-            //take the LND bucket to close the loan, and get xrd token from the main pool
-            let num_xrds_to_return = refund.amount();
-            self.lendings.put(refund);
-
-            //calculate reward
-            let reward = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
-            //give back xtr token plus reward %
-            let xrd_to_return = self.collected_xrd.take(reward);
-            info!("Loan token given back: {:?} ", xrd_to_return.amount());   
-
-            xrd_to_return
-        }
-
         pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
             // assert!(
             //     lender_badge.resource_address()
@@ -192,9 +175,9 @@ mod lending_dapp {
             //     "Incorrect resource passed in for loan terms"
             // );
 
-            // Verify we are being sent at least 10xrd
+            // Verify the Smart Contract has been sent at least 10xrd
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
-            // Calculate 50% of the amount due
+            // Calculate the minimum amount (20%) of the current loan
             let half_amount_due = lender_data.amount / 5;
             info!("Minimum amount : {:?} ", half_amount_due);  
 
@@ -206,16 +189,17 @@ mod lending_dapp {
             // Update the amount field
             let remaining_amount = lender_data.amount - refund.amount(); 
 
-            //take the LND bucket to close the loan, and get xrd token from the main pool
+            //take the LND bucket to close the loan, and get XRD tokens from the main pool
             let num_xrds_to_return = refund.amount();
             self.lendings.put(refund);
 
             //calculate reward
             let reward = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
-            //give back xtr token plus reward %
+            //give back XRD token plus reward %
             let xrd_to_return = self.collected_xrd.take(reward);
-            info!("Loan token given back: {:?} ", xrd_to_return);   
+            info!("Loan tokens given back: {:?} ", xrd_to_return);   
 
+            //burn the current NFT
             lender_badge.burn();
             // Mint a new NFT with the updated data
             let updated_lender_data = LenderData {
@@ -233,53 +217,21 @@ mod lending_dapp {
             self.collected_xrd.take_all()
         }
 
+        //returns main pool size
+        pub fn main_pool_size(&self) -> Decimal {
+            return self.collected_xrd.amount();
+        }
+        //returns the lendings pool size
+        pub fn lendings_pool_size(&self) -> Decimal {
+            return self.lendings.amount();
+        }
+
         pub fn fund(&mut self, fund: Bucket)  {
             //take the XRD bucket for funding the development
             let xrds_funded = fund.amount();
-            info!("Fund received token given back: {:?} ", xrds_funded);  
+            info!("Fund received to support development: {:?} ", xrds_funded);  
             self.collected_xrd.put(fund);
         }
-
-        pub fn lottery(&mut self, lottery: Bucket) -> Option<Bucket>  {
-            //take the XRD bucket for lottery
-            let ticket_price = lottery.amount();
-            info!("Ticket for the lottery received : {:?} ", ticket_price);  
-            self.collected_xrd.put(lottery);
-
-            let random_number = Self::custom_random();
-            let winning_probability = if ticket_price >= Decimal::from(0) && ticket_price <= Decimal::from(49) {
-                dec!("0.1")  // Low range tickets have a 10% chance of winning
-            } else if ticket_price >= Decimal::from(50) && ticket_price <= Decimal::from(99) {
-                dec!("0.3")  // Mid-range tickets have a 30% chance of winning
-            } else {
-                dec!("0.5")  // High range tickets have a 50% chance of winning
-            };
-
-            if Decimal::from(random_number) < winning_probability {
-                let payout_amount = (dec!("100.0") - winning_probability * dec!("100.0")) * ticket_price;
-                info!("You have won a price in the lottery of : {:?} ", payout_amount);  
-                Some(self.collected_xrd.take(payout_amount))
-            } else {
-                None // No payout for non-winning tickets
-            }
-        }
-
-        pub fn custom_random() -> u128 {
-            let random_decimal = Self::get_random_as_decimal(); // Use get_random_as_decimal to get a Decimal
-            random_decimal
-        }
-
-        pub fn get_random_as_decimal() -> u128 {
-            let value_bytes: [u8; 32] = Runtime::generate_ruid();
-
-            // Convert the [u8; 32] array to a u128
-            let mut value_u128: u128 = 0;
-            for i in 0..16 {
-                value_u128 |= (value_bytes[i] as u128) << (i * 8);
-            }
-            value_u128
-        }
-
 
     }
 
