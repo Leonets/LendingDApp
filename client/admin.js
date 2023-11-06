@@ -11,6 +11,9 @@ const rdt = RadixDappToolkit({
 })
 console.log("dApp Toolkit: ", rdt)
 
+let accountAddress
+let accountName
+
 // ************ Fetch the user's account address ************
 rdt.walletApi.setRequestData(DataRequestBuilder.accounts().atLeast(1))
 // Subscribe to updates to the user's shared wallet data
@@ -18,15 +21,10 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   console.log("subscription wallet data: ", walletData)
   document.getElementById('accountName').innerText = walletData.accounts[0].label
   document.getElementById('accountAddress').innerText = walletData.accounts[0].address
+  accountName = walletData.accounts[0].label
   accountAddress = walletData.accounts[0].address
 })
 
-// Package address
-// package_tdx_2_1p5gya6w2ctfaafqra8nc8vha2q86pryhrp4etlr6mkvs60kc23rjgr
-// Component Address: component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf
-// admin_badge address: resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq
-// owner_badge address: resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc
-// lnd_resource address: resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2
 
 // affected_global_entities: Array(9)
 // 0: "transactiontracker_tdx_2_1stxxxxxxxxxxtxtrakxxxxxxxxx006844685494xxxxxxxxxxzw7jp"
@@ -47,17 +45,23 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
 // this is an example of a removal
 // https://stokenet-dashboard.radixdlt.com/transaction/txid_tdx_2_1agezmpcyggzcn400nxxyej6r3px0c6sd4jswkpyhpculd5l4mu3s70d9l4/summary 
 
+// Package address
+// package_tdx_2_1pksnyqzl09695rw5lmpz3lyqnzjs3fv0eykcsm73ukr8ys3qnj9htt
+// Component Address: component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz
+// admin_badge address: resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada
+// owner_badge address: resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx
+// lnd_resource address: resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem
+// lnd_token address: resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl
+
 // Global states
-let accountAddress // User account address
-let componentAddress = "component_tdx_2_1cz8wr0jt4z8r4qkfmtw080xvcn8hyaes9xn28l7v2j2zlrds7xgecf" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1t4plje7qjldqyznxvlq626ej868w58talk5d2w08ukkgcjpcd5vsq2" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1nt47w2ag5a9fl3mk86493rwnfy9q7lxdx9jwm87twg5694gvrslksy" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t552x02v6ae34yeznhp0ap9w9je2qvc23zgn9t8reufdgqmqe6qjaq"
-let owner_badge = "resource_tdx_2_1t5526ghgtz0rkna5hs7tz2w08mwkx57xf8t0qyde926nd4vdu0txsc"
-// You can use this address to skip package deployment step
-// Stokenet package_address = package_tdx_2_1p4ccyz5jtgg0ptgddex03vn068uaz937zucky3nyp9hd6nml4ypx9a
+let admin_badge = "resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada"
+let owner_badge = "resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx"
+
 
 
 // ************ Instantiate component and fetch component and resource addresses *************

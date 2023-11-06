@@ -21,22 +21,86 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   console.log("subscription wallet data: ", walletData)
   accountName = walletData.accounts[0].label
   accountAddress = walletData.accounts[0].address
+
+  fetchLendingsLoanData(accountAddress);
+  fetchMainLoanData(accountAddress);
 })
 
-// Component Address: component_tdx_2_1credlhqknawpk6ptdyuc8gdd5knvgpa3regjz38s6xxl5mag3he7mt
-// admin_badge address: resource_tdx_2_1t4cgrymrdmrs8pf8hwad9kv4l6smefnz74jeq0nfj7vp6asr2pcsmq
-// owner_badge address: resource_tdx_2_1t5lrtraxmw3hmm09e9npym055wh9n27hrqne7lg9dw4kx62tqw6q44
-// lnd_resource address: resource_tdx_2_1nfqca307xvwaj8kz7ukh23lmz9scemkccl0qu59lccspy9zc70uay7
-// lnd_token address: resource_tdx_2_1tkrcmvm4p09sxtxw8zk6s06h7z2heknsp48gv4ma4lueekmjurj2lw
+
+async function fetchMainLoanData(accountAddress) {
+  const manifest = `
+    CALL_METHOD
+      Address("${componentAddress}")
+      "main_pool_size";
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("Main Vault manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    console.log("Main Vault Error: ", result.error);
+    throw result.error;
+  }
+
+  console.log("Main Vault sendTransaction result: ", result.value);
+  const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
+  console.log('Main Vault transaction status', transactionStatus);
+  const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+  console.log('Main Vault Committed Details Receipt', getCommitReceipt);
+  document.getElementById('mainPool').innerText = JSON.stringify(getCommitReceipt);
+}
+
+async function fetchLendingsLoanData(accountAddress) {
+  const manifest = `
+    CALL_METHOD
+      Address("${componentAddress}")
+      "lendings_pool_size";
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("Lendings Vault manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    throw result.error;
+  }
+
+  console.log("Lendings Vault sendTransaction result: ", result.value);
+  const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
+  console.log('Lendings Vault transaction status', transactionStatus);
+  const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+  console.log('Lendings Vault Committed Details Receipt', getCommitReceipt);
+  document.getElementById('lendinsPool').innerText = JSON.stringify(getCommitReceipt);
+}
+
+
+// Package address
+// package_tdx_2_1pksnyqzl09695rw5lmpz3lyqnzjs3fv0eykcsm73ukr8ys3qnj9htt
+// Component Address: component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz
+// admin_badge address: resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada
+// owner_badge address: resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx
+// lnd_resource address: resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem
+// lnd_token address: resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl
 
 // Global states
-let componentAddress = "component_tdx_2_1credlhqknawpk6ptdyuc8gdd5knvgpa3regjz38s6xxl5mag3he7mt" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1tkrcmvm4p09sxtxw8zk6s06h7z2heknsp48gv4ma4lueekmjurj2lw" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1nfqca307xvwaj8kz7ukh23lmz9scemkccl0qu59lccspy9zc70uay7" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t4cgrymrdmrs8pf8hwad9kv4l6smefnz74jeq0nfj7vp6asr2pcsmq"
-let owner_badge = "resource_tdx_2_1t5lrtraxmw3hmm09e9npym055wh9n27hrqne7lg9dw4kx62tqw6q44"
+let admin_badge = "resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada"
+let owner_badge = "resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx"
 
 // *********** Lends Token ***********
 document.getElementById('lendTokens').onclick = async function () {
@@ -197,4 +261,5 @@ document.getElementById('fundDevelopment').onclick = async function () {
   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
   console.log('Fund Development Committed Details Receipt', getCommitReceipt)
 }
+
 

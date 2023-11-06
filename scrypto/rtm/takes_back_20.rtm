@@ -7,11 +7,11 @@ CALL_METHOD
     Address("account_sim1c956qr3kxlgypxwst89j9yf24tjc7zxd4up38x37zr6q4jxdx9rhma")
     "withdraw"
     Address("resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr")
-    Decimal("80")
+    Decimal("20")
 ;
 TAKE_FROM_WORKTOP
     Address("resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr")
-    Decimal("80")
+    Decimal("20")
     Bucket("bucket1")
 ;
 CALL_METHOD

@@ -53,12 +53,6 @@ You can also run the lend_tokens.rtm transaction manifest to takes back the XRD 
 That file has been built with the following bash command:
 `resim call-method ${component} lend_tokens $xrd:100  --manifest rtm/lend_tokens.rtm`
 
-You can also run the take_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/take_back.rtm`
-
-That file has been built with the following bash command:
-`resim call-method ${component} take_back $lending_token:10  --manifest rtm/take_back.rtm`
-
-==============================
 
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`
 
@@ -66,12 +60,13 @@ That file has been built with the following bash command:
 `resim call-method ${component} takes_back $lnd:10 $lnd_resource_manager:1 --manifest rtm/takes_back.rtm`
 
 
-
-
-
-
+To fund the main vault and to fund the development you can run `resim run fund.rtm` to fund 100xrd each time.
 
 As the holder of the admin badge you can run `resim run withdraw_earnings.rtm` to collect your riches.
+
+# Quick test
+
+You can run ./lending_dapp.sh
 
 
 # TODO & Useful commands
