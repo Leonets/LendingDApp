@@ -46,21 +46,21 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
 // https://stokenet-dashboard.radixdlt.com/transaction/txid_tdx_2_1agezmpcyggzcn400nxxyej6r3px0c6sd4jswkpyhpculd5l4mu3s70d9l4/summary 
 
 // Package address
-// package_tdx_2_1pksnyqzl09695rw5lmpz3lyqnzjs3fv0eykcsm73ukr8ys3qnj9htt
-// Component Address: component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz
-// admin_badge address: resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada
-// owner_badge address: resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx
-// lnd_resource address: resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem
-// lnd_token address: resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl
+// package_tdx_2_1pk74app6j2d4v23dskdsst3yn7cyufh8x86ejen2aag3d6cwdpjy3z
+// Component Address: component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t
+// admin_badge address: resource_tdx_2_1t4knvegs8hzxchlxs7qa0kq75nxgv5kv2z5c922x7du2xck7vwlwt6
+// owner_badge address: resource_tdx_2_1t5zj4upsuur68uncsrdu6a0k973jn7mk750lgvwgdleh5zypwnrrve
+// lnd_resource address: resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv
+// lnd_token address: resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg
 
 // Global states
-let componentAddress = "component_tdx_2_1cp9qaexumwuys7hs0m8tm6ss78jjpxf6agtff9c39evzylh2x8kcwz" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1the4ctqp5ts2n96nynmhgx0erzmk0exqq42fjxfujv5jr0yxma4dfl" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1ngzty5d7xvwkgefznd2msmerwk4398fe7t3dndgcjqgcex8st5fsem" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1thwg8g2l8qu6626xd8t2caz37tm4q9xvhcshsffwnvv459sskhhada"
-let owner_badge = "resource_tdx_2_1thfnrmmmy0jqlju69gwgqch2a07cprde5zc9930t79nysdptrmawnx"
+let admin_badge = "resource_tdx_2_1t4knvegs8hzxchlxs7qa0kq75nxgv5kv2z5c922x7du2xck7vwlwt6"
+let owner_badge = "resource_tdx_2_1t5zj4upsuur68uncsrdu6a0k973jn7mk750lgvwgdleh5zypwnrrve"
 
 
 
