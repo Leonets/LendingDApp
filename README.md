@@ -15,7 +15,8 @@ Now we can publish our package, to do this locally run `resim publish .`
 
 Store the returned package address in the package environment variable `export package=<package_address>`
 
-At this point we can instantiate our Lending dApp locally `resim run rtm/instantiate_lending_dapp.rtm`
+At this point we can instantiate our Lending dApp locally 
+`resim run rtm/instantiate_lending_dapp.rtm`
 
 That file has been built with the following bash command:
 `$ resim call-function ${package} LendingDApp instantiate_lending_dapp 100 LND --manifest rtm/instantiate_lending_dapp.rtm`
@@ -33,20 +34,25 @@ where the order is the following:
 resource1 -> owner_badge
 resource2 -> admin_badge
 resource3 -> staff_badge
-resource4 -> lnd
-resource5 -> lnd_manager
+resource4 -> lending_token
+resource5 -> lnd_resource_manager
 
-Store the returned component addres in the component environment variable `export component=<component_address>`
+Store the returned component addres in the component environment variable 
+`export component=<component_address>`
 
-Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable `export owner_badge=<resource_address>`
+Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable 
+`export owner_badge=<resource_address>`
 
-Export also the lnd_resource_manager in the environment variable `export lnd_resource_manager=<lnd_resource_address>`
+Export also the lnd_resource_manager in the environment variable 
+`export lnd_resource_manager=<lnd_resource_address>`
 
-Export also the lending_token resource address in the environment variable `export lending_token=<lending_token>`
+Export also the lending_token resource address in the environment variable 
+`export lending_token=<lending_token>`
 That is the resource with the symbol you created the dApp (LendingToken, A token to use to receive back the loan)
 
 
-Let's also set the xrd address as an environment variable `export xrd=resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3`
+Let's also set the xrd address as an environment variable 
+`export xrd=resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3`
 
 You can also run the lend_tokens.rtm transaction manifest to takes back the XRD loan `resim run rtm/lend_tokens.rtm`
 

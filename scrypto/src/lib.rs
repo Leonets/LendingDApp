@@ -21,6 +21,7 @@ mod lending_dapp {
             staff => updatable_by: [admin, OWNER];
         },
         methods {
+            register => PUBLIC;
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
             fund => PUBLIC;
@@ -37,7 +38,7 @@ mod lending_dapp {
     }
 
     impl LendingDApp {
-        // given a price in XRD, creates a ready-to-use Lending dApp
+        // given a reward level and a symbol name, creates a ready-to-use Lending dApp
         pub fn instantiate_lending_dapp(
             reward: Decimal,
             symbol: String,
@@ -130,10 +131,10 @@ mod lending_dapp {
             let component = 
                 Self {
                     lnd_resource_manager: lendings_bucket.resource_manager(),
-                    staff_badge_resource_manager: staff_badge,
                     lendings: Vault::with_bucket(lendings_bucket.into()),
                     collected_xrd: Vault::new(XRD),
                     reward: reward,
+                    staff_badge_resource_manager: staff_badge,
                     lendings_nft_manager: lendings_nft_manager,
                 }
                 .instantiate()
@@ -151,8 +152,21 @@ mod lending_dapp {
             return (component, admin_badge, owner_badge);
         }
 
+        pub fn register(&mut self) -> Bucket {
+            //mint an NFT for registering loan amount and starting epoch
+            let lender_badge = self.lendings_nft_manager
+            .mint_ruid_non_fungible(
+                LenderData {
+                    minted_on: Runtime::current_epoch(),
+                    amount: dec!("0")
+                }
+            );
+            
+            lender_badge
+        }
 
-        pub fn lend_tokens(&mut self, payment: Bucket,nft_option: Option<Bucket>) -> (Bucket, Bucket) {
+        pub fn lend_tokens(&mut self, payment: Bucket) -> (Bucket, Bucket) {
+        // pub fn lend_tokens(&mut self, payment: Bucket,nft_option: Option<Bucket>) -> (Bucket, Bucket) {
             //take the XRD bucket as a new loan and put xrd token in main pool
             let num_xrds = payment.amount();
 
@@ -168,14 +182,14 @@ mod lending_dapp {
             let value_backed = self.lendings.take(num_xrds);
             info!("Amount of loan received: {:?} ", num_xrds);   
 
-            match nft_option {
-                Some(_nft) => {
-                    info!("A Lending NFT already exist"); 
-                }
-                None => {
-                    info!("A Lending NFT does not exist yet"); 
-                }
-            }
+            // match nft_option {
+            //     Some(_nft) => {
+            //         info!("A Lending NFT already exist"); 
+            //     }
+            //     None => {
+            //         info!("A Lending NFT does not exist yet"); 
+            //     }
+            // }
 
             //mint an NFT for registering loan amount and starting epoch
             let lender_badge = self.lendings_nft_manager
@@ -185,7 +199,6 @@ mod lending_dapp {
                     amount: num_xrds
                 }
             );
-
             (value_backed, lender_badge)
         }
 

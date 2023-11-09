@@ -28,11 +28,10 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     )?;
 
     // Act
-    let (lnd_bucket, _nft_bucket) = lendingdapp.lend_tokens(bucket1, None, &mut env)?;
+    let (lnd_bucket, nft_bucket) = lendingdapp.lend_tokens(bucket1, &mut env)?;
 
     // Verify that the NFT's amount matches the expected amount
-    assert_eq!(_nft_bucket.amount(&mut env)?, dec!("1"));
-
+    assert_eq!(nft_bucket.amount(&mut env)?, dec!("1"));
     info!("Nft: {:?} ", _nft_bucket);  
 
     // Assert
@@ -64,25 +63,19 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let symbol = String::from("LND");
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward,
-        symbol,
-        package_address,
-        &mut env,
-    )?;
+        reward,        symbol,        package_address,        &mut env,    )?;
 
     // let bucket2 = BucketFactory::create_non_fungible_bucket(
-    //     lendingdapp.lendings_nft_manager.address,
+    //     lendingdapp.lendings_nft_manager.resource_address,
     //     1.into(),
     //     Mock,
     //     &mut env
     // )?;
-
     
     // Act
     lendingdapp.fund(initial_fund, &mut env)?;
-
     // Act
-    let (lnd_bucket, received_nft) = lendingdapp.lend_tokens(bucket1, None, &mut env)?;
+    let (lnd_bucket, received_nft) = lendingdapp.lend_tokens(bucket1, &mut env)?;
 
     // Verify that the received buckets amount matches the expected amount
     // Assert
