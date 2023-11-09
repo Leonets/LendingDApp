@@ -15,17 +15,18 @@ pub struct LenderData {
 
 #[blueprint]
 mod lending_dapp {
-    // enable_method_auth! {
-    //     roles {
-    //         admin => updatable_by: [OWNER];
-    //         staff => updatable_by: [admin, OWNER];
-    //     },
-    //     methods {
-    //         lend_tokens => PUBLIC;
-    //         takes_back => PUBLIC;
-    //         withdraw_earnings => restrict_to: [OWNER];
-    //     }
-    // }
+    enable_method_auth! {
+        roles {
+            admin => updatable_by: [OWNER];
+            staff => updatable_by: [admin, OWNER];
+        },
+        methods {
+            lend_tokens => PUBLIC;
+            takes_back => PUBLIC;
+            fund => PUBLIC;
+            withdraw_earnings => restrict_to: [OWNER];
+        }
+    }
     struct LendingDApp {
         lendings: Vault,
         collected_xrd: Vault,
@@ -102,7 +103,7 @@ mod lending_dapp {
                 ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
                 .metadata(metadata!(
                     init {
-                        "name" => "XRD lender badge manager", locked;
+                        "name" => "LendingDapp NFT", locked;
                     }
                 ))
                 .mint_roles(mint_roles!(
@@ -117,14 +118,13 @@ mod lending_dapp {
                 // The second parameter (DenyAll) specifies that no one can update this rule.
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
                     non_fungible_data_updater => AccessRule::AllowAll;
-                    non_fungible_data_updater_updater => AccessRule::AllowAll;
+                    non_fungible_data_updater_updater => AccessRule::DenyAll;
                 )) 
                 // .deposit_roles(deposit_roles!(
                 //     depositor => rule!(deny_all);
                 //     depositor_updater => rule!(deny_all);
                 // ))                 
                 .create_with_no_initial_supply();
-
 
             // populate a LendingDApp struct and instantiate a new component
             let component = 
@@ -140,10 +140,11 @@ mod lending_dapp {
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
                     owner_badge.resource_address()
                 ))))
-                // .roles(roles!(
-                //     admin => rule!(require(admin_badge.resource_address()));
-                //     staff => rule!(require(staff_badge.address()));
-                // ))
+                //specify what this roles means
+                .roles(roles!(
+                    admin => rule!(require(admin_badge.resource_address()));
+                    staff => rule!(require(staff_badge.address()));
+                ))
                 .with_address(address_reservation)
                 .globalize();
 
@@ -151,22 +152,30 @@ mod lending_dapp {
         }
 
 
-        pub fn lend_tokens(&mut self, payment: Bucket,) -> (Bucket, Bucket) {
+        pub fn lend_tokens(&mut self, payment: Bucket,nft_option: Option<Bucket>) -> (Bucket, Bucket) {
             //take the XRD bucket as a new loan and put xrd token in main pool
             let num_xrds = payment.amount();
 
-            // Convert 1000 to Decimal for comparison
-            let max_allowed = Decimal::from(1000);
             assert!(
-                num_xrds <= max_allowed,
+                num_xrds <= Decimal::from(1000),
                 "Not loan approved over 1000xrd at this time!"
             );
 
+            //put received token in the bucket
             self.collected_xrd.put(payment);
 
-            //give back lnd token 
+            //prepare a bucket with lnd tokens to give back to the user 
             let value_backed = self.lendings.take(num_xrds);
             info!("Amount of loan received: {:?} ", num_xrds);   
+
+            match nft_option {
+                Some(_nft) => {
+                    info!("A Lending NFT already exist"); 
+                }
+                None => {
+                    info!("A Lending NFT does not exist yet"); 
+                }
+            }
 
             //mint an NFT for registering loan amount and starting epoch
             let lender_badge = self.lendings_nft_manager
@@ -180,23 +189,23 @@ mod lending_dapp {
             (value_backed, lender_badge)
         }
 
-        pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
+        pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
             // assert!(
             //     lender_badge.resource_address()
             //     == self.lendings_nft_manager.resource_address(),
-            //     "Incorrect resource passed in for loan terms"
+            //     "Incorrect resource passed in for requesting back the loan"
             // );
 
-            // Verify the Smart Contract has been sent at least 10xrd
+            // Verify the user has requested back at least 20% 
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
             // Calculate the minimum amount (20%) of the current loan
             let half_amount_due = lender_data.amount / 5;
             info!("Minimum amount : {:?} ", half_amount_due);  
 
-            // assert!(
-            //     refund.amount() >= half_amount_due,
-            //     "You cannot get back less than 20% of your loan!"
-            // );
+            assert!(
+                refund.amount() >= half_amount_due,
+                "You cannot get back less than 20% of your loan!"
+            );
 
             // Update the amount field
             let remaining_amount = lender_data.amount - refund.amount(); 
@@ -212,45 +221,30 @@ mod lending_dapp {
             info!("Loan tokens given back: {:?} ", reward);  
             let xrd_to_return = self.collected_xrd.take(reward);
 
-            // //burn the current NFT
-            // lender_badge.burn();
-            // // Mint a new NFT with the updated data
-            // let updated_lender_data = LenderData {
-            //     minted_on: lender_data.minted_on,
-            //     amount: remaining_amount
-            // };
-            // let _new_lender_badge = self.lendings_nft_manager
-            //     .mint_ruid_non_fungible(updated_lender_data);
-
-
-            // Get and update the mutable data
             let nft_local_id: NonFungibleLocalId =
             lender_badge.as_non_fungible().non_fungible_local_id();
-            // Update the data on the network
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "minted_on", Runtime::current_epoch());
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
+            //when all the loan amount has taken back then the nft gets burned
+            if remaining_amount == dec!("0") {
+                lender_badge.burn();
+                (xrd_to_return,None)
+            } else {
+                // Update the data on the network
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "minted_on", Runtime::current_epoch());
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
+                return (xrd_to_return,Some(lender_badge))
+            }
 
-            (xrd_to_return,lender_badge)
         }
 
-
+        //withdraw all the funds deposited
         pub fn withdraw_earnings(&mut self) -> Bucket {
             self.collected_xrd.take_all()
         }
 
-        //returns main pool size
-        pub fn main_pool_size(&self) -> Decimal {
-            return self.collected_xrd.amount();
-        }
-        //returns the lendings pool size
-        pub fn lendings_pool_size(&self) -> Decimal {
-            return self.lendings.amount();
-        }
 
         pub fn fund(&mut self, fund: Bucket)  {
             //take the XRD bucket for funding the development
-            let xrds_funded = fund.amount();
-            info!("Fund received to support development: {:?} ", xrds_funded);  
+            info!("Fund received to support development: {:?} ", fund.amount());  
             self.collected_xrd.put(fund);
         }
 

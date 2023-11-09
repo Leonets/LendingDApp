@@ -2,8 +2,8 @@
 This Lending dApp is a proof of concept written in Scrypto where tokens are natively supported as a core feature of the network and its aim is to better understand the asset oriented design pattern and serve as a It serves as a training ground to improve your knowledge of the Radix full stack
 
 
-
 ## Interacting with our Lending dApp Machine Locally
+
 First lets start with a fresh clean ledger with `resim reset`
 
 Next we need to create a default account with `resim new-account`
@@ -68,8 +68,13 @@ As the holder of the admin badge you can run `resim run withdraw_earnings.rtm` t
 
 You can run ./lending_dapp.sh
 
+# Unit test
+
+You can run 'scrypto test' from the 'scrypto' directory for testing the main functions (lend and takes_back)
+
 
 # TODO & Useful commands
 
 //to update the package without resetting resim 
+
 resim publish . --package-address $package
