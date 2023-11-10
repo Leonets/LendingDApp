@@ -25,7 +25,10 @@ mod lending_dapp {
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
             fund => PUBLIC;
+            set_reward => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
+            extend_lending_pool => restrict_to: [staff, admin, OWNER];
+            mint_staff_badge => restrict_to: [admin, OWNER];
         }
     }
     struct LendingDApp {
@@ -166,13 +169,12 @@ mod lending_dapp {
         }
 
         pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
-        // pub fn lend_tokens(&mut self, payment: Bucket,nft_option: Option<Bucket>) -> (Bucket, Bucket) {
             //take the XRD bucket as a new loan and put xrd token in main pool
             let num_xrds = payment.amount();
 
             assert!(
                 num_xrds <= Decimal::from(1000),
-                "Not loan approved over 1000xrd at this time!"
+                "No loan approved over 1000xrd at this time!"
             );
 
             //put received token in the bucket
@@ -255,16 +257,44 @@ mod lending_dapp {
 
         }
 
+
+        //for members funding
+        pub fn fund(&mut self, fund: Bucket)  {
+            //take the XRD bucket for funding the development
+            info!("Fund received to support development: {:?} ", fund.amount());  
+            self.collected_xrd.put(fund);
+        }
+
+        //for admin only
+        pub fn set_reward(&mut self, reward: Decimal) {
+            self.reward = reward
+        }
+
         //withdraw all the funds deposited
         pub fn withdraw_earnings(&mut self) -> Bucket {
             self.collected_xrd.take_all()
         }
 
+        pub fn mint_staff_badge(&mut self, username: String) -> Bucket {
+            let staff_badge_bucket: Bucket = self
+                .staff_badge_resource_manager
+                .mint_ruid_non_fungible(StaffBadge {
+                    username: username,
+                });
+            staff_badge_bucket
+        }
 
-        pub fn fund(&mut self, fund: Bucket)  {
-            //take the XRD bucket for funding the development
-            info!("Fund received to support development: {:?} ", fund.amount());  
-            self.collected_xrd.put(fund);
+        pub fn extend_lending_pool(&mut self) {
+            // mint some more lending tokens requires an admin or staff badge
+            self.lendings.put(self.lnd_resource_manager.mint(1000));
+        }
+
+        //financial function
+        fn calculate_interest(epochs: i32, percentage: f64, capital: f64) -> f64 {
+            let daily_rate = percentage / 100.0 / (365.0 * 24.0 * 12.0); // Assuming interest is calculated daily
+            let compound_factor = (1.0 + daily_rate).powi(epochs);
+            let interest = capital * (compound_factor - 1.0);
+            interest
         }
 
     }

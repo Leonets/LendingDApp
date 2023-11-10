@@ -142,3 +142,64 @@ document.getElementById('instantiateComponent').onclick = async function () {
 
 
 
+// *********** Set reward ***********
+document.getElementById('setReward').onclick = async function () {  
+  let reward = document.getElementById('reward').value
+  const manifest = ` 
+    CALL_METHOD
+      Address("${componentAddress}")
+      "setReward"
+      Decimal("${reward}");
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("setReward manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    console.log("Register User Error: ", result.error);
+    throw result.error;
+  }
+
+  // console.log("Register User sendTransaction result: ", result.value);
+  // const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
+  // console.log('Register User transaction status', transactionStatus);
+  // const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+  // console.log('Register User Committed Details Receipt', getCommitReceipt);
+}
+
+
+
+// *********** Set reward ***********
+document.getElementById('extendLendingPool').onclick = async function () {  
+  const manifest = ` 
+    CALL_METHOD
+      Address("${componentAddress}")
+      "extend_lending_pool";
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("extendLendingPool manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    console.log("Register User Error: ", result.error);
+    throw result.error;
+  }
+
+  // console.log("Register User sendTransaction result: ", result.value);
+  // const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
+  // console.log('Register User transaction status', transactionStatus);
+  // const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+  // console.log('Register User Committed Details Receipt', getCommitReceipt);
+}

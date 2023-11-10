@@ -66,13 +66,6 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
         reward,        symbol,        package_address,        &mut env,    )?;
-
-    // let bucket2 = BucketFactory::create_non_fungible_bucket(
-    //     lendingdapp.lendings_nft_manager.resource_address,
-    //     1.into(),
-    //     Mock,
-    //     &mut env
-    // )?;
     
     // Act
     lendingdapp.fund(initial_fund, &mut env)?;
