@@ -165,7 +165,7 @@ mod lending_dapp {
             lender_badge
         }
 
-        pub fn lend_tokens(&mut self, payment: Bucket) -> (Bucket, Bucket) {
+        pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
         // pub fn lend_tokens(&mut self, payment: Bucket,nft_option: Option<Bucket>) -> (Bucket, Bucket) {
             //take the XRD bucket as a new loan and put xrd token in main pool
             let num_xrds = payment.amount();
@@ -191,14 +191,20 @@ mod lending_dapp {
             //     }
             // }
 
-            //mint an NFT for registering loan amount and starting epoch
-            let lender_badge = self.lendings_nft_manager
-            .mint_ruid_non_fungible(
-                LenderData {
-                    minted_on: Runtime::current_epoch(),
-                    amount: num_xrds
-                }
-            );
+            // //mint an NFT for registering loan amount and starting epoch
+            // let lender_badge = self.lendings_nft_manager
+            // .mint_ruid_non_fungible(
+            //     LenderData {
+            //         minted_on: Runtime::current_epoch(),
+            //         amount: num_xrds
+            //     }
+            // );
+
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            // Update the data on the network
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "minted_on", Runtime::current_epoch());
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
+
             (value_backed, lender_badge)
         }
 

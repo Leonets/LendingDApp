@@ -28,7 +28,9 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     )?;
 
     // Act
-    let (lnd_bucket, nft_bucket) = lendingdapp.lend_tokens(bucket1, &mut env)?;
+    let user_nft = lendingdapp.register(&mut env)?;
+    // Act
+    let (lnd_bucket, nft_bucket) = lendingdapp.lend_tokens(bucket1, user_nft, &mut env)?;
 
     // Verify that the NFT's amount matches the expected amount
     assert_eq!(nft_bucket.amount(&mut env)?, dec!("1"));
@@ -75,7 +77,9 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     // Act
     lendingdapp.fund(initial_fund, &mut env)?;
     // Act
-    let (lnd_bucket, received_nft) = lendingdapp.lend_tokens(bucket1, &mut env)?;
+    let user_nft = lendingdapp.register(&mut env)?;
+    // Act
+    let (lnd_bucket, received_nft) = lendingdapp.lend_tokens(bucket1, user_nft, &mut env)?;
 
     // Verify that the received buckets amount matches the expected amount
     // Assert

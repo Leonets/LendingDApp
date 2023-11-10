@@ -49,7 +49,7 @@ resim show $account
 echo '>>> Lend tokens'
 
 #resim call-method ${component} lend_tokens $xrd:100
-resim run rtm/lend_tokens2.rtm
+resim run rtm/lend_tokens.rtm
 
 resim show $account
 

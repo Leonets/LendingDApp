@@ -11,6 +11,31 @@ const rdt = RadixDappToolkit({
 })
 console.log("dApp Toolkit: ", rdt)
 
+// Package address v.0
+// package_tdx_2_1pk74app6j2d4v23dskdsst3yn7cyufh8x86ejen2aag3d6cwdpjy3z
+// Component Address: component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t
+// admin_badge address: resource_tdx_2_1t4knvegs8hzxchlxs7qa0kq75nxgv5kv2z5c922x7du2xck7vwlwt6
+// owner_badge address: resource_tdx_2_1t5zj4upsuur68uncsrdu6a0k973jn7mk750lgvwgdleh5zypwnrrve
+// lnd_resource address: resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv
+// lnd_token address: resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg
+
+// Package address v.1
+// package_tdx_2_1phc5hj90sszhl0kmqmjp6hetjhtfylwygpgy4nzptcghxclz7rt3rn
+// Component Address: component_tdx_2_1crz9cma45dgzc7a8phu9zzmzfzy4uqw3hx548gwc9wpehrw8qvudkk
+// admin_badge address: resource_tdx_2_1thnlgyksrxupu8npjanj0a7zxrkd47uunwfnhfxcvtg9futupt7xyu
+// owner_badge address: resource_tdx_2_1t4r3h9ccm8ywpw9jufhj0046wv4nm5c7ugmk2tf25wr5hwqruvrzad
+// lnd_resource address: resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen
+// lnd_token address: resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g
+
+// Global states
+let componentAddress = "component_tdx_2_1crz9cma45dgzc7a8phu9zzmzfzy4uqw3hx548gwc9wpehrw8qvudkk" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen" // XRD lender badge manager
+let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
+// You receive this badge(your resource address will be different) when you instantiate the component
+let admin_badge = "resource_tdx_2_1thnlgyksrxupu8npjanj0a7zxrkd47uunwfnhfxcvtg9futupt7xyu"
+let owner_badge = "resource_tdx_2_1t4r3h9ccm8ywpw9jufhj0046wv4nm5c7ugmk2tf25wr5hwqruvrzad"
+
 let accountAddress
 let accountName
 
@@ -22,10 +47,10 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   accountName = walletData.accounts[0].label
   accountAddress = walletData.accounts[0].address
 
-  // fetchLendingsLoanData(accountAddress);
-  // fetchMainLoanData(accountAddress);
-  fetchMainPoolSize();
-  fetchLendingPoolSize();
+  //fetch pool size
+  fetchMainPoolSize(componentAddress, xrdAddress);
+  fetchLendingPoolSize(componentAddress, xrdAddress);
+  //fetch nft metadata info of the connected user
   fetchUserPosition(accountAddress);
 })
 
@@ -70,7 +95,7 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   
 //   e poi si può recuperare la lista di metadata
 
-
+// *********** Fetch User NFT Metadata Information (/entity/details) ***********
 async function fetchUserPosition(accountAddress) {
   // Define the data to be sent in the POST request.
   const requestData = `{
@@ -90,7 +115,7 @@ async function fetchUserPosition(accountAddress) {
     }
   }`;
 
-  //console.log(" request for entity detail with payload " + requestData);
+  console.log(" request for entity detail with payload " + requestData);
 
   // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
   fetch('https://stokenet.radixdlt.com/state/entity/details', {
@@ -103,10 +128,11 @@ async function fetchUserPosition(accountAddress) {
   .then(response => response.json()) // Assuming the response is JSON data.
   .then(data => { 
       // Example usage:
-      const resourceAddress = "resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv";
+      const resourceAddress = `${lnd_resourceAddress}`;
+      console.log(" resourceAddress " + resourceAddress);
 
       const result = getVaultsByResourceAddress(data, resourceAddress);
-      //console.log(" NFT id " + JSON.stringify(result));
+      console.log(" NFT id " + JSON.stringify(result));
       const itemsArray = result[0].items
 
       // Loop through itemsArray and make GET requests for each item
@@ -119,6 +145,7 @@ async function fetchUserPosition(accountAddress) {
   });
 }
 
+// *********** Fetch User NFT Metadata Information (Filtering response) ***********
 function getVaultsByResourceAddress(jsonData, resourceAddress) {
   const items = jsonData.items || [];
 
@@ -150,9 +177,9 @@ function getVaultsByResourceAddress(jsonData, resourceAddress) {
           resource.resource_address &&
           resource.resource_address === resourceAddress
       );
-
+      
       matchingResources.forEach(resource => {
-        //console.log(" matchingResources " + JSON.stringify(resource));
+        console.log(" matchingResources " + JSON.stringify(resource));
         if (resource.vaults && resource.vaults.total_count > 0) {
           result.push(...resource.vaults.items);
         }
@@ -164,6 +191,7 @@ function getVaultsByResourceAddress(jsonData, resourceAddress) {
   return vaults;
 }
 
+// *********** Fetch User NFT Metadata Information (/non-fungible/data) ***********
 async function fetchNftMetadata(resourceAddress, item) {
   // Define the data to be sent in the GET request.
   const requestData = `{
@@ -223,103 +251,9 @@ async function fetchNftMetadata(resourceAddress, item) {
 
 
 
-async function fetchMainPoolSize() {
-  // Define the data to be sent in the POST request.
-  const requestData = {
-      address: "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t",
-      "resource_address": "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc"
-  };
-
-  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
-  fetch('https://stokenet.radixdlt.com/state/entity/page/fungible-vaults/', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData),
-  })
-  .then(response => response.json()) // Assuming the response is JSON data.
-  .then(data => { 
-      // Check if the response has 'items' and process them.
-      if (data && data.items && Array.isArray(data.items)) {
-          const amount = data.items.map(item => item.amount);
-          console.log('Amount:', amount);
-          document.getElementById('mainPool').innerText = JSON.stringify(amount);
-      } else {
-          console.error('Invalid response format.');
-      }
-  })
-  .catch(error => {
-      console.error('Error fetching data:', error);
-  });
-}
-
-
-async function fetchLendingPoolSize() {
-  // Define the data to be sent in the POST request.
-  const requestData = {
-      address: "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t",
-      "resource_address": "resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg"
-  };
-
-  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
-  fetch('https://stokenet.radixdlt.com/state/entity/page/fungible-vaults/', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestData),
-  })
-  .then(response => response.json()) // Assuming the response is JSON data.
-  .then(data => { 
-      // Check if the response has 'items' and process them.
-      if (data && data.items && Array.isArray(data.items)) {
-          const amount = data.items.map(item => item.amount);
-          console.log('Amount:', amount);
-          document.getElementById('lendinsPool').innerText = JSON.stringify(amount);
-      } else {
-          console.error('Invalid response format.');
-      }
-  })
-  .catch(error => {
-      console.error('Error fetching data:', error);
-  });
-}
-
-
-async function fetchVaultAddresses() {
-    // Define the data to be sent in the POST request.
-    const requestData = {
-        address: "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t"
-    };
-
-    // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
-    fetch('https://stokenet.radixdlt.com/state/entity/page/fungibles/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-    })
-    .then(response => response.json()) // Assuming the response is JSON data.
-    .then(data => {
-        // Check if the response has 'items' and process them.
-        if (data && data.items && Array.isArray(data.items)) {
-            const resourceAddresses = data.items.map(item => item.resource_address);
-            console.log('Resource Addresses:', resourceAddresses);
-            document.getElementById('mainPool').innerText = JSON.stringify(resourceAddresses);
-        } else {
-            console.error('Invalid response format.');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching data:', error);
-    });
-}
-
-
-async function registerUser(accountAddress) {
-  const manifest = `
+// *********** Register User ***********
+document.getElementById('register').onclick = async function () {  
+  const manifest = ` 
     CALL_METHOD
       Address("${componentAddress}")
       "register";
@@ -344,82 +278,8 @@ async function registerUser(accountAddress) {
   console.log('Register User transaction status', transactionStatus);
   const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
   console.log('Register User Committed Details Receipt', getCommitReceipt);
+  //TODO when the user gets registered... then enable Lend/Take Back buttons
 }
-
-async function fetchMainLoanData(accountAddress) {
-  const manifest = `
-    CALL_METHOD
-      Address("${componentAddress}")
-      "main_pool_size";
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
-
-  console.log("Main Vault manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Main Vault Error: ", result.error);
-    throw result.error;
-  }
-
-  console.log("Main Vault sendTransaction result: ", result.value);
-  const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
-  console.log('Main Vault transaction status', transactionStatus);
-  const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
-  console.log('Main Vault Committed Details Receipt', getCommitReceipt);
-  document.getElementById('mainPool').innerText = JSON.stringify(getCommitReceipt);
-}
-
-async function fetchLendingsLoanData(accountAddress) {
-  const manifest = `
-    CALL_METHOD
-      Address("${componentAddress}")
-      "lendings_pool_size";
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
-
-  console.log("Lendings Vault manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    throw result.error;
-  }
-
-  console.log("Lendings Vault sendTransaction result: ", result.value);
-  const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
-  console.log('Lendings Vault transaction status', transactionStatus);
-  const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
-  console.log('Lendings Vault Committed Details Receipt', getCommitReceipt);
-  document.getElementById('lendinsPool').innerText = JSON.stringify(getCommitReceipt);
-}
-
-
-// Package address
-// package_tdx_2_1pk74app6j2d4v23dskdsst3yn7cyufh8x86ejen2aag3d6cwdpjy3z
-// Component Address: component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t
-// admin_badge address: resource_tdx_2_1t4knvegs8hzxchlxs7qa0kq75nxgv5kv2z5c922x7du2xck7vwlwt6
-// owner_badge address: resource_tdx_2_1t5zj4upsuur68uncsrdu6a0k973jn7mk750lgvwgdleh5zypwnrrve
-// lnd_resource address: resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv
-// lnd_token address: resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg
-
-// Global states
-let componentAddress = "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1tk2ck667rpuuj200m5cw9apu4dpdgfrmllvgg5fz3qmet5vxf0srfg" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1n2wsattx6ju55ya3hg4d4zrmmzrhehj0x964ph55ngdgsv8aezvdvv" // XRD lender badge manager
-let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
-// You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t4knvegs8hzxchlxs7qa0kq75nxgv5kv2z5c922x7du2xck7vwlwt6"
-let owner_badge = "resource_tdx_2_1t5zj4upsuur68uncsrdu6a0k973jn7mk750lgvwgdleh5zypwnrrve"
 
 // *********** Lends Token ***********
 document.getElementById('lendTokens').onclick = async function () {
@@ -443,9 +303,18 @@ document.getElementById('lendTokens').onclick = async function () {
     Address("${xrdAddress}")
     Bucket("xrd");
   CALL_METHOD
+    Address("${accountAddress}")
+    "withdraw"    
+    Address("${lnd_resourceAddress}")
+    Decimal("1");
+  TAKE_ALL_FROM_WORKTOP
+    Address("${lnd_resourceAddress}")
+    Bucket("nft");    
+  CALL_METHOD
     Address("${componentAddress}")
     "lend_tokens"
-    Bucket("xrd");
+    Bucket("xrd")
+    Bucket("nft");
   CALL_METHOD
     Address("${accountAddress}")
     "deposit_batch"
@@ -584,4 +453,100 @@ document.getElementById('fundDevelopment').onclick = async function () {
   console.log('Fund Development Committed Details Receipt', getCommitReceipt)
 }
 
+// *********** Fetch Main Pool size ***********
+async function fetchMainPoolSize(component, xrdAddress) {
+  // Define the data to be sent in the POST request.
+  console.log('Request data for Main Pool size for component = ', `${component}`)
+  const requestData = `{
+      "address": "${component}",
+      "resource_address": "${xrdAddress}"
+  }`;
+  console.log('Request data for Main Pool size', requestData)
 
+  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
+  fetch('https://stokenet.radixdlt.com/state/entity/page/fungible-vaults/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: requestData,
+  })
+  .then(response => response.json()) // Assuming the response is JSON data.
+  .then(data => { 
+      // Check if the response has 'items' and process them.
+      if (data && data.items && Array.isArray(data.items)) {
+          const amount = data.items.map(item => item.amount);
+          console.log('Amount:', amount);
+          document.getElementById('mainPool').innerText = JSON.stringify(amount);
+      } else {
+          console.error('Invalid response format.');
+      }
+  })
+  .catch(error => {
+      console.error('Error fetching data:', error);
+  });
+}
+
+// *********** Fetch Lendings Pool size ***********
+async function fetchLendingPoolSize(component, xrdAddress) {
+  // Define the data to be sent in the POST request.
+  const requestData = `{
+    address: "${component}",
+    "resource_address": "${lnd_tokenAddress}"
+}`;
+
+  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
+  fetch('https://stokenet.radixdlt.com/state/entity/page/fungible-vaults/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: requestData,
+  })
+  .then(response => response.json()) // Assuming the response is JSON data.
+  .then(data => { 
+      // Check if the response has 'items' and process them.
+      if (data && data.items && Array.isArray(data.items)) {
+          const amount = data.items.map(item => item.amount);
+          console.log('Amount:', amount);
+          document.getElementById('lendinsPool').innerText = JSON.stringify(amount);
+      } else {
+          console.error('Invalid response format.');
+      }
+  })
+  .catch(error => {
+      console.error('Error fetching data:', error);
+  });
+}
+
+
+// *********** Not used  ***********
+async function fetchVaultAddresses() {
+  // Define the data to be sent in the POST request.
+  const requestData = {
+      address: "component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t"
+  };
+
+  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
+  fetch('https://stokenet.radixdlt.com/state/entity/page/fungibles/', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+  })
+  .then(response => response.json()) // Assuming the response is JSON data.
+  .then(data => {
+      // Check if the response has 'items' and process them.
+      if (data && data.items && Array.isArray(data.items)) {
+          const resourceAddresses = data.items.map(item => item.resource_address);
+          console.log('Resource Addresses:', resourceAddresses);
+          document.getElementById('mainPool').innerText = JSON.stringify(resourceAddresses);
+      } else {
+          console.error('Invalid response format.');
+      }
+  })
+  .catch(error => {
+      console.error('Error fetching data:', error);
+  });
+}
