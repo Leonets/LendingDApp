@@ -16,7 +16,7 @@ TAKE_FROM_WORKTOP
 ;
 CALL_METHOD
     Address("${component}")
-    "fund"
+    "lend_tokens"
     Bucket("bucket1")
 ;
 CALL_METHOD
