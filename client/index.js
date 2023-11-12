@@ -27,14 +27,23 @@ console.log("dApp Toolkit: ", rdt)
 // lnd_resource address: resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen
 // lnd_token address: resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g
 
+// Package address v.2
+// package_tdx_2_1p5k80fw08d0eh5pvjpv47xf46r349yutstherngrsnjnlxpjrerqk0
+// Component Address: component_tdx_2_1cqappdlhv6yjp9ukfq8edc5jf4mc3z4xaptmewped6e607lm8kys8r
+// admin_badge address: resource_tdx_2_1t4rjdv0tjw5wlq4gqukyasx3u7d3nvr5yaj5za6dsg0nl2qhsxj7p7
+// owner_badge address: resource_tdx_2_1t4z8z7ukjta56m3jukqjgsed74yesq35zeczuuqvvz94skme44trwz
+// lnd_resource address: resource_tdx_2_1ntwnlyepercr75yhn48ucgedj8ka6gap2hgc6ejes4v892l6k273pz
+// lnd_token address: resource_tdx_2_1t4s6usewhkshfy8c9tdfqy7p6svljfr8c9dg3kvrjfm6r40mp3u9s8
+
+
 // Global states
-let componentAddress = "component_tdx_2_1crz9cma45dgzc7a8phu9zzmzfzy4uqw3hx548gwc9wpehrw8qvudkk" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1cqappdlhv6yjp9ukfq8edc5jf4mc3z4xaptmewped6e607lm8kys8r" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1t4s6usewhkshfy8c9tdfqy7p6svljfr8c9dg3kvrjfm6r40mp3u9s8" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1ntwnlyepercr75yhn48ucgedj8ka6gap2hgc6ejes4v892l6k273pz" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1thnlgyksrxupu8npjanj0a7zxrkd47uunwfnhfxcvtg9futupt7xyu"
-let owner_badge = "resource_tdx_2_1t4r3h9ccm8ywpw9jufhj0046wv4nm5c7ugmk2tf25wr5hwqruvrzad"
+let admin_badge = "resource_tdx_2_1t4rjdv0tjw5wlq4gqukyasx3u7d3nvr5yaj5za6dsg0nl2qhsxj7p7"
+let owner_badge = "resource_tdx_2_1t4z8z7ukjta56m3jukqjgsed74yesq35zeczuuqvvz94skme44trwz"
 
 let accountAddress
 let accountName
@@ -234,7 +243,7 @@ async function fetchNftMetadata(resourceAddress, item) {
     if (extractedValues.length > 0) {
       // Update the content of the div elements
       amountLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "amount").value;
-      epochLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "minted_on").value;
+      epochLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "start_lending_epoch").value;
       // Enable the input field
       numberOfTokensInput.readOnly = true;
       //console.error('Disable lending ');

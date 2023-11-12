@@ -8,7 +8,9 @@ struct StaffBadge {
 #[derive(ScryptoSbor, NonFungibleData)]
 pub struct LenderData {
     #[mutable]
-    minted_on: Epoch,
+    start_lending_epoch: Epoch,
+    #[mutable]
+    end_lending_epoch: Epoch,
     #[mutable]
     amount: Decimal
 }
@@ -22,10 +24,12 @@ mod lending_dapp {
         },
         methods {
             register => PUBLIC;
+            unregister => PUBLIC;
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
             fund => PUBLIC;
             set_reward => restrict_to: [admin, OWNER];
+            set_period_length => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
@@ -35,9 +39,10 @@ mod lending_dapp {
         lendings: Vault,
         collected_xrd: Vault,
         reward: Decimal,
-        lnd_resource_manager: ResourceManager,
+        lnd_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
         lendings_nft_manager: ResourceManager,
+        period_length: Decimal,
     }
 
     impl LendingDApp {
@@ -45,6 +50,7 @@ mod lending_dapp {
         pub fn instantiate_lending_dapp(
             reward: Decimal,
             symbol: String,
+            period_length: Decimal,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
             
             let (address_reservation, component_address) =
@@ -52,7 +58,7 @@ mod lending_dapp {
 
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
-                    .metadata(metadata!(init{"name"=>"owner badge", locked;}))
+                    .metadata(metadata!(init{"name"=>"LendingDapp Owner badge", locked;}))
                     .divisibility(DIVISIBILITY_NONE)
                     .mint_initial_supply(1);
 
@@ -60,7 +66,7 @@ mod lending_dapp {
                 ResourceBuilder::new_fungible(OwnerRole::Updatable(rule!(require(
                     owner_badge.resource_address()
                 ))))
-                .metadata(metadata!(init{"name"=>"admin badge", locked;}))
+                .metadata(metadata!(init{"name"=>"LendingDapp Admin badge", locked;}))
                 .mint_roles(mint_roles! (
                         minter => rule!(require(global_caller(component_address)));
                         minter_updater => OWNER;
@@ -73,7 +79,7 @@ mod lending_dapp {
                     require(owner_badge.resource_address())
                         || require(admin_badge.resource_address())
                 )))
-                .metadata(metadata!(init{"name" => "staff_badge", locked;}))
+                .metadata(metadata!(init{"name" => "LendingDapp Staff_badge", locked;}))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
                          minter_updater => OWNER;
@@ -133,12 +139,13 @@ mod lending_dapp {
             // populate a LendingDApp struct and instantiate a new component
             let component = 
                 Self {
-                    lnd_resource_manager: lendings_bucket.resource_manager(),
+                    lnd_manager: lendings_bucket.resource_manager(),
                     lendings: Vault::with_bucket(lendings_bucket.into()),
                     collected_xrd: Vault::new(XRD),
                     reward: reward,
                     staff_badge_resource_manager: staff_badge,
                     lendings_nft_manager: lendings_nft_manager,
+                    period_length: period_length,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -160,7 +167,8 @@ mod lending_dapp {
             let lender_badge = self.lendings_nft_manager
             .mint_ruid_non_fungible(
                 LenderData {
-                    minted_on: Runtime::current_epoch(),
+                    start_lending_epoch: Epoch::of(0),
+                    end_lending_epoch: Epoch::of(0),
                     amount: dec!("0")
                 }
             );
@@ -168,7 +176,38 @@ mod lending_dapp {
             lender_badge
         }
 
+        pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
+            //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
+            lender_badge.burn();
+            None
+        }
+
         pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+
+            // let option_metadata = self.lendings_nft_manager.get_metadata(&nft_local_id).ok();  
+            // for nft in name_nft.as_non_fungible().non_fungibles::<DomainName>() {
+            //     total_deposit_amount.checked_add(nft.data().deposit_amount);
+            // }
+
+            let start_epoch_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().start_lending_epoch;
+            let amount_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().amount;
+
+            match start_epoch_nft.number() != 0 {
+                true => {
+                    //if it is not the first time lending then checks epochs and amount
+                    assert!(
+                        start_epoch_nft.number() + 1728.to_u64().unwrap() <= Runtime::current_epoch().number(),
+                        "No lending accepted if previous is previous than 8460 epoch (aroung 1 month)!"
+                    );
+                    assert!(
+                        amount_nft == dec!("0"),
+                        "No lending accepted if previous is not closed yet!"
+                    );
+                }
+                false => (),
+            }
+
             //take the XRD bucket as a new loan and put xrd token in main pool
             let num_xrds = payment.amount();
 
@@ -184,27 +223,9 @@ mod lending_dapp {
             let value_backed = self.lendings.take(num_xrds);
             info!("Amount of loan received: {:?} ", num_xrds);   
 
-            // match nft_option {
-            //     Some(_nft) => {
-            //         info!("A Lending NFT already exist"); 
-            //     }
-            //     None => {
-            //         info!("A Lending NFT does not exist yet"); 
-            //     }
-            // }
-
-            // //mint an NFT for registering loan amount and starting epoch
-            // let lender_badge = self.lendings_nft_manager
-            // .mint_ruid_non_fungible(
-            //     LenderData {
-            //         minted_on: Runtime::current_epoch(),
-            //         amount: num_xrds
-            //     }
-            // );
-
-            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "minted_on", Runtime::current_epoch());
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
+            // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", None);
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
 
             (value_backed, lender_badge)
@@ -246,11 +267,16 @@ mod lending_dapp {
             lender_badge.as_non_fungible().non_fungible_local_id();
             //when all the loan amount has taken back then the nft gets burned
             if remaining_amount == dec!("0") {
-                lender_badge.burn();
-                (xrd_to_return,None)
+                // lender_badge.burn();
+                // (xrd_to_return,None)
+                // Update the data on the network
+                // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Runtime::current_epoch());
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
+                return (xrd_to_return,Some(lender_badge))                
             } else {
                 // Update the data on the network
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "minted_on", Runtime::current_epoch());
+                // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
                 return (xrd_to_return,Some(lender_badge))
             }
@@ -270,6 +296,10 @@ mod lending_dapp {
             self.reward = reward
         }
 
+        pub fn set_period_length(&mut self, period_length: Decimal) {
+            self.period_length = period_length
+        }
+
         //withdraw all the funds deposited
         pub fn withdraw_earnings(&mut self) -> Bucket {
             self.collected_xrd.take_all()
@@ -284,9 +314,9 @@ mod lending_dapp {
             staff_badge_bucket
         }
 
-        pub fn extend_lending_pool(&mut self) {
+        pub fn extend_lending_pool(&mut self, size_extended: Decimal) {
             // mint some more lending tokens requires an admin or staff badge
-            self.lendings.put(self.lnd_resource_manager.mint(1000));
+            self.lendings.put(self.lnd_manager.mint(size_extended));
         }
 
         //financial function

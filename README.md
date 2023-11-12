@@ -13,7 +13,11 @@ Store the account address in the account environment variable
 
 Now we can publish our package, to do this locally run `resim publish .`
 
-Store the returned package address in the package environment variable `export package=<package_address>`
+Store the returned package address in the package environment variable 
+`export package=<package_address>`
+
+Also you need to export this component for locking the transaction's fee
+`export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh`
 
 At this point we can instantiate our Lending dApp locally 
 `resim run rtm/instantiate_lending_dapp.rtm`
@@ -35,7 +39,7 @@ resource1 -> owner_badge
 resource2 -> admin_badge
 resource3 -> staff_badge
 resource4 -> lending_token
-resource5 -> lnd_resource_manager
+resource5 -> lnd_manager
 
 Store the returned component addres in the component environment variable 
 `export component=<component_address>`
@@ -43,8 +47,8 @@ Store the returned component addres in the component environment variable
 Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable 
 `export owner_badge=<resource_address>`
 
-Export also the lnd_resource_manager in the environment variable 
-`export lnd_resource_manager=<lnd_resource_address>`
+Export also the lnd_manager in the environment variable 
+`export lnd_manager=<lnd_resource_address>`
 
 Export also the lending_token resource address in the environment variable 
 `export lending_token=<lending_token>`
@@ -63,12 +67,28 @@ That file has been built with the following bash command:
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} takes_back $lnd:10 $lnd_resource_manager:1 --manifest rtm/takes_back.rtm`
+`resim call-method ${component} takes_back $lnd:10 $lnd_manager:1 --manifest rtm/takes_back.rtm`
 
 
-To fund the main vault and to fund the development you can run `resim run fund.rtm` to fund 100xrd each time.
+To fund the main vault and to fund the development you can run 
+`resim run rtm/fund.rtm` to fund 100xrd each time.
 
-As the holder of the admin badge you can run `resim run withdraw_earnings.rtm` to collect your riches.
+At the end, if you don't want anymore to fund nor to lend then you can unregister by using 
+`resim run rtm/unregister.rtm`
+
+# Administration 
+
+As the holder of the owner badge you can run `resim run rtm/withdraw_earnings.rtm` to collect your riches.
+`resim call-method ${component} withdraw_earnings --manifest rtm/withdraw_earnings.rtm`
+
+As the holder of the admin or owner badge you can run `resim run rtm/set_reward.rtm` to set the reward for lenders.
+`resim call-method ${component} set_reward 10 --manifest rtm/set_reward.rtm`
+
+As the holder of the admin or owner badge you can run `resim run rtm/mint_staff_badge.rtm` to mint a badge for new staff.
+`resim call-method ${component} mint_staff_badge luigi --manifest rtm/mint_staff_badge.rtm`
+
+As the holder of the admin,owner or staff badge you can run `resim run rtm/extend_lending_pool.rtm` to extend the pool for lenders.
+`resim call-method ${component} extend_lending_pool 100 --manifest rtm/extend_lending_pool.rtm`
 
 # Quick test
 

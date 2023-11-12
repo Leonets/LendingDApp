@@ -61,14 +61,23 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
 // lnd_resource address: resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen
 // lnd_token address: resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g
 
+// Package address v.2
+// package_tdx_2_1p5k80fw08d0eh5pvjpv47xf46r349yutstherngrsnjnlxpjrerqk0
+// Component Address: component_tdx_2_1cqappdlhv6yjp9ukfq8edc5jf4mc3z4xaptmewped6e607lm8kys8r
+// admin_badge address: resource_tdx_2_1t4rjdv0tjw5wlq4gqukyasx3u7d3nvr5yaj5za6dsg0nl2qhsxj7p7
+// owner_badge address: resource_tdx_2_1t4z8z7ukjta56m3jukqjgsed74yesq35zeczuuqvvz94skme44trwz
+// lnd_resource address: resource_tdx_2_1ntwnlyepercr75yhn48ucgedj8ka6gap2hgc6ejes4v892l6k273pz
+// lnd_token address: resource_tdx_2_1t4s6usewhkshfy8c9tdfqy7p6svljfr8c9dg3kvrjfm6r40mp3u9s8
+
+
 // Global states
-let componentAddress = "component_tdx_2_1crz9cma45dgzc7a8phu9zzmzfzy4uqw3hx548gwc9wpehrw8qvudkk" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1t4dhmqczjsmkc7va205vq3d8euu04x5ea5xfzydmx78fncsa540g8g" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1n2ufck30hzamejc70tpe9cz85jfj7hnpzu2w6pswxlz72tkwln7jen" // XRD lender badge manager
+let componentAddress = "component_tdx_2_1cqappdlhv6yjp9ukfq8edc5jf4mc3z4xaptmewped6e607lm8kys8r" //LendingDApp component address on stokenet
+let lnd_tokenAddress = "resource_tdx_2_1t4s6usewhkshfy8c9tdfqy7p6svljfr8c9dg3kvrjfm6r40mp3u9s8" // LND token resource address
+let lnd_resourceAddress = "resource_tdx_2_1ntwnlyepercr75yhn48ucgedj8ka6gap2hgc6ejes4v892l6k273pz" // XRD lender badge manager
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1thnlgyksrxupu8npjanj0a7zxrkd47uunwfnhfxcvtg9futupt7xyu"
-let owner_badge = "resource_tdx_2_1t4r3h9ccm8ywpw9jufhj0046wv4nm5c7ugmk2tf25wr5hwqruvrzad"
+let admin_badge = "resource_tdx_2_1t4rjdv0tjw5wlq4gqukyasx3u7d3nvr5yaj5za6dsg0nl2qhsxj7p7"
+let owner_badge = "resource_tdx_2_1t4z8z7ukjta56m3jukqjgsed74yesq35zeczuuqvvz94skme44trwz"
 
 
 // ************ Instantiate component and fetch component and resource addresses *************
@@ -81,7 +90,8 @@ document.getElementById('instantiateComponent').onclick = async function () {
     "LendingDApp"
     "instantiate_lending_dapp"
     Decimal("5")
-    "${flavor}";
+    "${flavor}"
+    Decimal("1728");
   CALL_METHOD
     Address("${accountAddress}")
     "deposit_batch"
@@ -147,8 +157,13 @@ document.getElementById('setReward').onclick = async function () {
   let reward = document.getElementById('reward').value
   const manifest = ` 
     CALL_METHOD
+      Address("${accountAddress}")
+      "create_proof_of_amount"    
+      Address("${admin_badge}")
+      Decimal("1");
+    CALL_METHOD
       Address("${componentAddress}")
-      "setReward"
+      "set_reward"
       Decimal("${reward}");
     CALL_METHOD
       Address("${accountAddress}")
@@ -165,22 +180,23 @@ document.getElementById('setReward').onclick = async function () {
     console.log("Register User Error: ", result.error);
     throw result.error;
   }
-
-  // console.log("Register User sendTransaction result: ", result.value);
-  // const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
-  // console.log('Register User transaction status', transactionStatus);
-  // const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
-  // console.log('Register User Committed Details Receipt', getCommitReceipt);
 }
 
 
 
-// *********** Set reward ***********
+// *********** Extend Lending Pool ***********
 document.getElementById('extendLendingPool').onclick = async function () {  
+  let extendLendingPoolAmount = document.getElementById('extendLendingPoolAmount').value
   const manifest = ` 
     CALL_METHOD
+      Address("${accountAddress}")
+      "create_proof_of_amount"    
+      Address("${admin_badge}")
+      Decimal("1");
+    CALL_METHOD
       Address("${componentAddress}")
-      "extend_lending_pool";
+      "extend_lending_pool"
+      Decimal("${extendLendingPoolAmount}");
     CALL_METHOD
       Address("${accountAddress}")
       "deposit_batch"
@@ -196,10 +212,67 @@ document.getElementById('extendLendingPool').onclick = async function () {
     console.log("Register User Error: ", result.error);
     throw result.error;
   }
+}
 
-  // console.log("Register User sendTransaction result: ", result.value);
-  // const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
-  // console.log('Register User transaction status', transactionStatus);
-  // const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
-  // console.log('Register User Committed Details Receipt', getCommitReceipt);
+
+
+// *********** Set Period Length  ***********
+document.getElementById('setPeriodLength').onclick = async function () {  
+  let periodLength = document.getElementById('periodLength').value
+  const manifest = ` 
+    CALL_METHOD
+      Address("${accountAddress}")
+      "create_proof_of_amount"    
+      Address("${admin_badge}")
+      Decimal("1");
+    CALL_METHOD
+      Address("${componentAddress}")
+      "set_period_length"
+      Decimal("${periodLength}");
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("setPeriodLength manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    console.log("Register User Error: ", result.error);
+    throw result.error;
+  }
+}
+
+
+// *********** Withdraw earning ***********
+document.getElementById('WithdrawEarnings').onclick = async function () {  
+  let numberOfEarnedToken = document.getElementById('numberOfEarnedToken').value
+  const manifest = ` 
+    CALL_METHOD
+      Address("${accountAddress}")
+      "create_proof_of_amount"    
+      Address("${owner_badge}")
+      Decimal("1");  
+    CALL_METHOD
+      Address("${componentAddress}")
+      "withdraw_earnings"
+      Decimal("${numberOfEarnedToken}");
+    CALL_METHOD
+      Address("${accountAddress}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
+  `;
+
+  console.log("Withdraw  manifest", manifest);
+  const result = await rdt.walletApi.sendTransaction({
+    transactionManifest: manifest,
+    version: 1,
+  });
+  if (result.isErr()) {
+    console.log("Withdraw  User Error: ", result.error);
+    throw result.error;
+  }
 }

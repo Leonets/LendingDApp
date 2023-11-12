@@ -12,7 +12,7 @@ echo "Publishing dapp"
 export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
 echo "Package = " $lendingapp_package
 
-output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 LND | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 LND 1728 | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
@@ -65,4 +65,27 @@ echo '>>> Takes back remaining'
 resim run rtm/takes_back_20.rtm
 
 resim show $account
+
+#echo '>>> Lend tokens again before next available epoch slot'
+#resim run rtm/lend_tokens.rtm
+
+echo '>>> Set Reward'
+
+resim run rtm/set_reward.rtm
+
+echo '>>> Set Period Length Pool'
+
+resim run rtm/set_period_length.rtm
+
+echo '>>> Extend Lending Pool'
+
+resim run rtm/extend_lending_pool.rtm
+
+echo '>>> Mint Staff Badge'
+
+resim run rtm/mint_staff_badge.rtm
+
+echo '>>> Withdraw Earnings'
+
+resim run rtm/withdraw_earnings.rtm
 

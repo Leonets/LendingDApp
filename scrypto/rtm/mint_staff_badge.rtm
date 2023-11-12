@@ -5,19 +5,13 @@ CALL_METHOD
 ;
 CALL_METHOD
     Address("${account}")
-    "withdraw"
-    Address("${lending_token}")
-    Decimal("10")
-;
-TAKE_FROM_WORKTOP
-    Address("${lending_token}")
-    Decimal("10")
-    Bucket("bucket1")
-;
+    "create_proof_of_amount"    
+    Address("${admin_badge}")
+    Decimal("1");
 CALL_METHOD
     Address("${component}")
-    "take_back"
-    Bucket("bucket1")
+    "mint_staff_badge"
+    "luigi"
 ;
 CALL_METHOD
     Address("${account}")

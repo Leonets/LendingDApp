@@ -19,13 +19,10 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
 
     let reward = Decimal::from(5);
     let symbol = String::from("LND");
+    let period_length = Decimal::from(1728);
 
     let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
-        reward,
-        symbol,
-        package_address,
-        &mut env,
-    )?;
+        reward, symbol, period_length, package_address, &mut env,)?;
 
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
@@ -63,9 +60,10 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
 
     let reward = Decimal::from(5);
     let symbol = String::from("LND");
+    let period_length = Decimal::from(1728);
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward,        symbol,        package_address,        &mut env,    )?;
+        reward, symbol, period_length, package_address, &mut env,)?;
     
     // Act
     lendingdapp.fund(initial_fund, &mut env)?;

@@ -3,13 +3,14 @@ CALL_METHOD
     "lock_fee"
     Decimal("5000")
 ;
-CALL_FUNCTION
-    Address("${package}")
-    "LendingDApp"
-    "instantiate_lending_dapp"
-    Decimal("5")
-    "LND"
-    Decimal("1728")
+CALL_METHOD
+    Address("${account}")
+    "create_proof_of_amount"    
+    Address("${owner_badge}")
+    Decimal("1");
+CALL_METHOD
+    Address("${component}")
+    "withdraw_earnings"
 ;
 CALL_METHOD
     Address("${account}")
