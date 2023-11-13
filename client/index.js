@@ -61,7 +61,69 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   fetchLendingPoolSize(componentAddress, xrdAddress);
   //fetch nft metadata info of the connected user
   fetchUserPosition(accountAddress);
+  //get config parameter of the component
+  fetchComponentConfig(componentAddress);
 })
+
+// *********** Fetch Component Config (/state/entity/details) ***********
+async function fetchComponentConfig(componentAddress) {
+  // Define the data to be sent in the POST request.
+  const requestData = `{
+    "addresses": [
+      "${componentAddress}"
+    ],
+    "aggregation_level": "Global",
+    "opt_ins": {
+      "ancestor_identities": true,
+      "component_royalty_vault_balance": true,
+      "package_royalty_vault_balance": true,
+      "non_fungible_include_nfids": true,
+      "explicit_metadata": [
+        "name",
+        "description"
+      ]
+    }
+  }`;
+
+  console.log(" request for entity detail with payload " + requestData);
+
+  // Make an HTTP POST request to your data source (replace 'your-api-endpoint' with the actual endpoint).
+  fetch('https://stokenet.radixdlt.com/state/entity/details', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: requestData,
+  })
+  .then(response => response.json()) // Assuming the response is JSON data.
+  .then(data => { 
+    const json = data.items ? data.items[0] : null;
+    console.log("Got something ? ", json.details.state);
+    const rewardValue = getReward(json);
+    const periodLengthValue = getPeriodLength(json);
+
+    console.log("Reward:", rewardValue);
+    console.log("Period Length:", periodLengthValue);
+
+    const rewardForYouConfig = document.getElementById("rewardForYou");
+    const periodLengthConfig = document.getElementById("periodLengthConfig");
+    rewardForYouConfig.textContent = rewardValue;
+    periodLengthConfig.textContent = periodLengthValue;
+  })
+  .catch(error => {
+      console.error('Error fetching data:', error);
+  });
+}
+
+function getReward(data) {
+  const rewardField = data.details.state.fields.find(field => field.field_name === "reward");
+  return rewardField ? rewardField.value : null;
+}
+
+function getPeriodLength(data) {
+  const periodLengthField = data.details.state.fields.find(field => field.field_name === "period_length");
+  return periodLengthField ? periodLengthField.value : null;
+}
 
 // Vaults inside the component component_tdx_2_1cqj0v52hvc3cs2gq9ekyswt7d2qcze3y6t8nhswhuyl8y9z8395y2t
 // ["resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc"
@@ -240,18 +302,18 @@ async function fetchNftMetadata(resourceAddress, item) {
 
 
     // Assuming 'extractedValues' is not empty
-    if (extractedValues.length > 0) {
+    // if (extractedValues.length > 0) {
       // Update the content of the div elements
       amountLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "amount").value;
       epochLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "start_lending_epoch").value;
-      // Enable the input field
-      numberOfTokensInput.readOnly = true;
-      //console.error('Disable lending ');
-    } else {
-      // If 'extractedValues' is empty, disable the input field
-      //console.error('Enable lending ');
-      numberOfTokensInput.readOnly = false;
-    }
+      // // Enable the input field
+      // numberOfTokensInput.readOnly = true;
+      // //console.error('Disable lending ');
+    // } else {
+    //   // If 'extractedValues' is empty, disable the input field
+    //   //console.error('Enable lending ');
+    //   numberOfTokensInput.readOnly = false;
+    // }
   })
   .catch(error => {
       console.error('Error fetching data:', error);
@@ -337,8 +399,13 @@ document.getElementById('lendTokens').onclick = async function () {
       transactionManifest: manifest,
       version: 1,
     })
-  if (result.isErr()) throw result.error
-  console.log("Lend Tokens sendTransaction result: ", result.value)
+
+  if (result.isErr()) {
+    console.log("Lend Tokens sendTransaction Error: ", result.error.message)  
+    document.getElementById('lendTxResult').textContent = extractErrorMessage(result.error.message);
+    throw result.error
+  }
+  console.log("Lend Tokens sendTransaction result: ", result.value)  
 
   // Fetch the transaction status from the Gateway SDK
   let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
@@ -349,7 +416,7 @@ document.getElementById('lendTokens').onclick = async function () {
   console.log('Lend Tokens Committed Details Receipt', getCommitReceipt)
 
   // Show the receipt in the DOM
-  // document.getElementById('receiptLends').innerText = JSON.stringify(getCommitReceipt);
+  // document.getElementById('receiptLend').innerText = JSON.stringify(getCommitReceipt);
   fetchUserPosition(accountAddress);
 }
 
@@ -558,4 +625,14 @@ async function fetchVaultAddresses() {
   .catch(error => {
       console.error('Error fetching data:', error);
   });
+}
+
+function extractErrorMessage(inputString) {
+  const regex = /PanicMessage\("([^@]*)@/;
+  const match = regex.exec(inputString);
+  if (match && match[1]) {
+    return match[1];
+  } else {
+    return "No match found";
+  }
 }

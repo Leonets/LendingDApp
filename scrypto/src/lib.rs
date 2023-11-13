@@ -1,4 +1,5 @@
 use scrypto::prelude::*;
+use scrypto_math::*;
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
@@ -162,6 +163,7 @@ mod lending_dapp {
             return (component, admin_badge, owner_badge);
         }
 
+        //register to the platform
         pub fn register(&mut self) -> Bucket {
             //mint an NFT for registering loan amount and starting epoch
             let lender_badge = self.lendings_nft_manager
@@ -176,12 +178,14 @@ mod lending_dapp {
             lender_badge
         }
 
+        //unregister from the platform
         pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
             lender_badge.burn();
             None
         }
 
+        //lend some xrd
         pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
 
@@ -197,8 +201,8 @@ mod lending_dapp {
                 true => {
                     //if it is not the first time lending then checks epochs and amount
                     assert!(
-                        start_epoch_nft.number() + 1728.to_u64().unwrap() <= Runtime::current_epoch().number(),
-                        "No lending accepted if previous is previous than 8460 epoch (aroung 1 month)!"
+                        start_epoch_nft.number() + 1728 <= Runtime::current_epoch().number(),
+                        "No lending accepted if previous is previous than 1728 epoch (aroung 1 month)!"
                     );
                     assert!(
                         amount_nft == dec!("0"),
@@ -231,6 +235,7 @@ mod lending_dapp {
             (value_backed, lender_badge)
         }
 
+        //gives back the original xrd 
         pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
             // assert!(
             //     lender_badge.resource_address()
@@ -292,10 +297,12 @@ mod lending_dapp {
         }
 
         //for admin only
+        // set the reward for lenders
         pub fn set_reward(&mut self, reward: Decimal) {
             self.reward = reward
         }
 
+        //set minimum period length between consecutive lendings
         pub fn set_period_length(&mut self, period_length: Decimal) {
             self.period_length = period_length
         }
@@ -305,6 +312,7 @@ mod lending_dapp {
             self.collected_xrd.take(amount)
         }
 
+        //mint a staff for a new staff member
         pub fn mint_staff_badge(&mut self, username: String) -> Bucket {
             let staff_badge_bucket: Bucket = self
                 .staff_badge_resource_manager
@@ -314,6 +322,7 @@ mod lending_dapp {
             staff_badge_bucket
         }
 
+        //extend the pool for accept lendings
         pub fn extend_lending_pool(&mut self, size_extended: Decimal) {
             // mint some more lending tokens requires an admin or staff badge
             self.lendings.put(self.lnd_manager.mint(size_extended));

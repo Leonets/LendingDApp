@@ -24,32 +24,42 @@
 
 
   <br>
+  <h1>Your Position</h1>
   Amount of your liquidity funded in the pool: <div class="number" id="amountLiquidityFunded"></div>
   Epoch of supplying liquidity :  <div class="number" id="epochLiquidityFunded"></div>
 
   <br>
-  <p><button id="register">Register</button></p>
-  Registering here you'll be able to fund liquidity in the pool
+  <h1>Current Pool Configuration</h1>
+  Reward for liquidity funding: <div class="number" id="rewardForYou"></div>
+  Length of the period beyond which liquidity can be provided again:  <div class="number" id="periodLengthConfig"></div>
 
   <br>
-  <p><button id="lendTokens">Supply Liquidity</button></p>
+  <h1>Lending DApp</h1>
+  Registering here you'll be able to fund liquidity in the pool
+  <p><button id="register">Register</button></p>
+
+
+  <br>
   Supplying liquidity you will receive the same of LND token back and also an NFT
+  <p><button id="lendTokens">Supply Liquidity</button></p>
   <div class="number">
     <input type="text" placeholder="Number of Token" id="numberOfTokens">
   </div>
 
+  <div class="number" id="lendTxResult"></div>
+
 
   <br>
-  <p><button id="takes_back">Withdraw</button></p>
   Withdraw liquidity you'll get back your original XRD amount plus a reward!
+  <p><button id="takes_back">Withdraw</button></p>
   <div class="number">
       <input type="text" placeholder="Number of Token" id="numberOfLndTokens">
   </div>
 
 
   <br>
-  <p><button id="fundDevelopment">Fund Development</button></p>
   Fund the development of the project and you will be recognized as an honorable member !!
+  <p><button id="fundDevelopment">Fund Development</button></p>
   <div class="number">
     <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
   </div>
