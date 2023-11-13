@@ -13,6 +13,7 @@ console.log("dApp Toolkit: ", rdt)
 
 let accountAddress
 let accountName
+let inputValue
 
 // ************ Fetch the user's account address ************
 rdt.walletApi.setRequestData(DataRequestBuilder.accounts().atLeast(1))
@@ -150,129 +151,285 @@ document.getElementById('instantiateComponent').onclick = async function () {
   document.getElementById('lnd_tokenAddress').innerText = lnd_tokenAddress;
 }
 
+// ***** Main function *****
+function createTransactionOnClick(elementId, inputTextId, method) {
+  document.getElementById(elementId).onclick = async function () {
+    let inputValue = document.getElementById(inputTextId).value;
+    console.log(`got inputValue = `, inputValue);
+
+    const manifest = generateManifest(method, inputValue);
+
+    console.log(`${method} manifest`, manifest);
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+    if (result.isErr()) {
+      console.log(`${method} User Error: `, result.error);
+      throw result.error;
+    }
+  };
+}
+
+function generateManifest(method, inputValue) {
+  let code;
+  switch (method) {
+    case 'withdraw_earnings':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${owner_badge}")
+          Decimal("1");  
+        CALL_METHOD
+          Address("${componentAddress}")
+          "withdraw_earnings"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+        `;
+    break;
+    case 'set_period_length':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "set_period_length"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+       `;
+    break;
+    case 'mint_staff_badge':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "mint_staff_badge"
+          "${inputValue}";
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+        `;
+    break;
+    case 'extend_lending_pool':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "extend_lending_pool"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+        `;
+    break;     
+    case 'set_reward':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "set_reward"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+       `;
+      break;            
+    // Add more cases as needed
+    default:
+      throw new Error(`Unsupported method: ${method}`);
+  }
+
+  return code;
+}
+
+
+// Usage
+createTransactionOnClick('WithdrawEarnings', 'numberOfEarnedToken', 'withdraw_earnings');
+createTransactionOnClick('mintStaffBadge', 'staffUsername', 'mint_staff_badge');
+createTransactionOnClick('setPeriodLength', 'periodLength', 'set_period_length');
+createTransactionOnClick('extendLendingPool', 'extendLendingPoolAmount', 'set_reward');
+createTransactionOnClick('setReward', 'reward', 'extend_lending_pool');
+
+
 
 
 // *********** Set reward ***********
-document.getElementById('setReward').onclick = async function () {  
-  let reward = document.getElementById('reward').value
-  const manifest = ` 
-    CALL_METHOD
-      Address("${accountAddress}")
-      "create_proof_of_amount"    
-      Address("${admin_badge}")
-      Decimal("1");
-    CALL_METHOD
-      Address("${componentAddress}")
-      "set_reward"
-      Decimal("${reward}");
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
+// document.getElementById('setReward').onclick = async function () {  
+//   let reward = document.getElementById('reward').value
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "create_proof_of_amount"    
+//       Address("${admin_badge}")
+//       Decimal("1");
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "set_reward"
+//       Decimal("${reward}");
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
 
-  console.log("setReward manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Register User Error: ", result.error);
-    throw result.error;
-  }
-}
+//   console.log("setReward manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Register User Error: ", result.error);
+//     throw result.error;
+//   }
+// }
 
 
 
 // *********** Extend Lending Pool ***********
-document.getElementById('extendLendingPool').onclick = async function () {  
-  let extendLendingPoolAmount = document.getElementById('extendLendingPoolAmount').value
-  const manifest = ` 
-    CALL_METHOD
-      Address("${accountAddress}")
-      "create_proof_of_amount"    
-      Address("${admin_badge}")
-      Decimal("1");
-    CALL_METHOD
-      Address("${componentAddress}")
-      "extend_lending_pool"
-      Decimal("${extendLendingPoolAmount}");
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
+// document.getElementById('extendLendingPool').onclick = async function () {  
+//   let extendLendingPoolAmount = document.getElementById('extendLendingPoolAmount').value
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "create_proof_of_amount"    
+//       Address("${admin_badge}")
+//       Decimal("1");
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "extend_lending_pool"
+//       Decimal("${extendLendingPoolAmount}");
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
 
-  console.log("extendLendingPool manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Register User Error: ", result.error);
-    throw result.error;
-  }
-}
+//   console.log("extendLendingPool manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Register User Error: ", result.error);
+//     throw result.error;
+//   }
+// }
 
 
 
 // *********** Set Period Length  ***********
-document.getElementById('setPeriodLength').onclick = async function () {  
-  let periodLength = document.getElementById('periodLength').value
-  const manifest = ` 
-    CALL_METHOD
-      Address("${accountAddress}")
-      "create_proof_of_amount"    
-      Address("${admin_badge}")
-      Decimal("1");
-    CALL_METHOD
-      Address("${componentAddress}")
-      "set_period_length"
-      Decimal("${periodLength}");
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
+// document.getElementById('setPeriodLength').onclick = async function () {  
+//   let periodLength = document.getElementById('periodLength').value
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "create_proof_of_amount"    
+//       Address("${admin_badge}")
+//       Decimal("1");
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "set_period_length"
+//       Decimal("${periodLength}");
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
 
-  console.log("setPeriodLength manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Register User Error: ", result.error);
-    throw result.error;
-  }
-}
+//   console.log("setPeriodLength manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Register User Error: ", result.error);
+//     throw result.error;
+//   }
+// }
 
 
-// *********** Withdraw earning ***********
-document.getElementById('WithdrawEarnings').onclick = async function () {  
-  let numberOfEarnedToken = document.getElementById('numberOfEarnedToken').value
-  const manifest = ` 
-    CALL_METHOD
-      Address("${accountAddress}")
-      "create_proof_of_amount"    
-      Address("${owner_badge}")
-      Decimal("1");  
-    CALL_METHOD
-      Address("${componentAddress}")
-      "withdraw_earnings"
-      Decimal("${numberOfEarnedToken}");
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
+// // *********** Withdraw earning ***********
+// document.getElementById('WithdrawEarnings').onclick = async function () {  
+//   let numberOfEarnedToken = document.getElementById('numberOfEarnedToken').value
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "create_proof_of_amount"    
+//       Address("${owner_badge}")
+//       Decimal("1");  
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "withdraw_earnings"
+//       Decimal("${numberOfEarnedToken}");
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
 
-  console.log("Withdraw  manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Withdraw  User Error: ", result.error);
-    throw result.error;
-  }
-}
+//   console.log("Withdraw  manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Withdraw  User Error: ", result.error);
+//     throw result.error;
+//   }
+// }
+
+
+// // *********** Mint Staff Badge Length  ***********
+// document.getElementById('mintStaffBadge').onclick = async function () {  
+//   let staffUsername = document.getElementById('staffUsername').value
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "create_proof_of_amount"    
+//       Address("${admin_badge}")
+//       Decimal("1");
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "mint_staff_badge"
+//       "${staffUsername}";
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
+
+//   console.log("mintStaffBadge manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Register User Error: ", result.error);
+//     throw result.error;
+//   }
+// }

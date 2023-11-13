@@ -301,8 +301,8 @@ mod lending_dapp {
         }
 
         //withdraw all the funds deposited
-        pub fn withdraw_earnings(&mut self) -> Bucket {
-            self.collected_xrd.take_all()
+        pub fn withdraw_earnings(&mut self, amount: Decimal) -> Bucket {
+            self.collected_xrd.take(amount)
         }
 
         pub fn mint_staff_badge(&mut self, username: String) -> Bucket {
