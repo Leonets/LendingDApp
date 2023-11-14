@@ -201,7 +201,7 @@ mod lending_dapp {
                 true => {
                     //if it is not the first time lending then checks epochs and amount
                     assert!(
-                        start_epoch_nft.number() + 1728 <= Runtime::current_epoch().number(),
+                        Decimal::from(start_epoch_nft.number()) + Decimal::from(self.period_length) <= Decimal::from(Runtime::current_epoch().number()),
                         "No lending accepted if previous is previous than 1728 epoch (aroung 1 month)!"
                     );
                     assert!(
@@ -329,7 +329,7 @@ mod lending_dapp {
         }
 
         //financial function
-        fn calculate_interest(epochs: i32, percentage: f64, capital: f64) -> f64 {
+        fn _calculate_interest(epochs: i32, percentage: f64, capital: f64) -> f64 {
             let daily_rate = percentage / 100.0 / (365.0 * 24.0 * 12.0); // Assuming interest is calculated daily
             let compound_factor = (1.0 + daily_rate).powi(epochs);
             let interest = capital * (compound_factor - 1.0);
