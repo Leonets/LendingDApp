@@ -123,13 +123,13 @@ mod lending_dapp {
                 ))
                 .burn_roles(burn_roles!(
                     burner => rule!(require(global_caller(component_address)));
-                    burner_updater => rule!(deny_all);
+                    burner_updater => OWNER;
                 ))
                 // Here we are allowing anyone (AllowAll) to update the NFT metadata.
                 // The second parameter (DenyAll) specifies that no one can update this rule.
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
-                    non_fungible_data_updater => AccessRule::AllowAll;
-                    non_fungible_data_updater_updater => AccessRule::DenyAll;
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));;
+                    non_fungible_data_updater_updater => OWNER;
                 )) 
                 // .deposit_roles(deposit_roles!(
                 //     depositor => rule!(deny_all);
@@ -159,7 +159,7 @@ mod lending_dapp {
                 ))
                 .with_address(address_reservation)
                 .globalize();
-
+ 
             return (component, admin_badge, owner_badge);
         }
 
@@ -187,12 +187,12 @@ mod lending_dapp {
 
         //lend some xrd
         pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
-            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            assert!(
+                lender_badge.resource_address() == self.lendings_nft_manager.address(),
+                "Incorrect resource passed in for requesting back the loan"
+            );
 
-            // let option_metadata = self.lendings_nft_manager.get_metadata(&nft_local_id).ok();  
-            // for nft in name_nft.as_non_fungible().non_fungibles::<DomainName>() {
-            //     total_deposit_amount.checked_add(nft.data().deposit_amount);
-            // }
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
 
             let start_epoch_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().start_lending_epoch;
             let amount_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().amount;
@@ -202,11 +202,11 @@ mod lending_dapp {
                     //if it is not the first time lending then checks epochs and amount
                     assert!(
                         Decimal::from(start_epoch_nft.number()) + Decimal::from(self.period_length) <= Decimal::from(Runtime::current_epoch().number()),
-                        "No lending accepted if previous is previous than 1728 epoch (aroung 1 month)!"
+                        "No loan accepted if the previous loan period has not yet ended!"
                     );
                     assert!(
                         amount_nft == dec!("0"),
-                        "No lending accepted if previous is not closed yet!"
+                        "No loan accepted if previous is not closed yet!"
                     );
                 }
                 false => (),
@@ -229,7 +229,7 @@ mod lending_dapp {
 
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
-            // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", None);
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Epoch::of(0));
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
 
             (value_backed, lender_badge)
@@ -237,11 +237,11 @@ mod lending_dapp {
 
         //gives back the original xrd 
         pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            // assert!(
-            //     lender_badge.resource_address()
-            //     == self.lendings_nft_manager.resource_address(),
-            //     "Incorrect resource passed in for requesting back the loan"
-            // );
+            assert!(
+                lender_badge.resource_address()
+                == self.lendings_nft_manager.address(),
+                "Incorrect resource passed in for requesting back the loan"
+            );
 
             // Verify the user has requested back at least 20% 
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();

@@ -11,6 +11,7 @@ CALL_METHOD
 CALL_METHOD
     Address("${component}")
     "withdraw_earnings"
+    Decimal("20")
 ;
 CALL_METHOD
     Address("${account}")

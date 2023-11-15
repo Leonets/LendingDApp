@@ -15,7 +15,7 @@
 
   <div class="maincontainer">
     <div class="logo">
-      <img src="images/logo3b.jpg" width="600" />
+      <img src="images/logo3b.jpg" width="400" />
     </div>
     <div class="connectBtn">
       <radix-connect-button />
@@ -23,55 +23,64 @@
   </div>
 
 
-  <br>
-  <h1>Your Position</h1>
-  Amount of your liquidity funded in the pool: <div class="number" id="amountLiquidityFunded"></div>
-  Epoch of supplying liquidity :  <div class="number" id="epochLiquidityFunded"></div>
-  Next Epoch available for supplying new liquidity :  <div class="number" id="epochLiquidityNext"></div>
+  <div class="big-container">
+    <div class="left-container">
+      <h1>Your Position</h1>
+      Amount of your liquidity funded in the pool: <div class="number" id="amountLiquidityFunded"></div>
+      Epoch of supplying liquidity: <div class="number" id="epochLiquidityFunded"></div>
+      Epoch of redeeming liquidity: <div class="number" id="epochLiquidityReedemed"></div>
+      Next Epoch available for supplying new liquidity: <div class="number" id="epochLiquidityNext"></div>
+      Current Epoch: <div class="number" id="currentEpoch"></div>
 
-  <br>
-  <h1>Current Pool Configuration</h1>
-  Reward for liquidity funding: <div class="number" id="rewardForYou"></div>
-  Length of the period beyond which liquidity can be provided again:  <div class="number" id="periodLengthConfig"></div>
+      <h1>Lending DApp</h1>
+      Registering here you'll be able to fund liquidity in the pool
+      <p><button id="register">Register</button></p>
+    
+    
+      <br>
+      Supplying liquidity you will receive the same of LND token back and also an NFT
+      <p><button id="lendTokens">Supply Liquidity</button></p>
+      <div class="number">
+        <input type="text" placeholder="Number of Token" id="numberOfTokens">
+      </div>
+    
+      <div class="number" id="lendTxResult"></div>
+    
+    
+      <br>  <br>
+      Withdraw liquidity you'll get back your original XRD amount plus a reward!
+      <p><button id="takes_back">Withdraw</button></p>
+      <div class="number">
+          <input type="text" placeholder="Number of Token" id="numberOfLndTokens">
+      </div>
+    
+    
+      <br>  <br>
+      Fund the development of the project and you will be recognized as an honorable member !!
+      <p><button id="fundDevelopment">Fund Development</button></p> 
+      <div class="number">
+        <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
+      </div>
+    </div>
 
-  <br>
-  <h1>Lending DApp</h1>
-  Registering here you'll be able to fund liquidity in the pool
-  <p><button id="register">Register</button></p>
+    <div class="right-container">
+      <h1>Smart Contract Documentation</h1>
+      <a href="https://docs-lending.stakingcoins.eu/">Docs</a>
 
+      <h1>Current Pool Configuration</h1>
+      Reward for liquidity funding: <div class="number" id="rewardForYou"></div>
+      Length of the period beyond which liquidity can be provided again: <div class="number" id="periodLengthConfig"></div>
 
-  <br>
-  Supplying liquidity you will receive the same of LND token back and also an NFT
-  <p><button id="lendTokens">Supply Liquidity</button></p>
-  <div class="number">
-    <input type="text" placeholder="Number of Token" id="numberOfTokens">
+      <h1>Smart Contract Vaults</h1>
+      Amount of main liquidity pool
+      <div class="number" id="mainPool"></div>
+
+      Amount of loans still accepted
+      <div class="number" id="lendinsPool"></div>
+    </div>
   </div>
 
-  <div class="number" id="lendTxResult"></div>
-
-
-  <br>
-  Withdraw liquidity you'll get back your original XRD amount plus a reward!
-  <p><button id="takes_back">Withdraw</button></p>
-  <div class="number">
-      <input type="text" placeholder="Number of Token" id="numberOfLndTokens">
-  </div>
-
-
-  <br>
-  Fund the development of the project and you will be recognized as an honorable member !!
-  <p><button id="fundDevelopment">Fund Development</button></p> 
-  <div class="number">
-    <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
-  </div>
-
-  <br>
-  Amount of main liquidity pool 
-  <div class="number" id="mainPool"></div>
-
-  <br>
-  Amount of loans still accepted
-  <div class="number" id="lendinsPool"></div>
+ 
 
 </body>
 

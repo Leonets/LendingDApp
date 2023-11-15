@@ -43,15 +43,24 @@ console.log("dApp Toolkit: ", rdt)
 // lnd_resource address: resource_tdx_2_1n2xdv5skm3x8cr3mdcm7x78z678vjfjpuufa0mzjs7utd2guzmqnmq
 // lnd_token address: resource_tdx_2_1thggqkegwda56rj6tvuanqglfeq0v45f3d03l95dpjwz26v2z5y9wq
 
+// Package address v.4
+// package_tdx_2_1p544fx9lqdlwg2v2snlamxls4z2dwjzpggetm7vrts6g9zvvdc2xhx
+// component_tdx_2_1cqka4kxm98hf9ykj7g4dcv9rxh2vqld6qg6g0ghje6dvuxqny562x8
+// admin_badge address: resource_tdx_2_1tkud85qeswfn5ag94a5rcc0kegwgzhltg8xhfwzts53xvlsutl7p9a
+// owner_badge address: resource_tdx_2_1t5gtgqjustpsyx3d7rygp3wcd355dm5p4an64nqnm3nqdr8pwucfa4
+// lnd_resource address: resource_tdx_2_1ng78xcx0njgdm43l4cfdxn3zsq7pxf94vqlz3x9kanpj2fz2adstqf
+// lnd_token address: resource_tdx_2_1th9llwx23cygde0tx32636xmtfr0ln464fwnxgne42fs7a4dnj03hc
 
 // Global states
-let componentAddress = "component_tdx_2_1cqy0kyz2ag8n5spkxw6spd6rdfn8xshfdgyqu64dzln3mm6kp5vqjz" //LendingDApp component address on stokenet
-let lnd_tokenAddress = "resource_tdx_2_1thggqkegwda56rj6tvuanqglfeq0v45f3d03l95dpjwz26v2z5y9wq" // LND token resource address
-let lnd_resourceAddress = "resource_tdx_2_1n2xdv5skm3x8cr3mdcm7x78z678vjfjpuufa0mzjs7utd2guzmqnmq" // XRD lender badge manager
-let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
+let componentAddress = "component_tdx_2_1cqka4kxm98hf9ykj7g4dcv9rxh2vqld6qg6g0ghje6dvuxqny562x8" //LendingDApp component address on stokenet
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1thyh2xqk27x2rvrr6rhf7qlqekz5pufg6zqncuk2wegcrm5nnyk2hw"
-let owner_badge = "resource_tdx_2_1tkgqwyh8c2zdavvrml75en2ttq84f6e3rz49c00tfp5cqzu4q4aj8w"
+let admin_badge = "resource_tdx_2_1tkud85qeswfn5ag94a5rcc0kegwgzhltg8xhfwzts53xvlsutl7p9a"
+let owner_badge = "resource_tdx_2_1t5gtgqjustpsyx3d7rygp3wcd355dm5p4an64nqnm3nqdr8pwucfa4"
+let lnd_resourceAddress = "resource_tdx_2_1ng78xcx0njgdm43l4cfdxn3zsq7pxf94vqlz3x9kanpj2fz2adstqf" // XRD lender badge manager
+let lnd_tokenAddress = "resource_tdx_2_1th9llwx23cygde0tx32636xmtfr0ln464fwnxgne42fs7a4dnj03hc" // LND token resource address
+
+let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
+
 
 let accountAddress
 let accountName
@@ -136,6 +145,7 @@ async function fetchComponentConfig(componentAddress) {
   .then(response => response.json()) // Assuming the response is JSON data.
   .then(data => { 
     const json = data.items ? data.items[0] : null;
+    const currentEpoch = data.ledger_state.epoch;
     const rewardValue = getReward(json);
     const periodLengthValue = getPeriodLength(json);
 
@@ -143,12 +153,18 @@ async function fetchComponentConfig(componentAddress) {
     // console.log("Period Length:", periodLengthValue);
     const rewardForYouConfig = document.getElementById("rewardForYou");
     const periodLengthConfig = document.getElementById("periodLengthConfig");
-    rewardForYouConfig.textContent = rewardValue;
+    rewardForYouConfig.textContent = rewardValue + '%';
     periodLengthConfig.textContent = periodLengthValue;
+    document.getElementById("currentEpoch").textContent = currentEpoch;
   })
   .catch(error => {
       console.error('Error fetching data:', error);
   });
+}
+
+function getCurrentEpoch(data) {
+  const currentEpoch = data.details.state.fields.find(field => field.field_name === "reward");
+  return currentEpoch ? currentEpoch.value : null;
 }
 
 function getReward(data) {
@@ -268,12 +284,20 @@ async function fetchNftMetadata(resourceAddress, item) {
     // Find the elements by their IDs
     const amountLiquidityFundedDiv = document.getElementById("amountLiquidityFunded");
     const epochLiquidityFundedDiv = document.getElementById("epochLiquidityFunded");
+    const epochLiquidityReedemedDiv = document.getElementById("epochLiquidityReedemed");
+    const epochLiquidityNextDiv = document.getElementById("epochLiquidityNext");
     // Find the input element by its ID
     const numberOfTokensInput = document.getElementById("numberOfTokens");
 
     // Update the content of the div elements
     amountLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "amount").value;
-    epochLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "start_lending_epoch").value;
+    const startLendingEpochValue = parseFloat(extractedValues.find(field => field.field_name === "start_lending_epoch").value) || 0;;
+    epochLiquidityFundedDiv.textContent = startLendingEpochValue;
+    epochLiquidityReedemedDiv.textContent = extractedValues.find(field => field.field_name === "end_lending_epoch").value
+    // update the sum
+    const currentValueEpochLength = parseFloat(periodLengthConfig.textContent) || 0; 
+    const sumValue = startLendingEpochValue + currentValueEpochLength;
+    epochLiquidityNextDiv.textContent = sumValue;
   })
   .catch(error => {
       console.error('Error fetching data:', error);
