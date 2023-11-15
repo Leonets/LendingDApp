@@ -1,14 +1,28 @@
 import { RadixDappToolkit, DataRequestBuilder, RadixNetwork, NonFungibleIdType } from '@radixdlt/radix-dapp-toolkit'
 // You can create a dApp definition in the dev console at https://stokenet-console.radixdlt.com/dapp-metadata 
 // then use that account for your dAppId
-const dAppId = 'account_tdx_2_12ys5dcytt0hc0yhq5a78stl7upchljsvs36ujdunlszlrgu90mz44d'
+// Set an environment variable to indicate the current environment
+const environment = process.env.NODE_ENV || 'Stokenet'; // Default to 'development' if NODE_ENV is not set
+console.log("environment : ", environment)
+// Define constants based on the environment
+let dAppId, networkId;
+
+if (environment === 'Mainnet') {
+  dAppId = 'account_tdx_2_12y0nsx9';
+  networkId = RadixNetwork.Mainnet;
+} else {
+  // Default to Stokenet configuration
+  dAppId = 'account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl';
+  networkId = RadixNetwork.Stokenet;
+}
+
 // Instantiate DappToolkit
 const rdt = RadixDappToolkit({
   dAppDefinitionAddress: dAppId,
-  networkId: RadixNetwork.Stokenet, // network ID 2 is for the stokenet test network 1 is for mainnet
+  networkId: networkId,
   applicationName: 'Lending dApp',
   applicationVersion: '1.0.0',
-})
+});
 console.log("dApp Toolkit: ", rdt)
 
 // Package address v.0
@@ -50,6 +64,14 @@ console.log("dApp Toolkit: ", rdt)
 // owner_badge address: resource_tdx_2_1t5gtgqjustpsyx3d7rygp3wcd355dm5p4an64nqnm3nqdr8pwucfa4
 // lnd_resource address: resource_tdx_2_1ng78xcx0njgdm43l4cfdxn3zsq7pxf94vqlz3x9kanpj2fz2adstqf
 // lnd_token address: resource_tdx_2_1th9llwx23cygde0tx32636xmtfr0ln464fwnxgne42fs7a4dnj03hc
+
+// Package address v.4 (test dAppId)
+// package_tdx_2_1p5gxjxlpp62akldqztcrywwujr3u8upwc5hhprvl7flacugzcah6vs
+// Component Address: component_tdx_2_1cpx8x9gxyz09q33zwgvwxshh8txdmftk53yjswxdvxfxelp8k0n3j7
+// admin_badge address: resource_tdx_2_1t5z8se93dymhkv7hx58tmguyh5lu8rllkjlq4w66sen0gy0s2skjz2
+// owner_badge address: resource_tdx_2_1t5uls69uf3jlhepz69hx283e2pqprq8u3c0368mm5r7ek5w3v2xkde
+// lnd_resource address: resource_tdx_2_1n2n8crzehuh27p00cuqpc7asuwws639y85x6ycmyumswglrrre9z7w
+// lnd_token address: resource_tdx_2_1tkd38t6xtxd2vqeq8yp4eqaam68qz50rguynq3vzym2epphjpnqyu0
 
 // Global states
 let componentAddress = "component_tdx_2_1cqka4kxm98hf9ykj7g4dcv9rxh2vqld6qg6g0ghje6dvuxqny562x8" //LendingDApp component address on stokenet
@@ -145,6 +167,7 @@ async function fetchComponentConfig(componentAddress) {
   .then(response => response.json()) // Assuming the response is JSON data.
   .then(data => { 
     const json = data.items ? data.items[0] : null;
+
     const currentEpoch = data.ledger_state.epoch;
     const rewardValue = getReward(json);
     const periodLengthValue = getPeriodLength(json);

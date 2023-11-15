@@ -1,14 +1,28 @@
 import { RadixDappToolkit, DataRequestBuilder, RadixNetwork } from '@radixdlt/radix-dapp-toolkit'
 // You can create a dApp definition in the dev console at https://stokenet-console.radixdlt.com/dapp-metadata 
 // then use that account for your dAppId
-const dAppId = 'account_tdx_2_12ys5dcytt0hc0yhq5a78stl7upchljsvs36ujdunlszlrgu90mz44d'
+// Set an environment variable to indicate the current environment
+const environment = process.env.NODE_ENV || 'Stokenet'; // Default to 'development' if NODE_ENV is not set
+console.log("environment : ", environment)
+// Define constants based on the environment
+let dAppId, networkId;
+
+if (environment === 'Mainnet') {
+  dAppId = 'account_tdx_2_12y0nsx9';
+  networkId = RadixNetwork.Mainnet;
+} else {
+  // Default to Stokenet configuration
+  dAppId = 'account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl';
+  networkId = RadixNetwork.Stokenet;
+}
+
 // Instantiate DappToolkit
 const rdt = RadixDappToolkit({
   dAppDefinitionAddress: dAppId,
-  networkId: RadixNetwork.Stokenet, // network ID 2 is for the stokenet test network 1 is for mainnet
+  networkId: networkId,
   applicationName: 'Lending dApp',
   applicationVersion: '1.0.0',
-})
+});
 console.log("dApp Toolkit: ", rdt)
 
 let accountAddress
