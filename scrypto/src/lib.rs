@@ -1,5 +1,5 @@
 use scrypto::prelude::*;
-use scrypto_math::*;
+//use scrypto_math::*;
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
@@ -59,7 +59,12 @@ mod lending_dapp {
 
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
-                    .metadata(metadata!(init{"name"=>"LendingDapp Owner badge", locked;}))
+                    .metadata(metadata!(init{
+                        "name"=>"LendingDapp Owner badge", locked;
+                        "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                        "description" => "A badge to be used for some extra-special administrative function", locked;
+                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                    }))
                     .divisibility(DIVISIBILITY_NONE)
                     .mint_initial_supply(1);
 
@@ -67,7 +72,12 @@ mod lending_dapp {
                 ResourceBuilder::new_fungible(OwnerRole::Updatable(rule!(require(
                     owner_badge.resource_address()
                 ))))
-                .metadata(metadata!(init{"name"=>"LendingDapp Admin badge", locked;}))
+                .metadata(metadata!(init{
+                    "name"=>"LendingDapp Admin badge", locked;
+                    "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                    "description" => "A badge to be used for some special administrative function", locked;
+                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                }))
                 .mint_roles(mint_roles! (
                         minter => rule!(require(global_caller(component_address)));
                         minter_updater => OWNER;
@@ -80,7 +90,12 @@ mod lending_dapp {
                     require(owner_badge.resource_address())
                         || require(admin_badge.resource_address())
                 )))
-                .metadata(metadata!(init{"name" => "LendingDapp Staff_badge", locked;}))
+                .metadata(metadata!(init{
+                    "name" => "LendingDapp Staff_badge", locked;
+                    "description" => "A badge to be used for some administrative function", locked;
+                    "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
                          minter_updater => OWNER;
@@ -102,6 +117,8 @@ mod lending_dapp {
                     "name" => "LendingToken", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
+                    "icon_url" => "https://test-lending.stakingcoins.eu/images/lending_token.png", locked;
+                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -110,11 +127,14 @@ mod lending_dapp {
                 .mint_initial_supply(1000);
 
             // Create a badge to identify this user who lends xrd tokens
-            let lendings_nft_manager =
+            let nft_manager =
                 ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
                 .metadata(metadata!(
                     init {
                         "name" => "LendingDapp NFT", locked;
+                        "icon_url" => "https://test-lending.stakingcoins.eu/images/lending_nft.png", locked;
+                        "description" => "An NFT containing information about your liquidity", locked;
+                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
                     }
                 ))
                 .mint_roles(mint_roles!(
@@ -128,7 +148,7 @@ mod lending_dapp {
                 // Here we are allowing anyone (AllowAll) to update the NFT metadata.
                 // The second parameter (DenyAll) specifies that no one can update this rule.
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
-                    non_fungible_data_updater => rule!(require(global_caller(component_address)));;
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
                     non_fungible_data_updater_updater => OWNER;
                 )) 
                 // .deposit_roles(deposit_roles!(
@@ -145,14 +165,21 @@ mod lending_dapp {
                     collected_xrd: Vault::new(XRD),
                     reward: reward,
                     staff_badge_resource_manager: staff_badge,
-                    lendings_nft_manager: lendings_nft_manager,
+                    lendings_nft_manager: nft_manager,
                     period_length: period_length,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
                     owner_badge.resource_address()
                 ))))
-                //specify what this roles means
+                .metadata(metadata!(
+                    init {
+                        "name" => "LendingDapp", locked;
+                        "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                        "description" => "LendingDapp SmartContract ComponentNFT", locked;
+                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                    }
+                ))//specify what this roles means
                 .roles(roles!(
                     admin => rule!(require(admin_badge.resource_address()));
                     staff => rule!(require(staff_badge.address()));
