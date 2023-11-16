@@ -45,6 +45,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
 
+
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
 
     // Act
@@ -66,7 +67,11 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
         reward, symbol, period_length, package_address, &mut env,)?;
     
     // Act
-    lendingdapp.fund(initial_fund, &mut env)?;
+    let _ = env.with_auth_module_disabled(|env| {
+        /* Auth Module is disabled just before this point */
+        lendingdapp.fund_main_pool(initial_fund, env);
+        /* Kernel modules are reset just after this point. */
+    });
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
     // Act

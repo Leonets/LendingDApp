@@ -5,31 +5,24 @@ CALL_METHOD
 ;
 CALL_METHOD
     Address("${account}")
-    "withdraw"
-    Address("${lending_token}")
-    Decimal("20")
-;
-TAKE_FROM_WORKTOP
-    Address("${lending_token}")
-    Decimal("20")
-    Bucket("bucket1")
-;
+    "create_proof_of_amount"    
+    Address("${admin_badge}")
+    Decimal("1");
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${lnd_manager}")
-    Decimal("1")
+    Address("${xrd}")
+    Decimal("100")
 ;
 TAKE_FROM_WORKTOP
-    Address("${lnd_manager}")
-    Decimal("1")
-    Bucket("bucket2")
+    Address("${xrd}")
+    Decimal("100")
+    Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${component}")
-    "takes_back"
+    "fund_main_pool"
     Bucket("bucket1")
-    Bucket("bucket2")
 ;
 CALL_METHOD
     Address("${account}")

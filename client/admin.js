@@ -287,7 +287,32 @@ function generateManifest(method, inputValue) {
           "deposit_batch"
           Expression("ENTIRE_WORKTOP");
        `;
-      break;            
+      break;     
+      case 'fund_main_pool':
+        code = `
+          CALL_METHOD
+            Address("${accountAddress}")
+            "create_proof_of_amount"    
+            Address("${admin_badge}")
+            Decimal("1");              
+          CALL_METHOD
+            Address("${accountAddress}")
+            "withdraw"    
+            Address("${xrdAddress}")
+            Decimal("${inputValue}");
+          TAKE_ALL_FROM_WORKTOP
+            Address("${xrdAddress}")
+            Bucket("xrd");
+          CALL_METHOD
+            Address("${componentAddress}")
+            "fund_main_pool"
+            Bucket("xrd");      
+          CALL_METHOD
+            Address("${accountAddress}")
+            "deposit_batch"
+            Expression("ENTIRE_WORKTOP");
+            `;
+        break;           
     // Add more cases as needed
     default:
       throw new Error(`Unsupported method: ${method}`);
@@ -303,4 +328,4 @@ createTransactionOnClick('mintStaffBadge', 'staffUsername', 'mint_staff_badge');
 createTransactionOnClick('setPeriodLength', 'periodLength', 'set_period_length');
 createTransactionOnClick('extendLendingPool', 'extendLendingPoolAmount', 'extend_lending_pool');
 createTransactionOnClick('setReward', 'reward', 'set_reward');
-
+createTransactionOnClick('fundMainPool', 'numberOfFundedTokens', 'fund_main_pool');

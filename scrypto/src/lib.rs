@@ -1,9 +1,30 @@
 use scrypto::prelude::*;
 //use scrypto_math::*;
+use std::env;
+
+// Function to get the NFT icon URL based on the environment
+fn get_nft_icon_url() -> String {
+    match env::var("ENVIRONMENT") {
+        Ok(environment) if environment == "production" => {
+            env::var("NFT_ICON_URL_PROD").unwrap_or_default()
+        }
+        _ => {
+            env::var("NFT_ICON_URL_NON_PROD").unwrap_or_default()
+        }
+    }
+}
+
+
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
-    username: String,
+    username: String
+}
+
+#[derive(NonFungibleData, ScryptoSbor)]
+struct BenefactorBadge {
+    #[mutable]
+    amount_funded: Decimal
 }
 
 #[derive(ScryptoSbor, NonFungibleData)]
@@ -29,9 +50,11 @@ mod lending_dapp {
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
             fund => PUBLIC;
+            fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
+            withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
         }
@@ -39,9 +62,12 @@ mod lending_dapp {
     struct LendingDApp {
         lendings: Vault,
         collected_xrd: Vault,
+        fee_xrd: Vault,
+        donations_xrd: Vault,
         reward: Decimal,
         lnd_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
+        benefactor_badge_resource_manager: ResourceManager,
         lendings_nft_manager: ResourceManager,
         period_length: Decimal,
     }
@@ -57,13 +83,18 @@ mod lending_dapp {
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
 
+            // let hash_result = hash("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl".as_bytes());
+            // let mut result = [0u8; 30];
+            // result.copy_from_slice(&hash_result.as_bytes()[..30]);
+            // ComponentAddress::new_or_panic(result)
+
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
                     .metadata(metadata!(init{
                         "name"=>"LendingDapp Owner badge", locked;
-                        "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
-                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }))
                     .divisibility(DIVISIBILITY_NONE)
                     .mint_initial_supply(1);
@@ -74,9 +105,9 @@ mod lending_dapp {
                 ))))
                 .metadata(metadata!(init{
                     "name"=>"LendingDapp Admin badge", locked;
-                    "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
-                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                         minter => rule!(require(global_caller(component_address)));
@@ -93,8 +124,33 @@ mod lending_dapp {
                 .metadata(metadata!(init{
                     "name" => "LendingDapp Staff_badge", locked;
                     "description" => "A badge to be used for some administrative function", locked;
-                    "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
-                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
+                }))
+                .mint_roles(mint_roles! (
+                         minter => rule!(require(global_caller(component_address)));
+                         minter_updater => OWNER;
+                ))
+                .burn_roles(burn_roles! (
+                    burner => rule!(require(admin_badge.resource_address()));
+                    burner_updater => OWNER;
+                ))
+                .recall_roles(recall_roles! {
+                    recaller => rule!(require(admin_badge.resource_address()));
+                    recaller_updater => OWNER;
+                })
+                .create_with_no_initial_supply();
+
+            let benefactor_badge =
+                ResourceBuilder::new_ruid_non_fungible::<BenefactorBadge>(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
+                .metadata(metadata!(init{
+                    "name" => "LendingDapp Benefactor_badge", locked;
+                    "description" => "A badge to be used for rewarding benefactors", locked;
+                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -117,8 +173,8 @@ mod lending_dapp {
                     "name" => "LendingToken", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
-                    "icon_url" => "https://test-lending.stakingcoins.eu/images/lending_token.png", locked;
-                    "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/lending_token.png"), locked;
+                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -132,9 +188,10 @@ mod lending_dapp {
                 .metadata(metadata!(
                     init {
                         "name" => "LendingDapp NFT", locked;
-                        "icon_url" => "https://test-lending.stakingcoins.eu/images/lending_nft.png", locked;
+                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/lending_nft.png"), locked;
+                        // "icon_url" => Url::of(get_nft_icon_url()), locked;
                         "description" => "An NFT containing information about your liquidity", locked;
-                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }
                 ))
                 .mint_roles(mint_roles!(
@@ -163,8 +220,11 @@ mod lending_dapp {
                     lnd_manager: lendings_bucket.resource_manager(),
                     lendings: Vault::with_bucket(lendings_bucket.into()),
                     collected_xrd: Vault::new(XRD),
+                    fee_xrd: Vault::new(XRD),
+                    donations_xrd: Vault::new(XRD),
                     reward: reward,
                     staff_badge_resource_manager: staff_badge,
+                    benefactor_badge_resource_manager: benefactor_badge,
                     lendings_nft_manager: nft_manager,
                     period_length: period_length,
                 }
@@ -175,9 +235,9 @@ mod lending_dapp {
                 .metadata(metadata!(
                     init {
                         "name" => "LendingDapp", locked;
-                        "icon_url" => "https://test-lending.stakingcoins.eu/images/logo.jpg", locked;
+                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                         "description" => "LendingDapp SmartContract ComponentNFT", locked;
-                        "dapp_definitions" => "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl", locked;
+                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }
                 ))//specify what this roles means
                 .roles(roles!(
@@ -246,6 +306,10 @@ mod lending_dapp {
                 num_xrds <= Decimal::from(1000),
                 "No loan approved over 1000xrd at this time!"
             );
+            assert!(
+                num_xrds >= Decimal::from(100),
+                "No loan approved below 100xrd at this time!"
+            );
 
             //put received token in the bucket
             self.collected_xrd.put(payment);
@@ -293,7 +357,11 @@ mod lending_dapp {
             let reward = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
             //give back XRD token plus reward %
             info!("Loan tokens given back: {:?} ", reward);  
-            let xrd_to_return = self.collected_xrd.take(reward);
+            //paying fees
+            let fees = dec!(10);
+            self.fee_xrd.put(self.collected_xrd.take(fees));
+            //returning amount less fees
+            let xrd_to_return = self.collected_xrd.take(reward-fees);
 
             let nft_local_id: NonFungibleLocalId =
             lender_badge.as_non_fungible().non_fungible_local_id();
@@ -315,12 +383,27 @@ mod lending_dapp {
 
         }
 
+        //for refund the main bucket
+        pub fn fund_main_pool(&mut self, fund: Bucket)  {
+            //take the XRD bucket for funding the main vault
+            info!("Fund received to fund the main vault: {:?} ", fund.amount());  
+            self.collected_xrd.put(fund);
+        }
 
         //for members funding
-        pub fn fund(&mut self, fund: Bucket)  {
+        pub fn fund(&mut self, fund: Bucket) -> Bucket {
             //take the XRD bucket for funding the development
-            info!("Fund received to support development: {:?} ", fund.amount());  
-            self.collected_xrd.put(fund);
+            let amount = fund.amount();
+            info!("Fund received to support development: {:?} ", amount);  
+            self.donations_xrd.put(fund);
+
+            //TODO manage subsequent funding
+            let benefactor_badge_bucket: Bucket = self
+            .benefactor_badge_resource_manager
+            .mint_ruid_non_fungible(BenefactorBadge {
+                amount_funded: amount
+            });
+            benefactor_badge_bucket
         }
 
         //for admin only
@@ -336,7 +419,13 @@ mod lending_dapp {
 
         //withdraw all the funds deposited
         pub fn withdraw_earnings(&mut self, amount: Decimal) -> Bucket {
-            self.collected_xrd.take(amount)
+            self.donations_xrd.take(amount)
+        }
+
+        //withdraw the fees by the capital funded
+        //TODO reward with fee the benefactor proportionally between their funded amount
+        pub fn withdraw_fees(&mut self, amount: Decimal) -> Bucket {
+            self.fee_xrd.take(amount)
         }
 
         //mint a staff for a new staff member

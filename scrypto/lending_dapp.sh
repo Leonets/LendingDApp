@@ -17,8 +17,10 @@ export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
 export staff_badge=`echo $output | cut -d " " -f4`
-export lending_token=`echo $output | cut -d " " -f5`
-export lnd_manager=`echo $output | cut -d " " -f6`
+export benefactor_badge=`echo $output | cut -d " " -f5`
+export lending_token=`echo $output | cut -d " " -f6`
+export lnd_manager=`echo $output | cut -d " " -f7`
+
 
 export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh
 
@@ -28,6 +30,7 @@ echo 'admin_badge = '$admin_badge
 echo 'staff_badge = '$staff_badge
 echo 'lending_token = ' $lending_token
 echo 'lnd_manager = ' $lnd_manager
+echo 'benefactor_badge = ' $benefactor_badge
 
 echo ' '
 echo 'account = ' $account
@@ -37,7 +40,11 @@ echo ' '
 
 echo '>>> Fund Main Vault'
 
-resim run rtm/fund.rtm
+resim run rtm/fund_main_pool.rtm
+resim run rtm/fund_main_pool.rtm
+
+echo '>>> Donate'
+
 resim run rtm/fund.rtm
 
 echo '>>> Register'
@@ -84,6 +91,10 @@ resim run rtm/extend_lending_pool.rtm
 echo '>>> Mint Staff Badge'
 
 resim run rtm/mint_staff_badge.rtm
+
+echo '>>> Withdraw Fees'
+
+resim run rtm/withdraw_fees.rtm
 
 echo '>>> Withdraw Earnings'
 
