@@ -3,7 +3,7 @@ use scrypto::prelude::*;
 use std::env;
 
 // Function to get the NFT icon URL based on the environment
-fn get_nft_icon_url() -> String {
+fn _get_nft_icon_url() -> String {
     match env::var("ENVIRONMENT") {
         Ok(environment) if environment == "production" => {
             env::var("NFT_ICON_URL_PROD").unwrap_or_default()
