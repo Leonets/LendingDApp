@@ -13,61 +13,85 @@
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <script type="module" src="/admin.js"></script>
 
-  <div class="connectBtn">
-    <radix-connect-button />
-  </div>
-  <h1>Lending dApp Administration</h1>
-
-  <div class="container">
-    <p>Account Name:
-    <pre id="accountName"></pre>
-    </p>
-    <p>Account Address:
-    <pre id="accountAddress"></pre>
-    </p>
+  <div class="maincontainer">
+    <div class="logo">
+      <img src="images/logo3b.jpg" width="400" />
+    </div>
+    <div class="connectBtn">
+      <radix-connect-button />
+    </div>
   </div>
 
-  <h1>Instantiate Lending dApp</h1>
-  <input type="text" placeholder="Package address" id="packageAddress" />
-  <input type="text" placeholder="Lending Symbol" id="flavor">
-  <p><button id="instantiateComponent">Instantiate component</button></p>
-  <div class="container">
-    <p>Component Address: <span id="componentAddress">component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4l</span></p>
-    <p>admin_badge address: <span id="admin_badge">resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22</span></p>
-    <p>owner_badge address: <span id="owner_badge">resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v</span></p>
-    <p>lnd_resource address: <span id="lnd_resourceAddress">resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58</span></p>
-    <p>lnd_token address: <span id="lnd_tokenAddress">resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y</span></p>
+  <div class="big-container">
+    <div class="left-container">    
+      <h1>DApp Tuning</h1>
+      Set the reward level for account providing liquidity (Admin or Owner badge needed)
+      <p><button id="setReward">Set reward level</button></p>
+      <input type="text" placeholder="Reward" id="reward">
+
+      <br>
+      Sets the length of the period beyond which liquidity can be provided again (Admin or Owner badge needed)
+      <p><button id="setPeriodLength">Sets the length of the period</button></p>
+      <input type="text" placeholder="Sets Period Length" id="periodLength">
+
+      <br>
+      Extend the Lending Pool size by the specified number of token (Admin or Owner or Staff badge needed)
+      <p><button id="extendLendingPool">Extend the Lending Pool size</button></p>
+      <input type="text" placeholder="Extend the Lending Pool size" id="extendLendingPoolAmount">
+
+      <br>
+      <h1>Administrative Function</h1>
+      Withdraw Fund for the development of the project (Owner badge needed)
+      <p><button id="WithdrawEarnings">Withdraw Fund</button></p>
+      <input type="text" placeholder="Number of Token" id="numberOfEarnedToken">
+
+      <br>
+      Fund the main pool (public)
+      <p><button id="fundMainPool">Fund</button></p> 
+      <div class="number">
+        <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
+      </div>
+
+      <br>
+      <h1>Staff Badges</h1>
+      Mint a Staff Badge (Admin or Owner badge needed)
+      <p><button id="mintStaffBadge">Mint Staff Badge</button></p>
+      <input type="text" placeholder="staffUsername" id="staffUsername">
+    </div>
+
+    <div class="right-container">
+      <h1>Smart Contract Documentation</h1>
+      <a href="https://docs-lending.stakingcoins.eu/">Docs</a>
+
+      <h1>Current Pool Configuration</h1>
+      Reward for liquidity funding: <div class="number" id="rewardForYou"></div>
+      Length of the period beyond which liquidity can be provided again: <div class="number" id="periodLengthConfig"></div>
+
+      <h1>Smart Contract Vaults</h1>
+      Amount of main liquidity pool
+      <div class="number" id="mainPool"></div>
+
+      Amount of loans still accepted
+      <div class="number" id="lendinsPool"></div>
+
+      Amount of donations received
+      <div class="number" id="donationsPool"></div>
+
+      Amount of fee collected
+      <div class="number" id="feePool"></div>
+    </div>
   </div>
 
-  <h1>Administrative Function</h1>
-  <p><button id="WithdrawEarnings">Withdraw Fund for the development of the project (Owner badge needed)</button></p>
-  <input type="text" placeholder="Number of Token" id="numberOfEarnedToken">
-  <div class="container">
-    <p>Receipt:<br>
-    <pre id="receiptWithdraw"></pre>
-    </p>
-  </div>
-
-  <h1>DApp Tuning</h1>
-  <p><button id="setReward">Set the reward level for account providing liquidity (Admin or Owner badge needed)</button></p>
-  <input type="text" placeholder="Reward" id="reward">
-
-  <p><button id="setPeriodLength">Sets the length of the period beyond which liquidity can be provided again (Admin or Owner badge needed)</button></p>
-  <input type="text" placeholder="Sets Period Length" id="periodLength">
-
-  <p><button id="extendLendingPool">Extend the Lending Pool size by the specified number of token (Admin or Owner or Staff badge needed)</button></p>
-  <input type="text" placeholder="Extend the Lending Pool size" id="extendLendingPoolAmount">
-
-  <br>  <br>
-  Fund the main pool
-  <p><button id="fundMainPool">Fund</button></p> 
-  <div class="number">
-    <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
-  </div>
-
-  <h1>Staff Badges</h1>
-  <p><button id="mintStaffBadge">Mint a Staff Badge (Admin or Owner badge needed)</button></p>
-  <input type="text" placeholder="staffUsername" id="staffUsername">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 </body>
 
