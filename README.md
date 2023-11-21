@@ -38,8 +38,9 @@ where the order is the following:
 resource1 -> owner_badge
 resource2 -> admin_badge
 resource3 -> staff_badge
-resource4 -> lending_token
-resource5 -> lnd_manager
+resource4 -> benefactor_badge
+resource5 -> lending_token
+resource6 -> lnd_manager
 
 Store the returned component addres in the component environment variable 
 `export component=<component_address>`

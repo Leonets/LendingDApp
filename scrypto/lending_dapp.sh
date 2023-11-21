@@ -46,6 +46,7 @@ resim run rtm/fund_main_pool.rtm
 echo '>>> Donate'
 
 resim run rtm/fund.rtm
+resim run rtm/fund.rtm
 
 echo '>>> Register'
 

@@ -391,19 +391,63 @@ mod lending_dapp {
         }
 
         //for members funding
-        pub fn fund(&mut self, fund: Bucket) -> Bucket {
+        pub fn fund(&mut self, fund: Bucket, benefactor: Option<Proof>) -> Option<Bucket> {
             //take the XRD bucket for funding the development
             let amount = fund.amount();
             info!("Fund received to support development: {:?} ", amount);  
             self.donations_xrd.put(fund);
 
-            //TODO manage subsequent funding
-            let benefactor_badge_bucket: Bucket = self
-            .benefactor_badge_resource_manager
-            .mint_ruid_non_fungible(BenefactorBadge {
-                amount_funded: amount
-            });
-            benefactor_badge_bucket
+            match benefactor {
+                Some(benefactor_badge) => {
+                    // Checking the type and quantity of the resource in the proof
+                    let benefactor =
+                    benefactor_badge.check(self.benefactor_badge_resource_manager.address());
+
+                    // At this point we have verified that the caller has presented a valid shareholder badge. 
+                    // we can update the amount funded until now 
+                    let non_fungible: NonFungible<BenefactorBadge> = benefactor
+                        .as_non_fungible()
+                        .non_fungible::<BenefactorBadge>();
+
+                    let nft_local_id: NonFungibleLocalId = benefactor.as_non_fungible().non_fungible_local_id();
+                    let benefactor_data = non_fungible.data();
+
+                    //update the amount on the nft
+                    self.benefactor_badge_resource_manager.update_non_fungible_data(&nft_local_id, "amount_funded", benefactor_data.amount_funded+amount);
+        
+                    return None;
+                    // (benefactor_data);
+                }
+                None => {
+                    let benefactor_badge_bucket: Bucket = self
+                    .benefactor_badge_resource_manager
+                    .mint_ruid_non_fungible(BenefactorBadge {
+                        amount_funded: amount
+                    });
+                    // return Bucket::put(benefactor_badge_bucket);
+                    return Some(benefactor_badge_bucket);
+                }
+            }
+
+
+            // match benefactor {
+            //     Some(previous_bucket) => {
+            //         let nft_local_id: NonFungibleLocalId = previous_bucket.as_non_fungible().non_fungible_local_id();
+            //         let benefactorbadge: BenefactorBadge = previous_bucket.as_non_fungible().non_fungible().data();
+            //         //update the amount on the nft
+            //         self.benefactor_badge_resource_manager.update_non_fungible_data(&nft_local_id, "amount_funded", benefactorbadge.amount_funded+amount);
+                
+            //         return previous_bucket;
+            //     }
+            //     None => {
+            //         let benefactor_badge_bucket: Bucket = self
+            //         .benefactor_badge_resource_manager
+            //         .mint_ruid_non_fungible(BenefactorBadge {
+            //             amount_funded: amount
+            //         });
+            //         return benefactor_badge_bucket;
+            //     }
+            // };
         }
 
         //for admin only
@@ -417,7 +461,7 @@ mod lending_dapp {
             self.period_length = period_length
         }
 
-        //withdraw all the funds deposited
+        //withdraw some of the funds deposited
         pub fn withdraw_earnings(&mut self, amount: Decimal) -> Bucket {
             self.donations_xrd.take(amount)
         }
