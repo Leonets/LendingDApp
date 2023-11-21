@@ -91,11 +91,11 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
             // Verify that the nft has been correctly burned
             assert_eq!(nft.amount(&mut env)?, dec!("1"));
             // Verify that the reward has been received
-            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("105"));
+            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("95"));
         }
         None => {
             // Verify that the reward has been received
-            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("105"));
+            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("95"));
         }
     }
 

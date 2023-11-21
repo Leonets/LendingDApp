@@ -328,15 +328,25 @@ async function fetchNftMetadata(resourceAddress, item) {
     const amountLiquidityFundedDiv = document.getElementById("amountLiquidityFunded");
     const epochLiquidityFundedDiv = document.getElementById("epochLiquidityFunded");
     const epochLiquidityReedemedDiv = document.getElementById("epochLiquidityReedemed");
+    //borrow id
+    const amountBorrowingsDiv = document.getElementById("amountBorrowings");
+    const epochBorrowDiv = document.getElementById("epochBorrow");
+    const epochRepayDiv = document.getElementById("epochRepay");
+    //next epoch
     const epochLiquidityNextDiv = document.getElementById("epochLiquidityNext");
     // Find the input element by its ID
     const numberOfTokensInput = document.getElementById("numberOfTokens");
 
-    // Update the content of the div elements
+    // Update the content of the div elements (lend)
     amountLiquidityFundedDiv.textContent = extractedValues.find(field => field.field_name === "amount").value;
     const startLendingEpochValue = parseFloat(extractedValues.find(field => field.field_name === "start_lending_epoch").value) || 0;;
     epochLiquidityFundedDiv.textContent = startLendingEpochValue;
     epochLiquidityReedemedDiv.textContent = extractedValues.find(field => field.field_name === "end_lending_epoch").value
+    // Update the content of the div elements (borrow)
+    amountBorrowingsDiv.textContent = extractedValues.find(field => field.field_name === "borrow_amount").value;
+    const epochBorrowValue = parseFloat(extractedValues.find(field => field.field_name === "start_borrow_epoch").value) || 0;;
+    epochBorrowDiv.textContent = epochBorrowValue;
+    epochRepayDiv.textContent = extractedValues.find(field => field.field_name === "end_borrow_epoch").value
     // update the sum
     const currentValueEpochLength = parseFloat(periodLengthConfig.textContent) || 0; 
     const sumValue = startLendingEpochValue + currentValueEpochLength;
@@ -508,6 +518,54 @@ document.getElementById('takes_back').onclick = async function () {
   // fetch commit reciept from gateway api 
   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
   console.log('Takes Back Committed Details Receipt', getCommitReceipt)
+
+  fetchUserPosition(accountAddress);
+}
+
+
+
+// TODO Please refactor
+// *********** Takes Back ***********
+document.getElementById('borrow').onclick = async function () {
+  let numberOfRequestedXrdTokens = document.getElementById('numberOfRequestedXrdTokens').value
+  let manifest = `
+  CALL_METHOD
+    Address("${accountAddress}")
+    "withdraw"    
+    Address("${lnd_resourceAddress}")
+    Decimal("1");
+  TAKE_FROM_WORKTOP
+    Address("${lnd_resourceAddress}")
+    Decimal("1")
+    Bucket("nft");  
+  CALL_METHOD
+    Address("${componentAddress}")
+    "borrow"
+    Decimal("${numberOfRequestedXrdTokens}")
+    Bucket("nft");
+  CALL_METHOD
+    Address("${accountAddress}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP");
+    `
+  console.log('borrow manifest: ', manifest)
+
+  // Send manifest to extension for signing
+  const result = await rdt.walletApi
+    .sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    })
+  if (result.isErr()) throw result.error
+  // console.log("Takes Back sendTransaction Result: ", result.value)
+
+  // // Fetch the transaction status from the Gateway SDK
+  // let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
+  // console.log('Takes Back TransactionAPI transaction/status: ', transactionStatus)
+
+  // // fetch commit reciept from gateway api 
+  // let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
+  // console.log('Takes Back Committed Details Receipt', getCommitReceipt)
 
   fetchUserPosition(accountAddress);
 }

@@ -72,6 +72,12 @@ echo '>>> Takes back remaining'
 
 resim run rtm/takes_back_20.rtm
 
+resim show $component
+
+echo '>>> Borrow'
+
+resim run rtm/borrow.rtm
+
 resim show $account
 
 #echo '>>> Lend tokens again before next available epoch slot'

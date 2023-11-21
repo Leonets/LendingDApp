@@ -34,7 +34,13 @@ pub struct LenderData {
     #[mutable]
     end_lending_epoch: Epoch,
     #[mutable]
-    amount: Decimal
+    amount: Decimal,
+    #[mutable]
+    start_borrow_epoch: Epoch,
+    #[mutable]
+    end_borrow_epoch: Epoch,
+    #[mutable]
+    borrow_amount: Decimal
 }
 
 #[blueprint]
@@ -50,6 +56,7 @@ mod lending_dapp {
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
             fund => PUBLIC;
+            borrow => PUBLIC;
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
@@ -258,7 +265,10 @@ mod lending_dapp {
                 LenderData {
                     start_lending_epoch: Epoch::of(0),
                     end_lending_epoch: Epoch::of(0),
-                    amount: dec!("0")
+                    amount: dec!("0"),
+                    start_borrow_epoch: Epoch::of(0),
+                    end_borrow_epoch: Epoch::of(0),
+                    borrow_amount: dec!("0")
                 }
             );
             
@@ -383,6 +393,36 @@ mod lending_dapp {
 
         }
 
+        //gives back the original xrd 
+        pub fn borrow(&mut self, amount: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+            // assert!(
+            //     lender_badge.resource_address()
+            //     == self.lendings_nft_manager.address(),
+            //     "Incorrect resource passed in for requesting back the loan"
+            // );
+
+            // Verify the user has not an open borrow
+            let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
+            assert!(
+                lender_data.borrow_amount == dec!("0"),
+                "You cannot borrow before repaying back first"
+            );
+            info!("Amount of token borrowed : {:?} ", amount);   
+
+            //paying fees
+            let fees = dec!(10);
+            self.fee_xrd.put(self.collected_xrd.take(fees));
+
+            //take the XRD from the main pool to borrow to the user
+            let xrd_to_return = self.collected_xrd.take(amount-fees);
+
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            // Update the data on the network
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", amount);
+            return (xrd_to_return,Some(lender_badge))                
+        }
+
         //for refund the main bucket
         pub fn fund_main_pool(&mut self, fund: Bucket)  {
             //take the XRD bucket for funding the main vault
@@ -391,63 +431,19 @@ mod lending_dapp {
         }
 
         //for members funding
-        pub fn fund(&mut self, fund: Bucket, benefactor: Option<Proof>) -> Option<Bucket> {
+        pub fn fund(&mut self, fund: Bucket) -> Bucket {
             //take the XRD bucket for funding the development
             let amount = fund.amount();
             info!("Fund received to support development: {:?} ", amount);  
             self.donations_xrd.put(fund);
 
-            match benefactor {
-                Some(benefactor_badge) => {
-                    // Checking the type and quantity of the resource in the proof
-                    let benefactor =
-                    benefactor_badge.check(self.benefactor_badge_resource_manager.address());
-
-                    // At this point we have verified that the caller has presented a valid shareholder badge. 
-                    // we can update the amount funded until now 
-                    let non_fungible: NonFungible<BenefactorBadge> = benefactor
-                        .as_non_fungible()
-                        .non_fungible::<BenefactorBadge>();
-
-                    let nft_local_id: NonFungibleLocalId = benefactor.as_non_fungible().non_fungible_local_id();
-                    let benefactor_data = non_fungible.data();
-
-                    //update the amount on the nft
-                    self.benefactor_badge_resource_manager.update_non_fungible_data(&nft_local_id, "amount_funded", benefactor_data.amount_funded+amount);
-        
-                    return None;
-                    // (benefactor_data);
-                }
-                None => {
-                    let benefactor_badge_bucket: Bucket = self
-                    .benefactor_badge_resource_manager
-                    .mint_ruid_non_fungible(BenefactorBadge {
-                        amount_funded: amount
-                    });
-                    // return Bucket::put(benefactor_badge_bucket);
-                    return Some(benefactor_badge_bucket);
-                }
-            }
-
-
-            // match benefactor {
-            //     Some(previous_bucket) => {
-            //         let nft_local_id: NonFungibleLocalId = previous_bucket.as_non_fungible().non_fungible_local_id();
-            //         let benefactorbadge: BenefactorBadge = previous_bucket.as_non_fungible().non_fungible().data();
-            //         //update the amount on the nft
-            //         self.benefactor_badge_resource_manager.update_non_fungible_data(&nft_local_id, "amount_funded", benefactorbadge.amount_funded+amount);
-                
-            //         return previous_bucket;
-            //     }
-            //     None => {
-            //         let benefactor_badge_bucket: Bucket = self
-            //         .benefactor_badge_resource_manager
-            //         .mint_ruid_non_fungible(BenefactorBadge {
-            //             amount_funded: amount
-            //         });
-            //         return benefactor_badge_bucket;
-            //     }
-            // };
+            //TODO manage subsequent funding
+            let benefactor_badge_bucket: Bucket = self
+            .benefactor_badge_resource_manager
+            .mint_ruid_non_fungible(BenefactorBadge {
+                amount_funded: amount
+            });
+            benefactor_badge_bucket
         }
 
         //for admin only

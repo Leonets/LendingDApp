@@ -29,6 +29,11 @@
       Amount of your liquidity funded in the pool: <div class="number" id="amountLiquidityFunded"></div>
       Epoch of supplying liquidity: <div class="number" id="epochLiquidityFunded"></div>
       Epoch of redeeming liquidity: <div class="number" id="epochLiquidityReedemed"></div>
+      <br>
+      Amount of your borrowings from the the pool: <div class="number" id="amountBorrowings"></div>
+      Epoch of borrow: <div class="number" id="epochBorrow"></div>
+      Epoch of repaying borrow: <div class="number" id="epochRepay"></div>
+      <br>
       Next Epoch available for supplying new liquidity: <div class="number" id="epochLiquidityNext"></div>
       Current Epoch: <div class="number" id="currentEpoch"></div>
 
@@ -83,6 +88,20 @@
 
       Amount of fee collected
       <div class="number" id="feePool"></div>
+
+      <br>  <br>
+      Borrow liquidity !
+      <p><button id="borrow">Borrow</button></p>
+      <div class="number">
+          <input type="text" placeholder="Number of Token" id="numberOfRequestedXrdTokens">
+      </div>
+
+      <br>  <br>
+      Repay borrowings !
+      <p><button id="borrow">Repay</button></p>
+      <div class="number">
+          <input type="text" placeholder="Number of Token" id="numberOfRepaiedXrdTokens">
+      </div>
     </div>
   </div>
 
