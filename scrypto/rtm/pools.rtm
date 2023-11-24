@@ -6,12 +6,11 @@ CALL_METHOD
 CALL_METHOD
     Address("${account}")
     "create_proof_of_amount"    
-    Address("${admin_badge}")
+    Address("${owner_badge}")
     Decimal("1");
 CALL_METHOD
     Address("${component}")
-    "set_reward"
-    Decimal("8")
+    "pools"
 ;
 CALL_METHOD
     Address("${account}")

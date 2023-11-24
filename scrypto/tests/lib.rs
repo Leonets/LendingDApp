@@ -18,11 +18,12 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     )?;
 
     let reward = Decimal::from(5);
+    let interest=  Decimal::from(10);
     let symbol = String::from("LND");
     let period_length = Decimal::from(1728);
 
     let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, symbol, period_length, package_address, &mut env,)?;
+        reward, interest,symbol, period_length, package_address, &mut env,)?;
 
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
@@ -60,11 +61,12 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let initial_fund = BucketFactory::create_fungible_bucket(XRD,100.into(),Mock,&mut env)?;
 
     let reward = Decimal::from(5);
+    let interest=  Decimal::from(10);
     let symbol = String::from("LND");
     let period_length = Decimal::from(1728);
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, symbol, period_length, package_address, &mut env,)?;
+        reward, interest, symbol, period_length, package_address, &mut env,)?;
     
     // Act
     let _ = env.with_auth_module_disabled(|env| {

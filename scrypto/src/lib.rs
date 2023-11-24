@@ -57,8 +57,11 @@ mod lending_dapp {
             takes_back => PUBLIC;
             fund => PUBLIC;
             borrow => PUBLIC;
+            repay => PUBLIC;
+            pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
+            set_interest => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
@@ -72,6 +75,7 @@ mod lending_dapp {
         fee_xrd: Vault,
         donations_xrd: Vault,
         reward: Decimal,
+        interest: Decimal,
         lnd_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
         benefactor_badge_resource_manager: ResourceManager,
@@ -83,6 +87,7 @@ mod lending_dapp {
         // given a reward level and a symbol name, creates a ready-to-use Lending dApp
         pub fn instantiate_lending_dapp(
             reward: Decimal,
+            interest: Decimal,
             symbol: String,
             period_length: Decimal,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
@@ -114,6 +119,7 @@ mod lending_dapp {
                     "name"=>"LendingDapp Admin badge", locked;
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
+                    // "dapp_definitions" => GlobalAddress::from("adg"),locked;
                     // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
@@ -221,6 +227,8 @@ mod lending_dapp {
                 // ))                 
                 .create_with_no_initial_supply();
 
+            // let dAppId = "account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl";
+
             // populate a LendingDApp struct and instantiate a new component
             let component = 
                 Self {
@@ -230,6 +238,7 @@ mod lending_dapp {
                     fee_xrd: Vault::new(XRD),
                     donations_xrd: Vault::new(XRD),
                     reward: reward,
+                    interest: interest,
                     staff_badge_resource_manager: staff_badge,
                     benefactor_badge_resource_manager: benefactor_badge,
                     lendings_nft_manager: nft_manager,
@@ -240,10 +249,19 @@ mod lending_dapp {
                     owner_badge.resource_address()
                 ))))
                 .metadata(metadata!(
+                    // roles {
+                    //     metadata_setter => rule!(require(owner_badge.resource_address()));
+                    //     metadata_setter_updater => rule!(deny_all);
+                    //     metadata_locker => rule!(allow_all);
+                    //     metadata_locker_updater => rule!(allow_all);
+                    // },
                     init {
                         "name" => "LendingDapp", locked;
-                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
-                        "description" => "LendingDapp SmartContract ComponentNFT", locked;
+                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo3b.jpg"), locked;
+                        "description" => "LendingDapp SmartContract for lending and borrowing service", locked;
+                        "claimed_websites" =>  ["https://test-lending.stakingcoins.eu"], locked;
+                        // "dapp_definition" => GlobalAddress::from(dAppId), updatable;         
+                            // Array<String>(
                         // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }
                 ))//specify what this roles means
@@ -393,7 +411,7 @@ mod lending_dapp {
 
         }
 
-        //gives back the original xrd 
+        //get some xrd  
         pub fn borrow(&mut self, amount: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
             // assert!(
             //     lender_badge.resource_address()
@@ -419,8 +437,75 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", amount);
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount);
             return (xrd_to_return,Some(lender_badge))                
+        }
+
+        //get some xrd  
+        pub fn repay(&mut self, mut borrow: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+            // assert!(
+            //     lender_badge.resource_address()
+            //     == self.lendings_nft_manager.address(),
+            //     "Incorrect resource passed in for requesting back the loan"
+            // );
+
+            // Verify the user has not an open borrow
+            let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
+            // Calculate the minimum amount (20%) of the current loan
+            let half_amount_due = lender_data.borrow_amount / 5;
+            info!("Minimum amount : {:?} ", half_amount_due);  
+            assert!(
+                borrow.amount() >= half_amount_due,
+                "You cannot refund less than 20% of your loan!"
+            );
+
+            // Calculate the maximum percentage of the total (3%) 
+            let max_amount = self.collected_xrd.amount() * (3/100);
+            info!("Maximum amount : {:?} ", max_amount);  
+            assert!(
+                borrow.amount() >= max_amount,
+                "You cannot borrow more than 3% of the main pool!"
+            );
+
+            let fees = dec!(10);
+            //calculate interest
+            let amount_returned = borrow.amount();
+            let amount_to_be_returned = lender_data.borrow_amount + (lender_data.borrow_amount*self.interest/100);
+            info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
+            info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
+            let total =   amount_to_be_returned + fees;
+            info!("Total Amount to repay with interest and fees: {:?} ", total);  
+
+            //paying fees
+            self.fee_xrd.put(borrow.take(fees));
+
+            let remaining:Decimal = total-amount_returned;
+            let remaining_abs = -remaining;
+            info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);  
+
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            // Update the data on the network
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());
+            if remaining <= dec!("0") {
+                info!("Setting loan as closed ");  
+                //take the XRD for repay the borrow
+                self.collected_xrd.put(borrow.take(total-fees));
+                info!("Exceed Amount returned back to user : {:?}  ", borrow.amount()); 
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
+            } else  {
+                info!("Missing token to close loan  {:?} ", remaining);
+                //take the XRD for repay the borrow
+                self.collected_xrd.put(borrow.take(borrow.amount()-fees)); 
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
+            }  
+            return (borrow,Some(lender_badge))                
+        }
+
+        //vault size
+        pub fn pools(&mut self)  {
+            info!("Main Pool: {:?} ", self.collected_xrd.amount());  
+            info!("Fees: {:?} ", self.fee_xrd.amount());  
+            info!("Donations: {:?} ", self.donations_xrd.amount());  
         }
 
         //for refund the main bucket
@@ -450,6 +535,11 @@ mod lending_dapp {
         // set the reward for lenders
         pub fn set_reward(&mut self, reward: Decimal) {
             self.reward = reward
+        }
+
+        // set the reward for borrowers
+        pub fn set_interest(&mut self, interest: Decimal) {
+            self.interest = interest
         }
 
         //set minimum period length between consecutive lendings

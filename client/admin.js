@@ -71,21 +71,23 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
 // resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5yicon
 // resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58
 
-
-// Component Address: component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4l
-// admin_badge address: resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22
-// owner_badge address: resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v
-// benefactor_badge: resource_tdx_2_1ngd26wz3mew2d7n0wf4a8f788tltqk465cw9fuwtnwh6g8a3hc57e2
-// lnd_resource address: resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58
-// lnd_token address: resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y
+// Tx ID
+// txid_tdx_2_1dgq7mzm3jfj4s9522tyjz2pvdnyypc0gpgwwcdmjlg56k8gpzvzs5nul2m
+// Package address v.9
+// package_tdx_2_1pkwdc4f337wmdnhyl6jfysnh9zlqntayfc3x6qaglelffxgjufqx2r
+// Component Address: component_tdx_2_1czq3c2ptkyz6jtjkq5xee9kwns29xhdmqcaxu8uc9ass54d3rvwc94
+// admin_badge address: resource_tdx_2_1t43elum4rz5mdzt6sprqa9z3ahhatttwwm36sslrm0puywct3hy7km
+// owner_badge address: resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh
+// lnd_resource address: resource_tdx_2_1n2va2fmhvuv50wqknf5fu0v3cqghkf4yr69n0xmj58u27ht2262mf9
+// lnd_token address: resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wdejwvrdmjyu9q4s
 
 // Global states
-let componentAddress = "component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4l" //LendingDApp component address on stokenet
+let componentAddress = "component_tdx_2_1czq3c2ptkyz6jtjkq5xee9kwns29xhdmqcaxu8uc9ass54d3rvwc94" //LendingDApp component address on stokenet
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22"
-let owner_badge = "resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v"
-let lnd_resourceAddress = "resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58" // XRD lender badge manager
-let lnd_tokenAddress = "resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y" // LND token resource address
+let admin_badge = "resource_tdx_2_1t43elum4rz5mdzt6sprqa9z3ahhatttwwm36sslrm0puywct3hy7km"
+let owner_badge = "resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh"
+let lnd_resourceAddress = "resource_tdx_2_1n2va2fmhvuv50wqknf5fu0v3cqghkf4yr69n0xmj58u27ht2262mf9" // XRD lender badge manager
+let lnd_tokenAddress = "resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wdejwvrdmjyu9q4s" // LND token resource address
 
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 
@@ -196,7 +198,24 @@ function generateManifest(method, inputValue) {
           "deposit_batch"
           Expression("ENTIRE_WORKTOP");
        `;
-      break;     
+      break;   
+      case 'set_interest':
+        code = ` 
+          CALL_METHOD
+            Address("${accountAddress}")
+            "create_proof_of_amount"    
+            Address("${admin_badge}")
+            Decimal("1");
+          CALL_METHOD
+            Address("${componentAddress}")
+            "set_interest"
+            Decimal("${inputValue}");
+          CALL_METHOD
+            Address("${accountAddress}")
+            "deposit_batch"
+            Expression("ENTIRE_WORKTOP");
+         `;
+        break;           
       case 'fund_main_pool':
         code = `
           CALL_METHOD
@@ -237,4 +256,5 @@ createTransactionOnClick('mintStaffBadge', 'staffUsername', 'mint_staff_badge');
 createTransactionOnClick('setPeriodLength', 'periodLength', 'set_period_length');
 createTransactionOnClick('extendLendingPool', 'extendLendingPoolAmount', 'extend_lending_pool');
 createTransactionOnClick('setReward', 'reward', 'set_reward');
+createTransactionOnClick('setInterest', 'interest', 'set_interest');
 createTransactionOnClick('fundMainPool', 'numberOfFundedTokens', 'fund_main_pool');

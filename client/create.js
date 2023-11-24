@@ -34,39 +34,35 @@ rdt.walletApi.setRequestData(DataRequestBuilder.accounts().atLeast(1))
 // Subscribe to updates to the user's shared wallet data
 rdt.walletApi.walletData$.subscribe((walletData) => {
   console.log("subscription wallet data: ", walletData)
-  document.getElementById('accountName').innerText = walletData.accounts[0].label
-  document.getElementById('accountAddress').innerText = walletData.accounts[0].address
+  // document.getElementById('accountName').innerText = walletData.accounts[0].label
+  // document.getElementById('accountAddress').innerText = walletData.accounts[0].address
   accountName = walletData.accounts[0].label
   accountAddress = walletData.accounts[0].address
 })
 
-// Package address v.5
-// package_tdx_2_1phwmc8ytpjtjfezqpq057gzq50gwzj23qt4vqaveea8hml4prg6z2n
-// dalla tx = txid_tdx_2_1sf03yjvswnvzkt7ws9ltjjmz3a54vh2pyg5kw2q3zf3v3hxyl99sfcch9f
-// CREATED ENTITIES = 
-// component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4licon
-// resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98vicon
-// resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22icon
-// resource_tdx_2_1n2hcf9cu0m2jpp23tzy8p03l3xdt26cqqm58qxcsdvee0ynsmhlpfeicon
-// resource_tdx_2_1ngd26wz3mew2d7n0wf4a8f788tltqk465cw9fuwtnwh6g8a3hc57e2icon
-// resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5yicon
-// resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58
+// Package address v.7
+// package_tdx_2_1pkv623effm52fjmug2lstp69hu42rlsm3zpalsdsr020jmsn539hmr
+// Component Address: component_tdx_2_1cqdlgpyv5w6napra38ya83s2vj2psn00z0f5j3vnyvzlcf0dcg94tc
+// admin_badge address: resource_tdx_2_1t5yw40l9nesezl2wztw9zg39v3k64fs67thm2exa3sn6knw0dkvdzu
+// owner_badge address: resource_tdx_2_1t44haerhjyha52l67l6hdd5c439644cp3vl9cs435ftv3yywppshah
+// lnd_resource address: resource_tdx_2_1nt4xm5mwdahv4vyft8hhvpkcq5s4z7hu0qav4248sad2ursmkj8327
+// lnd_token address: resource_tdx_2_1thk2uhpmvg5u5964t8kxeg5h69jnvch5jmmekmregw440yvf940am4
 
-
-// Component Address: component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4l
-// admin_badge address: resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22
-// owner_badge address: resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v
-// benefactor_badge: resource_tdx_2_1ngd26wz3mew2d7n0wf4a8f788tltqk465cw9fuwtnwh6g8a3hc57e2
-// lnd_resource address: resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58
-// lnd_token address: resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y
+// Package address v.8
+// package_tdx_2_1pkw45plqnw5p93dcy2574m8hcgpyuvksuv4xkhk0f4y77xaul5kus3
+// Component Address: component_tdx_2_1cry98tgseee2ugz0syfnkt090gsvemm6xjwkm7jk9sxyj8hmweynk4
+// admin_badge address: resource_tdx_2_1t5zmjcdvrexeevg4pjx3h4jwvkcndwd53khqgvnln560p389uzh83g
+// owner_badge address: resource_tdx_2_1t5zjxt622dzs60mjec8g8qdmr0ptd4u0qcxw93f46vfafl9tk2z6jl
+// lnd_resource address: resource_tdx_2_1n2yr7tjehsj3j0le9kl6ayngzq7geugkamwy7535rnl2td2jvf2z5k
+// lnd_token address: resource_tdx_2_1tkfd9xnnswu9a4rl6cyrmnyktstq4l4qfk92vef879z0xku49qvdyn
 
 // Global states
-let componentAddress = "component_tdx_2_1cpvjha5pl0z74g8ll0329gvcypvhsytq75g8agemw0dnj7s3e0gn4l" //LendingDApp component address on stokenet
+let componentAddress = "component_tdx_2_1cry98tgseee2ugz0syfnkt090gsvemm6xjwkm7jk9sxyj8hmweynk4" //LendingDApp component address on stokenet
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22"
-let owner_badge = "resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v"
-let lnd_resourceAddress = "resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58" // XRD lender badge manager
-let lnd_tokenAddress = "resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y" // LND token resource address
+let admin_badge = "resource_tdx_2_1t5zmjcdvrexeevg4pjx3h4jwvkcndwd53khqgvnln560p389uzh83g"
+let owner_badge = "resource_tdx_2_1t5zjxt622dzs60mjec8g8qdmr0ptd4u0qcxw93f46vfafl9tk2z6jl"
+let lnd_resourceAddress = "resource_tdx_2_1n2yr7tjehsj3j0le9kl6ayngzq7geugkamwy7535rnl2td2jvf2z5k" // XRD lender badge manager
+let lnd_tokenAddress = "resource_tdx_2_1tkfd9xnnswu9a4rl6cyrmnyktstq4l4qfk92vef879z0xku49qvdyn" // LND token resource address
 
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 
@@ -80,6 +76,7 @@ document.getElementById('instantiateComponent').onclick = async function () {
     "LendingDApp"
     "instantiate_lending_dapp"
     Decimal("5")
+    Decimal("10")
     "${flavor}"
     Decimal("1728");
   CALL_METHOD
@@ -132,10 +129,10 @@ document.getElementById('instantiateComponent').onclick = async function () {
   document.getElementById('owner_badge').innerText = owner_badge;
 
   // ****** Set lnd_resourceAddress variable with gateway api getCommitReciept payload ******
-  lnd_resourceAddress = getCommitReceipt.transaction.affected_global_entities[7];
+  lnd_resourceAddress = getCommitReceipt.transaction.affected_global_entities[8];
   document.getElementById('lnd_resourceAddress').innerText = lnd_resourceAddress;
 
   // ****** Set lnd_tokenAddress variable with gateway api getCommitReciept payload ******
-  lnd_tokenAddress = getCommitReceipt.transaction.affected_global_entities[6];
+  lnd_tokenAddress = getCommitReceipt.transaction.affected_global_entities[7];
   document.getElementById('lnd_tokenAddress').innerText = lnd_tokenAddress;
 }
