@@ -11,9 +11,9 @@ resource "null_resource" "deploy_files" {
       mkdir -p tmp_upload
 
       # Copy files and directories to the temporary directory
-      cp -r client/dist/assets tmp_upload/assets
-      cp -r client/dist/images tmp_upload/images
-      cp client/dist/index.html tmp_upload/index.html
+      cp -r ../client/dist/assets tmp_upload/assets
+      cp -r ../client/dist/images tmp_upload/images
+      cp ../client/dist/index.html tmp_upload/index.html
 
       # Upload files to FTP server
       lftp -c "open -u ${var.ftp_username},${var.ftp_password} ${var.ftp_server}; \
@@ -27,13 +27,13 @@ resource "null_resource" "deploy_files" {
 }
 
 variable "ftp_username" {
-  description = "FTP username"
+  description = "leo"
 }
 
 variable "ftp_password" {
-  description = "FTP password"
+  description = "All4.Grand3"
 }
 
 variable "ftp_server" {
-  description = "FTP server address"
+  description = "test-lending.stakingcoins.eu"
 }

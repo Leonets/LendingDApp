@@ -58,170 +58,290 @@ rdt.walletApi.walletData$.subscribe((walletData) => {
   accountAddress = walletData.accounts[0].address
 })
 
-// TODO Please refactor
-// *********** Register User ***********
-document.getElementById('register').onclick = async function () {  
-  const manifest = ` 
-    CALL_METHOD
-      Address("${componentAddress}")
-      "register";
-    CALL_METHOD
-      Address("${accountAddress}")
-      "deposit_batch"
-      Expression("ENTIRE_WORKTOP");
-  `;
 
-  console.log("Register User manifest", manifest);
-  const result = await rdt.walletApi.sendTransaction({
-    transactionManifest: manifest,
-    version: 1,
-  });
-  if (result.isErr()) {
-    console.log("Register User Error: ", result.error);
-    throw result.error;
-  }
+// ***** Main function *****
+function createTransactionOnClick(elementId, inputTextId, method, errorField) {
+  document.getElementById(elementId).onclick = async function () {
+    let inputValue = document.getElementById(inputTextId).value;
+    console.log(`got inputValue = `, inputValue);
 
-  console.log("Register User sendTransaction result: ", result.value);
-  const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
-  console.log('Register User transaction status', transactionStatus);
-  const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
-  console.log('Register User Committed Details Receipt', getCommitReceipt);
-  //TODO when the user gets registered... then enable Lend/Take Back buttons
-}
+    const manifest = generateManifest(method, inputValue);
+    console.log(`${method} manifest`, manifest);
 
-// TODO Please refactor
-// *********** Lends Token ***********
-document.getElementById('lendTokens').onclick = async function () {
-  console.log("componentAddress", componentAddress)
-  console.log("lnd_resourceAddress", lnd_resourceAddress)
-  console.log("lnd_tokenAddress", lnd_tokenAddress)
-  console.log("admin_badge", admin_badge)
-  console.log("owner_badge", owner_badge)
-
-  console.log("accountName", accountAddress)
-  console.log("accountAddress", accountAddress)
-
-  let numberOfToken = document.getElementById('numberOfTokens').value
-  let manifest = `
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${xrdAddress}")
-    Decimal("${numberOfToken}");
-  TAKE_ALL_FROM_WORKTOP
-    Address("${xrdAddress}")
-    Bucket("xrd");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${lnd_resourceAddress}")
-    Decimal("1");
-  TAKE_ALL_FROM_WORKTOP
-    Address("${lnd_resourceAddress}")
-    Bucket("nft");    
-  CALL_METHOD
-    Address("${componentAddress}")
-    "lend_tokens"
-    Bucket("xrd")
-    Bucket("nft");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "deposit_batch"
-    Expression("ENTIRE_WORKTOP");
-    `
-  console.log("Lend Tokens manifest", manifest)
-
-  // Send manifest to extension for signing
-  const result = await rdt.walletApi
-    .sendTransaction({
+    const result = await rdt.walletApi.sendTransaction({
       transactionManifest: manifest,
       version: 1,
-    })
+    });
+    if (result.isErr()) {
+      console.log(`${method} User Error: `, result.error);
+      document.getElementById(errorField).textContent = extractErrorMessage(result.error.message);
+      throw result.error;
+    }
 
-  if (result.isErr()) {
-    console.log("Lend Tokens sendTransaction Error: ", result.error.message)  
-    document.getElementById('lendTxResult').textContent = extractErrorMessage(result.error.message);
-    throw result.error
-  }
-  console.log("Lend Tokens sendTransaction result: ", result.value)  
+    // await fetchUserPosition(accountAddress);
+  };
 
-  // Fetch the transaction status from the Gateway SDK
-  let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
-  console.log('Lend Tokens transaction status', transactionStatus)
-
-  // fetch commit reciept from gateway api 
-  let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
-  console.log('Lend Tokens Committed Details Receipt', getCommitReceipt)
-
-  // Show the receipt in the DOM
-  // document.getElementById('receiptLend').innerText = JSON.stringify(getCommitReceipt);
-  fetchUserPosition(accountAddress);
 }
+
+// ***** Utility function *****
+function generateManifest(method, inputValue) {
+  let code;
+  switch (method) {
+    case 'lend_tokens':
+      code = `
+        CALL_METHOD
+          Address("${accountAddress}")
+          "withdraw"    
+          Address("${xrdAddress}")
+          Decimal("${inputValue}");
+        TAKE_ALL_FROM_WORKTOP
+          Address("${xrdAddress}")
+          Bucket("xrd");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "withdraw"    
+          Address("${lnd_resourceAddress}")
+          Decimal("1");
+        TAKE_ALL_FROM_WORKTOP
+          Address("${lnd_resourceAddress}")
+          Bucket("nft");    
+        CALL_METHOD
+          Address("${componentAddress}")
+          "lend_tokens"
+          Bucket("xrd")
+          Bucket("nft");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+          `;
+      break;
+    case 'register':
+      code = ` 
+        CALL_METHOD
+          Address("${componentAddress}")
+          "register";
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+      `;
+      break;
+    case 'takes_back':
+      code = `
+        CALL_METHOD
+          Address("${accountAddress}")
+          "withdraw"    
+          Address("${lnd_tokenAddress}")
+          Decimal("${inputValue}");
+        TAKE_FROM_WORKTOP
+          Address("${lnd_tokenAddress}")
+          Decimal("${inputValue}")
+          Bucket("loan");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "withdraw"    
+          Address("${lnd_resourceAddress}")
+          Decimal("1");
+        TAKE_FROM_WORKTOP
+          Address("${lnd_resourceAddress}")
+          Decimal("1")
+          Bucket("nft");  
+        CALL_METHOD
+          Address("${componentAddress}")
+          "takes_back"
+          Bucket("loan")
+          Bucket("nft");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+          `;
+      break;
+    case 'extend_lending_pool':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "extend_lending_pool"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+        `;
+    break;     
+    case 'set_reward':
+      code = ` 
+        CALL_METHOD
+          Address("${accountAddress}")
+          "create_proof_of_amount"    
+          Address("${admin_badge}")
+          Decimal("1");
+        CALL_METHOD
+          Address("${componentAddress}")
+          "set_reward"
+          Decimal("${inputValue}");
+        CALL_METHOD
+          Address("${accountAddress}")
+          "deposit_batch"
+          Expression("ENTIRE_WORKTOP");
+       `;
+      break;   
+      case 'set_interest':
+        code = ` 
+          CALL_METHOD
+            Address("${accountAddress}")
+            "create_proof_of_amount"    
+            Address("${admin_badge}")
+            Decimal("1");
+          CALL_METHOD
+            Address("${componentAddress}")
+            "set_interest"
+            Decimal("${inputValue}");
+          CALL_METHOD
+            Address("${accountAddress}")
+            "deposit_batch"
+            Expression("ENTIRE_WORKTOP");
+         `;
+        break;           
+      case 'fund_main_pool':
+        code = `
+          CALL_METHOD
+            Address("${accountAddress}")
+            "create_proof_of_amount"    
+            Address("${admin_badge}")
+            Decimal("1");              
+          CALL_METHOD
+            Address("${accountAddress}")
+            "withdraw"    
+            Address("${xrdAddress}")
+            Decimal("${inputValue}");
+          TAKE_ALL_FROM_WORKTOP
+            Address("${xrdAddress}")
+            Bucket("xrd");
+          CALL_METHOD
+            Address("${componentAddress}")
+            "fund_main_pool"
+            Bucket("xrd");      
+          CALL_METHOD
+            Address("${accountAddress}")
+            "deposit_batch"
+            Expression("ENTIRE_WORKTOP");
+            `;
+        break;           
+    // Add more cases as needed
+    default:
+      throw new Error(`Unsupported method: ${method}`);
+  }
+
+  return code;
+}
+
+
+// Usage
+// createTransactionOnClick (elementId = divId del button, inputTextId = divId del field di inserimento, method = scrypto method)
+createTransactionOnClick('register', 'unknown', 'register', 'registerTxResult');
+createTransactionOnClick('lendTokens', 'numberOfTokens', 'lend_tokens', 'lendTxResult');
+createTransactionOnClick('takes_back', 'numberOfLndTokens', 'takes_back', 'takeBackTxResult');
+
+// TODO Please refactor
+// *********** Register User ***********
+// document.getElementById('register').onclick = async function () {  
+//   const manifest = ` 
+//     CALL_METHOD
+//       Address("${componentAddress}")
+//       "register";
+//     CALL_METHOD
+//       Address("${accountAddress}")
+//       "deposit_batch"
+//       Expression("ENTIRE_WORKTOP");
+//   `;
+
+//   console.log("Register User manifest", manifest);
+//   const result = await rdt.walletApi.sendTransaction({
+//     transactionManifest: manifest,
+//     version: 1,
+//   });
+//   if (result.isErr()) {
+//     console.log("Register User Error: ", result.error);
+//     throw result.error;
+//   }
+
+//   console.log("Register User sendTransaction result: ", result.value);
+//   const transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash);
+//   console.log('Register User transaction status', transactionStatus);
+//   const getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+//   console.log('Register User Committed Details Receipt', getCommitReceipt);
+//   //TODO when the user gets registered... then enable Lend/Take Back buttons
+// }
 
 
 // TODO Please refactor
 // *********** Takes Back ***********
-document.getElementById('takes_back').onclick = async function () {
-  console.log("componentAddress", componentAddress)
-  console.log("lnd_resourceAddress", lnd_resourceAddress)
-  console.log("lnd_tokenAddress", lnd_tokenAddress)
-  console.log("admin_badge", admin_badge)
-  console.log("owner_badge", owner_badge)
+// document.getElementById('takes_back').onclick = async function () {
 
-  console.log("accountName", accountAddress)
-  console.log("accountAddress", accountAddress)
+//   let numberOfLndTokens = document.getElementById('numberOfLndTokens').value
+//   let manifest = `
+//   CALL_METHOD
+//     Address("${accountAddress}")
+//     "withdraw"    
+//     Address("${lnd_tokenAddress}")
+//     Decimal("${numberOfLndTokens}");
+//   TAKE_FROM_WORKTOP
+//     Address("${lnd_tokenAddress}")
+//     Decimal("${numberOfLndTokens}")
+//     Bucket("loan");
+//   CALL_METHOD
+//     Address("${accountAddress}")
+//     "withdraw"    
+//     Address("${lnd_resourceAddress}")
+//     Decimal("1");
+//   TAKE_FROM_WORKTOP
+//     Address("${lnd_resourceAddress}")
+//     Decimal("1")
+//     Bucket("nft");  
+//   CALL_METHOD
+//     Address("${componentAddress}")
+//     "takes_back"
+//     Bucket("loan")
+//     Bucket("nft");
+//   CALL_METHOD
+//     Address("${accountAddress}")
+//     "deposit_batch"
+//     Expression("ENTIRE_WORKTOP");
+//     `
+//   console.log('takes_back manifest: ', manifest)
 
-  let numberOfLndTokens = document.getElementById('numberOfLndTokens').value
-  let manifest = `
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${lnd_tokenAddress}")
-    Decimal("${numberOfLndTokens}");
-  TAKE_FROM_WORKTOP
-    Address("${lnd_tokenAddress}")
-    Decimal("${numberOfLndTokens}")
-    Bucket("loan");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "withdraw"    
-    Address("${lnd_resourceAddress}")
-    Decimal("1");
-  TAKE_FROM_WORKTOP
-    Address("${lnd_resourceAddress}")
-    Decimal("1")
-    Bucket("nft");  
-  CALL_METHOD
-    Address("${componentAddress}")
-    "takes_back"
-    Bucket("loan")
-    Bucket("nft");
-  CALL_METHOD
-    Address("${accountAddress}")
-    "deposit_batch"
-    Expression("ENTIRE_WORKTOP");
-    `
-  console.log('takes_back manifest: ', manifest)
+//   // Send manifest to extension for signing
+//   const result = await rdt.walletApi
+//     .sendTransaction({
+//       transactionManifest: manifest,
+//       version: 1,
+//     })
+//   if (result.isErr()) throw result.error
+//   console.log("Takes Back sendTransaction Result: ", result.value)
 
-  // Send manifest to extension for signing
-  const result = await rdt.walletApi
-    .sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    })
-  if (result.isErr()) throw result.error
-  console.log("Takes Back sendTransaction Result: ", result.value)
+//   // Fetch the transaction status from the Gateway SDK
+//   let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
+//   console.log('Takes Back TransactionAPI transaction/status: ', transactionStatus)
 
-  // Fetch the transaction status from the Gateway SDK
-  let transactionStatus = await rdt.gatewayApi.transaction.getStatus(result.value.transactionIntentHash)
-  console.log('Takes Back TransactionAPI transaction/status: ', transactionStatus)
+//   // fetch commit reciept from gateway api 
+//   let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
+//   console.log('Takes Back Committed Details Receipt', getCommitReceipt)
 
-  // fetch commit reciept from gateway api 
-  let getCommitReceipt = await rdt.gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash)
-  console.log('Takes Back Committed Details Receipt', getCommitReceipt)
+//   await fetchUserPosition(accountAddress);
+// };
 
-  fetchUserPosition(accountAddress);
-}
+// Use a delay or handle the asynchrony appropriately
+// setTimeout(() => {
+//   // Call the asynchronous function immediately (for demonstration purposes)
+//   fetchUserPosition(accountAddress);
+// }, 1000);
 
 
 

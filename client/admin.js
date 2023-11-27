@@ -91,14 +91,12 @@ let lnd_tokenAddress = "resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wd
 
 let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
 
-// ***** Main function *****
+// ***** Main function (elementId = divId del button, inputTextId = divId del field di inserimento, method = scrypto method) *****
 function createTransactionOnClick(elementId, inputTextId, method) {
   document.getElementById(elementId).onclick = async function () {
     let inputValue = document.getElementById(inputTextId).value;
     console.log(`got inputValue = `, inputValue);
-
     const manifest = generateManifest(method, inputValue);
-
     console.log(`${method} manifest`, manifest);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: manifest,
