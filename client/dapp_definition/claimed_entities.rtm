@@ -1,137 +1,123 @@
-CALL_METHOD
-    Address("account_rdx12y578twr894f2a4hexzvdjzja6x6nc2mlwvz0nnmqpu9h6rtr0fc25")
-    "lock_fee"
-    Decimal("10")
-;
+# In questo modo la dApp definition (l'address che è anche l'owner del componente) afferma che le entities elencate
+# (componenti e risorse) sono di sua gestione.
+
+# Questo deve essere 'controfirmato' dai componenti e dalle risorse stesse che devono confermare che 'appartengono'
+# a tale account id (dapp_definition)
 
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "claimed_entities"
     Enum<136u8>(
         Array<Address>(
-        Address("component_tdx_2_1cpyyeq68zd8j0jzmzqxlctvv8f8vrlwexqfym4k8yavegtmpkuqfnp"),
-        Address("resource_tdx_2_1t4xnf5r85xj3c3tkfg5u2psjwcajff3m0gmq2j2m9mua7q3pjf3jrc"),
-        Address("resource_tdx_2_1tkxj3trr3cfj49nk2fezp3sfecvjvd7rvhjnc33gcsu59qgtmvm8sa"),
-        Address("resource_tdx_2_1nf7gu22rmvny9x3nqh5u6grn48hq7k7hr8yxyzyl2p02e2wy003c5h"),
-        Address("resource_tdx_2_1nf2zmeurtlzsh2hk6rarewvzavpvwfuv5y9p694qz9gpefgmsll3cg"),
-        Address("resource_tdx_2_1thg2sd49lftcx79rduj709v26lud08lx9llznx7a2kgsse3m8m9tt8"),
-        Address("resource_tdx_2_1ngre8dchdycfsvsmlq9wh63ln4ve9r2wt23y8w97737w0fteaxghk5")
+            Address("component_tdx_2_1czq3c2ptkyz6jtjkq5xee9kwns29xhdmqcaxu8uc9ass54d3rvwc94"),
+            Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh"),
+            Address("resource_tdx_2_1t43elum4rz5mdzt6sprqa9z3ahhatttwwm36sslrm0puywct3hy7km"),
+            Address("resource_tdx_2_1ngw36y4tfcwz7j0wk2658s9d83nlu5mrnja5nelcsmsw05qhcpym8p"),
+            Address("resource_tdx_2_1ntzurcf9zp3nlf20n3mnmqdtsuzyqmk9p22268gvekhrrhd4evc90c"),
+            Address("resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wdejwvrdmjyu9q4s"),
+            Address("resource_tdx_2_1n2va2fmhvuv50wqknf5fu0v3cqghkf4yr69n0xmj58u27ht2262mf9")
         )
     )
 ;
 
-
-
-
-
-
-
-
+# Questa è la controfirma, cioè l'associazione della dapp_definition al componente, tramite l'uso dell'owner badge
 
 CALL_METHOD
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
-    "create_proof_of_non_fungibles"
-    Address("resource_tdx_2_1nfxxxxxxxxxxpkgwnrxxxxxxxxx002558553505xxxxxxxxxfzgzzk")
-    Array<NonFungibleLocalId>(
-        NonFungibleLocalId("[0db179fe14cc1a908ae3ec30ab08281314bccf1a13cb25028318961dab82]")
-    )
-;
-
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+    "create_proof_of_amount"    
+    Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh")
+    Decimal("1");
 SET_METADATA
-    Address("component_tdx_2_1cpyyeq68zd8j0jzmzqxlctvv8f8vrlwexqfym4k8yavegtmpkuqfnp")
+    Address("component_tdx_2_1czq3c2ptkyz6jtjkq5xee9kwns29xhdmqcaxu8uc9ass54d3rvwc94")
     "dapp_definition"
     Enum<8u8>(
-        Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+        Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     )
 ;
 
+            Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh"),
+            Address("resource_tdx_2_1t43elum4rz5mdzt6sprqa9z3ahhatttwwm36sslrm0puywct3hy7km"),
+            Address("resource_tdx_2_1ngw36y4tfcwz7j0wk2658s9d83nlu5mrnja5nelcsmsw05qhcpym8p"),
+            Address("resource_tdx_2_1ntzurcf9zp3nlf20n3mnmqdtsuzyqmk9p22268gvekhrrhd4evc90c"),
+            Address("resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wdejwvrdmjyu9q4s"),
+            Address("resource_tdx_2_1n2va2fmhvuv50wqknf5fu0v3cqghkf4yr69n0xmj58u27ht2262mf9")
+# e questa è invece la controfirma di tutte le risorse (create proof utilizza l'indirizzo dell'owner badge)
+# sui due badge admin ed owner non funziona
+# Unauthorized(Unauthorized { failed_access_rules: RoleList([(RoleKey { key: \'metadata_setter\' }, [DenyAll]
+
+CALL_METHOD
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+    "create_proof_of_amount"    
+    Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh")
+    Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1thlpe0pl24ay7tzvgmv04lc0eu04sn5n6ve6qqujf28xnfdqn9n98v")
+    Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
         )
     )
 ;
 SET_METADATA
-    Address("resource_tdx_2_1tkhlzmlsgpkljl9cdr2d65t9k9hpu9xytegdjyfg78mdpfepjush22")
+    Address("resource_tdx_2_1t43elum4rz5mdzt6sprqa9z3ahhatttwwm36sslrm0puywct3hy7km")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
-        )
-    )
-;
-SET_METADATA
-    Address("resource_tdx_2_1n2hcf9cu0m2jpp23tzy8p03l3xdt26cqqm58qxcsdvee0ynsmhlpfe")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
-        )
-    )
-;
-SET_METADATA
-    Address("resource_tdx_2_1ngd26wz3mew2d7n0wf4a8f788tltqk465cw9fuwtnwh6g8a3hc57e2")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
-        )
-    )
-;
-SET_METADATA
-    Address("resource_tdx_2_1t4ew27eswmeu0m9f9dhun3fvzhusd4hma6u8mmfg6e4zeqywcmyf5y")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
-        )
-    )
-;
-SET_METADATA
-    Address("resource_tdx_2_1ngkem9png0mtqk4fp7e3eg5ayxlf6adt59ckxv6xv8j0gqur9dan58")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
         )
     )
 ;
 
+# sui due badge benefactor e staff invece funziona
 
-
-
-
-
-
-
+CALL_METHOD
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+    "create_proof_of_amount"    
+    Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh")
+    Decimal("1");
 SET_METADATA
-    Address("resource_rdx1nfyg2f68jw7hfdlg5hzvd8ylsa7e0kjl68t5t62v3ttamtejc9wlxa")
-    "icon_url"
-    Enum<13u8>(
-        "https://gumball-club.radixdlt.com/assets/member-card.png"
+    Address("resource_tdx_2_1ngw36y4tfcwz7j0wk2658s9d83nlu5mrnja5nelcsmsw05qhcpym8p")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+        )
     )
 ;
 SET_METADATA
-    Address("resource_rdx1t4dy69k6s0gv040xa64cyadyefwtett62ng6xfdnljyydnml7t6g3j")
-    "icon_url"
-    Enum<13u8>(
-        "https://gumball-club.radixdlt.com/assets/candy-token.png"
+    Address("resource_tdx_2_1ntzurcf9zp3nlf20n3mnmqdtsuzyqmk9p22268gvekhrrhd4evc90c")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+        )
+    )
+;
+
+# e su questi nemmeno
+# Unauthorized(Unauthorized { failed_access_rules: RoleList([(RoleKey { key: \'metadata_setter\' }, [DenyAll])]
+
+CALL_METHOD
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+    "create_proof_of_amount"    
+    Address("resource_tdx_2_1t4ta06v8jrvu82vzpz5rzpe88q7ap73qcfaa4zww0zjq4ty2fw3zwh")
+    Decimal("1");
+SET_METADATA
+    Address("resource_tdx_2_1th6tw0wudvswqse9jxkq5237fe2q46jt9p4af5wdejwvrdmjyu9q4s")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+        )
     )
 ;
 SET_METADATA
-    Address("resource_rdx1t5tsyyh82jxjrg7lrat7y5f7mcuxcch6d3jkc75l8et3n2n6h32kvd")
-    "icon_url"
-    Enum<13u8>(
-        "https://gumball-club.radixdlt.com/assets/gumball-token.png"
-    )
-;
-SET_METADATA
-    Address("resource_rdx1thlnv2lydu7np9w8guguqslkydv000d7ydn7uq0sestql96hrfml0v")
-    "icon_url"
-    Enum<13u8>(
-        "https://gumball-club.radixdlt.com/assets/gc-token.png"
+    Address("resource_tdx_2_1n2va2fmhvuv50wqknf5fu0v3cqghkf4yr69n0xmj58u27ht2262mf9")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+        )
     )
 ;

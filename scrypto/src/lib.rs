@@ -1,6 +1,28 @@
 use scrypto::prelude::*;
-//use scrypto_math::*;
+use scrypto_math::*;
 use std::env;
+
+// Import the FromStr trait for parsing strings
+use std::str::FromStr;
+
+// Define the Reward enum
+#[derive(Debug)]
+enum Reward {
+    Fixed,
+    TimeBased,
+}
+// Implement the FromStr trait for parsing strings into Reward enum variants
+impl FromStr for Reward {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "fixed" => Ok(Reward::Fixed),
+            "timebased" => Ok(Reward::TimeBased),
+            _ => Err(()),
+        }
+    }
+}
 
 // Function to get the NFT icon URL based on the environment
 fn _get_nft_icon_url() -> String {
@@ -13,8 +35,6 @@ fn _get_nft_icon_url() -> String {
         }
     }
 }
-
-
 
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
@@ -81,24 +101,21 @@ mod lending_dapp {
         benefactor_badge_resource_manager: ResourceManager,
         lendings_nft_manager: ResourceManager,
         period_length: Decimal,
+        reward_type: String,
     }
 
     impl LendingDApp {
-        // given a reward level and a symbol name, creates a ready-to-use Lending dApp
+        // given a reward, interest level and a symbol name, creates a ready-to-use Lending dApp
         pub fn instantiate_lending_dapp(
             reward: Decimal,
             interest: Decimal,
             symbol: String,
             period_length: Decimal,
+            reward_type: String,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
             
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
-
-            // let hash_result = hash("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl".as_bytes());
-            // let mut result = [0u8; 30];
-            // result.copy_from_slice(&hash_result.as_bytes()[..30]);
-            // ComponentAddress::new_or_panic(result)
 
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
@@ -243,6 +260,7 @@ mod lending_dapp {
                     benefactor_badge_resource_manager: benefactor_badge,
                     lendings_nft_manager: nft_manager,
                     period_length: period_length,
+                    reward_type: reward_type,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -263,6 +281,7 @@ mod lending_dapp {
                         // "dapp_definition" => GlobalAddress::from(dAppId), updatable;         
                             // Array<String>(
                         // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
+                        // "dapp_definitions" => [GlobalAddress::from(dAppId)], locked;
                     }
                 ))//specify what this roles means
                 .roles(roles!(
@@ -289,7 +308,6 @@ mod lending_dapp {
                     borrow_amount: dec!("0")
                 }
             );
-            
             lender_badge
         }
 
@@ -301,26 +319,25 @@ mod lending_dapp {
         }
 
         //lend some xrd
-        pub fn lend_tokens(&mut self, payment: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
+        pub fn lend_tokens(&mut self, loan: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
             assert!(
                 lender_badge.resource_address() == self.lendings_nft_manager.address(),
                 "Incorrect resource passed in for requesting back the loan"
             );
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            let start_epoch = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().start_lending_epoch;
+            let amount_lended = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().amount;
 
-            let start_epoch_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().start_lending_epoch;
-            let amount_nft = lender_badge.as_non_fungible().non_fungible::<LenderData>().data().amount;
-
-            match start_epoch_nft.number() != 0 {
+            match start_epoch.number() != 0 {
                 true => {
                     //if it is not the first time lending then checks epochs and amount
                     assert!(
-                        Decimal::from(start_epoch_nft.number()) + Decimal::from(self.period_length) <= Decimal::from(Runtime::current_epoch().number()),
+                        Decimal::from(start_epoch.number()) + Decimal::from(self.period_length) <= Decimal::from(Runtime::current_epoch().number()),
                         "No loan accepted if the previous loan period has not yet ended!"
                     );
                     assert!(
-                        amount_nft == dec!("0"),
+                        amount_lended == dec!("0"),
                         "No loan accepted if previous is not closed yet!"
                     );
                 }
@@ -328,8 +345,7 @@ mod lending_dapp {
             }
 
             //take the XRD bucket as a new loan and put xrd token in main pool
-            let num_xrds = payment.amount();
-
+            let num_xrds = loan.amount();
             assert!(
                 num_xrds <= Decimal::from(1000),
                 "No loan approved over 1000xrd at this time!"
@@ -340,18 +356,18 @@ mod lending_dapp {
             );
 
             //put received token in the bucket
-            self.collected_xrd.put(payment);
+            self.collected_xrd.put(loan);
 
             //prepare a bucket with lnd tokens to give back to the user 
-            let value_backed = self.lendings.take(num_xrds);
-            info!("Amount of loan received: {:?} ", num_xrds);   
+            let token_received = self.lendings.take(num_xrds);
+            info!("Amount of token received: {:?} ", num_xrds);   
 
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Epoch::of(0));
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
 
-            (value_backed, lender_badge)
+            (token_received, lender_badge)
         }
 
         //gives back the original xrd 
@@ -365,59 +381,86 @@ mod lending_dapp {
             // Verify the user has requested back at least 20% 
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
             // Calculate the minimum amount (20%) of the current loan
-            let half_amount_due = lender_data.amount / 5;
-            info!("Minimum amount : {:?} ", half_amount_due);  
+            let allowed_amount = lender_data.amount / 5;
+            info!("Minimum amount : {:?} ", allowed_amount);  
 
             assert!(
-                refund.amount() >= half_amount_due,
+                refund.amount() >= allowed_amount,
                 "You cannot get back less than 20% of your loan!"
             );
 
             // Update the amount field
-            let remaining_amount = lender_data.amount - refund.amount(); 
-            info!("Remaining tokens to reedem: {:?} ", remaining_amount);   
+            let remaining_amount_to_return = lender_data.amount - refund.amount(); 
+            info!("Remaining tokens to return: {:?} ", remaining_amount_to_return);   
 
-            //take the LND bucket to close the loan, and get XRD tokens from the main pool
+            //take the LND bucket to close the loan, and returns XRD tokens from the main pool
             let num_xrds_to_return = refund.amount();
             self.lendings.put(refund);
 
             //calculate reward
-            let reward = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
+            let mut amount_returned = dec!(0);
+            // = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
+
+            // Parse the string into the Reward enum
+            match Reward::from_str(&self.reward_type) {
+                Ok(reward) => {
+                    // Match statement to handle different enum variants
+                    match reward {
+                        Reward::Fixed => {
+                            info!("Handle Fixed reward logic here");
+                            // Do something specific for Fixed reward
+                            amount_returned = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
+                        }
+                        Reward::TimeBased => {
+                            info!("Handle TimeBased reward logic here");
+                            // Do something specific for TimeBased reward
+                            let length = Runtime::current_epoch().number() - lender_data.start_lending_epoch.number();
+                            
+                            let interest = Self::calculate_interest(Decimal::from(length), self.reward, num_xrds_to_return);
+                            amount_returned = num_xrds_to_return + interest;
+                            info!("Calculated interest {:?} ", interest);  
+                        }
+                    }
+                }
+                Err(()) => {
+                    println!("Invalid reward string");
+                    // Handle invalid input here
+                }
+            }
+
             //give back XRD token plus reward %
-            info!("Loan tokens given back: {:?} ", reward);  
-            //paying fees
-            let fees = dec!(10);
+            info!("XRD tokens given back: {:?} ", amount_returned);  
+            // Paying fees
+            let fees = if amount_returned > Decimal::from_str("10.0").unwrap() {
+                Decimal::from_str("10.0").unwrap()
+            } else {
+                Decimal::from_str("0.0").unwrap()
+            };
+
             self.fee_xrd.put(self.collected_xrd.take(fees));
             //returning amount less fees
-            let xrd_to_return = self.collected_xrd.take(reward-fees);
+            let net_returned = self.collected_xrd.take(amount_returned-fees);
 
-            let nft_local_id: NonFungibleLocalId =
-            lender_badge.as_non_fungible().non_fungible_local_id();
-            //when all the loan amount has taken back then the nft gets burned
-            if remaining_amount == dec!("0") {
-                // lender_badge.burn();
-                // (xrd_to_return,None)
-                // Update the data on the network
-                // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            // Update the data on the network
+            if remaining_amount_to_return == dec!("0") {
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Runtime::current_epoch());
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
-                return (xrd_to_return,Some(lender_badge))                
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+                return (net_returned,Some(lender_badge))                
             } else {
-                // Update the data on the network
                 // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount);
-                return (xrd_to_return,Some(lender_badge))
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+                return (net_returned,Some(lender_badge))
             }
 
         }
 
         //get some xrd  
-        pub fn borrow(&mut self, amount: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            // assert!(
-            //     lender_badge.resource_address()
-            //     == self.lendings_nft_manager.address(),
-            //     "Incorrect resource passed in for requesting back the loan"
-            // );
+        pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+            assert!(
+                lender_badge.resource_address() == self.lendings_nft_manager.address(),
+                "Incorrect resource passed in for requesting a borrow"
+            );
 
             // Verify the user has not an open borrow
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
@@ -425,51 +468,51 @@ mod lending_dapp {
                 lender_data.borrow_amount == dec!("0"),
                 "You cannot borrow before repaying back first"
             );
-            info!("Amount of token borrowed : {:?} ", amount);   
+            info!("Amount of token borrowed : {:?} ", amount_requested);   
 
             //paying fees
             let fees = dec!(10);
             self.fee_xrd.put(self.collected_xrd.take(fees));
 
             //take the XRD from the main pool to borrow to the user
-            let xrd_to_return = self.collected_xrd.take(amount-fees);
+            let xrd_to_return = self.collected_xrd.take(amount_requested-fees);
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount);
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
             return (xrd_to_return,Some(lender_badge))                
         }
 
-        //get some xrd  
-        pub fn repay(&mut self, mut borrow: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            // assert!(
-            //     lender_badge.resource_address()
-            //     == self.lendings_nft_manager.address(),
-            //     "Incorrect resource passed in for requesting back the loan"
-            // );
+        //repay some xrd  
+        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+            assert!(
+                lender_badge.resource_address() == self.lendings_nft_manager.address(),
+                "Incorrect resource passed in for repaying a borrow"
+            );
 
             // Verify the user has not an open borrow
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
             // Calculate the minimum amount (20%) of the current loan
-            let half_amount_due = lender_data.borrow_amount / 5;
-            info!("Minimum amount : {:?} ", half_amount_due);  
+            let allowed_amount = lender_data.borrow_amount / 5;
+            info!("Minimum amount : {:?} ", allowed_amount);  
             assert!(
-                borrow.amount() >= half_amount_due,
+                loan_repaied.amount() >= allowed_amount,
                 "You cannot refund less than 20% of your loan!"
             );
 
             // Calculate the maximum percentage of the total (3%) 
             let max_amount = self.collected_xrd.amount() * (3/100);
-            info!("Maximum amount : {:?} ", max_amount);  
+            info!("Maximum amount allowed : {:?} ", max_amount);  
             assert!(
-                borrow.amount() >= max_amount,
+                loan_repaied.amount() >= max_amount,
                 "You cannot borrow more than 3% of the main pool!"
             );
 
+            //paying fees
             let fees = dec!(10);
             //calculate interest
-            let amount_returned = borrow.amount();
+            let amount_returned = loan_repaied.amount();
             let amount_to_be_returned = lender_data.borrow_amount + (lender_data.borrow_amount*self.interest/100);
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
             info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
@@ -477,28 +520,26 @@ mod lending_dapp {
             info!("Total Amount to repay with interest and fees: {:?} ", total);  
 
             //paying fees
-            self.fee_xrd.put(borrow.take(fees));
+            self.fee_xrd.put(loan_repaied.take(fees));
 
             let remaining:Decimal = total-amount_returned;
-            let remaining_abs = -remaining;
             info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);  
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());
+            //repay the loan
             if remaining <= dec!("0") {
                 info!("Setting loan as closed ");  
-                //take the XRD for repay the borrow
-                self.collected_xrd.put(borrow.take(total-fees));
-                info!("Exceed Amount returned back to user : {:?}  ", borrow.amount()); 
+                self.collected_xrd.put(loan_repaied.take(total-fees));
+                info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
-                //take the XRD for repay the borrow
-                self.collected_xrd.put(borrow.take(borrow.amount()-fees)); 
+                self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
             }  
-            return (borrow,Some(lender_badge))                
+            return (loan_repaied,Some(lender_badge))                
         }
 
         //vault size
@@ -575,11 +616,29 @@ mod lending_dapp {
         }
 
         //financial function
-        fn _calculate_interest(epochs: i32, percentage: f64, capital: f64) -> f64 {
+        fn _calculate_interest(epochs: i32, percentage: f32, capital: f32) -> f32 {
             let daily_rate = percentage / 100.0 / (365.0 * 24.0 * 12.0); // Assuming interest is calculated daily
             let compound_factor = (1.0 + daily_rate).powi(epochs);
             let interest = capital * (compound_factor - 1.0);
             interest
+        }
+
+        fn calculate_interest(epochs: Decimal, _percentage: Decimal, capital: Decimal) -> Decimal {
+        
+            // let value = 365.0 * 24.0 * 12.0;
+            // let _value_decimal = Decimal::from_str(&(value).to_string()).unwrap();
+            // Calculate daily rate
+            // let daily_rate = percentage / dec!(100) / dec!(105120);
+            let daily = dec!(0.00000048);
+        
+            // Assuming interest is calculated daily
+            let compound_factor = (dec!(1) + daily).pow(epochs);
+            // let ask: Decimal = Decimal::from(compound_factor);
+            let interest = capital * (compound_factor.unwrap() - dec!(1));
+
+            let rounded = interest.checked_round(5, RoundingMode::ToNearestMidpointToEven);
+        
+            rounded.unwrap()
         }
 
     }

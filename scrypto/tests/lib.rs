@@ -21,9 +21,10 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     let interest=  Decimal::from(10);
     let symbol = String::from("LND");
     let period_length = Decimal::from(1728);
+    let reward_type = "fixed";
 
     let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest,symbol, period_length, package_address, &mut env,)?;
+        reward, interest,symbol, period_length, reward_type.to_string(), package_address, &mut env,)?;
 
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
@@ -64,14 +65,15 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let interest=  Decimal::from(10);
     let symbol = String::from("LND");
     let period_length = Decimal::from(1728);
+    let reward_type = "fixed";
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest, symbol, period_length, package_address, &mut env,)?;
+        reward, interest, symbol, period_length, reward_type.to_owned(), package_address, &mut env,)?;
     
     // Act
-    let _ = env.with_auth_module_disabled(|env| {
+    let _unused = env.with_auth_module_disabled(|env| {
         /* Auth Module is disabled just before this point */
-        lendingdapp.fund_main_pool(initial_fund, env);
+        let _ = lendingdapp.fund_main_pool(initial_fund, env);
         /* Kernel modules are reset just after this point. */
     });
     // Act

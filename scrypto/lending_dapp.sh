@@ -12,7 +12,7 @@ echo "Publishing dapp"
 export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
 echo "Package = " $lendingapp_package
 
-output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 10 LND 1728 | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
@@ -58,6 +58,7 @@ resim show $account
 
 echo '>>> Lend tokens'
 
+resim set-current-epoch 1000
 #resim call-method ${component} lend_tokens $xrd:100
 resim run rtm/lend_tokens.rtm
 
@@ -65,6 +66,7 @@ resim show $account
 
 echo '>>> Takes back'
 
+resim set-current-epoch 42000
 #resim call-method ${component} takes_back $lending_token:100
 resim run rtm/takes_back.rtm
 # fee 10
@@ -84,59 +86,59 @@ resim run rtm/takes_back_20.rtm
 
 resim show $component
 
-echo '>>> Borrow'
+# echo '>>> Borrow'
 
-resim run rtm/borrow.rtm
-# fee 10
+# resim run rtm/borrow.rtm
+# # fee 10
 
-resim show $account
+# resim show $account
 
-echo '>>> Repay'
+# echo '>>> Repay'
 
-resim run rtm/repay.rtm
-# fee 10
-# main pool 5
+# resim run rtm/repay.rtm
+# # fee 10
+# # main pool 5
 
-resim show $account
+# resim show $account
 
-echo '>>> Borrow Again'
+# echo '>>> Borrow Again'
 
-resim run rtm/borrow.rtm
-# fee 10
-# main pool -100
+# resim run rtm/borrow.rtm
+# # fee 10
+# # main pool -100
 
-# echo '>>> Lend tokens again before next available epoch slot'
-# resim run rtm/lend_tokens.rtm
+# # echo '>>> Lend tokens again before next available epoch slot'
+# # resim run rtm/lend_tokens.rtm
 
-echo '>>> Set Reward'
+# echo '>>> Set Reward'
 
-resim run rtm/set_reward.rtm
+# resim run rtm/set_reward.rtm
 
-echo '>>> Set Period Length Pool'
+# echo '>>> Set Period Length Pool'
 
-resim run rtm/set_period_length.rtm
+# resim run rtm/set_period_length.rtm
 
-echo '>>> Extend Lending Pool'
+# echo '>>> Extend Lending Pool'
 
-resim run rtm/extend_lending_pool.rtm
+# resim run rtm/extend_lending_pool.rtm
 
-echo '>>> Mint Staff Badge'
+# echo '>>> Mint Staff Badge'
 
-resim run rtm/mint_staff_badge.rtm
+# resim run rtm/mint_staff_badge.rtm
 
-echo '>>> Withdraw Fees'
+# echo '>>> Withdraw Fees'
 
-resim run rtm/withdraw_fees.rtm
+# resim run rtm/withdraw_fees.rtm
 
-echo '>>> Withdraw Earnings'
-# fee -20
+# echo '>>> Withdraw Earnings'
+# # fee -20
 
-resim run rtm/withdraw_earnings.rtm
-# donations -20
+# resim run rtm/withdraw_earnings.rtm
+# # donations -20
 
-echo '>>> Pools'
+# echo '>>> Pools'
 
-resim run rtm/pools.rtm
+# resim run rtm/pools.rtm
 
 # fee vault -> 30
 # donations vault -> 180

@@ -1,33 +1,33 @@
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "account_type"
     Enum<0u8>(
         "dapp definition"
     )
 ;
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "name"
     Enum<0u8>(
         "Lending dApp"
     )
 ;
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "icon_url"
     Enum<13u8>(
         "https://test-lending.stakingcoins.eu/images/logo3b.jpg"
     )
 ;
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "description"
     Enum<0u8>(
         "Loan Service"
     )
 ;
 SET_METADATA
-    Address("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl")
+    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
     "claimed_websites"
     Enum<142u8>(
         Array<String>(
