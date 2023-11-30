@@ -43,6 +43,8 @@ echo '>>> Fund Main Vault'
 resim run rtm/fund_main_pool.rtm
 resim run rtm/fund_main_pool.rtm
 # main pool 200
+resim run rtm/fund_main_pool_4000.rtm
+# main pool 4200
 
 echo '>>> Donate'
 

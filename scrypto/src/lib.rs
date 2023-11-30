@@ -477,6 +477,14 @@ mod lending_dapp {
             );
             info!("Amount of token borrowed : {:?} ", amount_requested);   
 
+            // Calculate the maximum percentage of the total (3%) 
+            let max_amount_allowed = self.collected_xrd.amount() * 3 / 100;
+            info!("Maximum amount allowed : {:?} ", max_amount_allowed);  
+            assert!(
+                max_amount_allowed >= amount_requested,
+                "You cannot borrow more than 3% of the main pool!"
+            );
+
             //paying fees
             let fees = dec!(10);
             self.fee_xrd.put(self.collected_xrd.take(fees));
@@ -506,14 +514,6 @@ mod lending_dapp {
             assert!(
                 loan_repaied.amount() >= allowed_amount,
                 "You cannot refund less than 20% of your loan!"
-            );
-
-            // Calculate the maximum percentage of the total (3%) 
-            let max_amount = self.collected_xrd.amount() * (3/100);
-            info!("Maximum amount allowed : {:?} ", max_amount);  
-            assert!(
-                loan_repaied.amount() >= max_amount,
-                "You cannot borrow more than 3% of the main pool!"
             );
 
             //paying fees
