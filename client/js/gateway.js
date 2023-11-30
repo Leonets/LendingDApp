@@ -87,16 +87,19 @@ async function fetchComponentConfig(componentAddress) {
     const currentEpoch = data.ledger_state.epoch;
     const rewardValue = getReward(json);
     const interestValue = getInterest(json);
+    const rewardTypeValue = getRewardType(json);
     const periodLengthValue = getPeriodLength(json);
 
     // console.log("Reward:", rewardValue);
     // console.log("Period Length:", periodLengthValue);
     const rewardForYouConfig = document.getElementById("rewardForYou");
     const interestForYouConfig = document.getElementById("interestForYou");
+    const rewardTypeConfig = document.getElementById("rewardType");
     const periodLengthConfig = document.getElementById("periodLengthConfig");
     rewardForYouConfig.textContent = rewardValue + '%';
     periodLengthConfig.textContent = periodLengthValue;
     interestForYouConfig.textContent = interestValue + '%';
+    rewardTypeConfig.textContent = rewardTypeValue + '%';
     document.getElementById("currentEpoch").textContent = currentEpoch;
   })
   .catch(error => {
@@ -116,6 +119,11 @@ function getReward(data) {
 
 function getInterest(data) {
   const rewardField = data.details.state.fields.find(field => field.field_name === "interest");
+  return rewardField ? rewardField.value : null;
+}
+
+function getRewardType(data) {
+  const rewardField = data.details.state.fields.find(field => field.field_name === "reward_type");
   return rewardField ? rewardField.value : null;
 }
 
