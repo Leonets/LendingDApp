@@ -120,7 +120,7 @@ echo '>>> Show Interest Values along epochs'
 resim run rtm/borrow_interest.rtm
 
 
-
+resim set-current-epoch 400
 
 echo '>>> Repay'
 
