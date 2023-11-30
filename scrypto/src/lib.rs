@@ -520,10 +520,62 @@ mod lending_dapp {
             let fees = dec!(10);
             //calculate interest
             let amount_returned = loan_repaied.amount();
-            let length = Runtime::current_epoch().number() - lender_data.start_borrow_epoch.number();
+            let current_epoch = Runtime::current_epoch().number(); 
+            let length = current_epoch - lender_data.start_borrow_epoch.number();
+            
+            
             let interest = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
             // fixed interest calculator (lender_data.borrow_amount*self.interest/100)
-            let amount_to_be_returned = lender_data.borrow_amount + interest;
+
+            //calculate interest to be repaied
+            let mut interest_totals = dec!(0);
+            // Parse the string into the Reward enum
+            match Reward::from_str(&self.reward_type) {
+                Ok(reward) => {
+                    // Match statement to handle different enum variants
+                    match reward {
+                        Reward::Fixed => {
+                            info!("Handle Fixed reward logic here");
+                            // Do something specific for Fixed reward
+                            interest_totals = lender_data.borrow_amount*self.interest/100;
+                        }
+                        Reward::TimeBased => {
+                            info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , lender_data.start_borrow_epoch.number(), current_epoch, amount_returned);
+                            // Do something specific for TimeBased reward
+
+                            let mut total_amount = dec!(0);
+                            let mut first_epoch = Decimal::from(lender_data.start_borrow_epoch.number());
+                            let mut last_value = dec!(0);
+                            for (key, value) in self.interest_kv.range(
+                                    Decimal::from(lender_data.start_borrow_epoch.number())..Decimal::from(current_epoch)
+                                ) {
+                                
+                                let internal_length = key-first_epoch;
+                                info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
+                                let accumulated_interest = Self::calculate_interest(Decimal::from(internal_length), self.interest, amount_returned); 
+                                total_amount = total_amount + accumulated_interest;
+                                info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
+                                first_epoch = key;
+                                last_value = value; 
+                            }
+                            //TODO need to add the last run from first_epoch to current epoch
+                            let last = current_epoch - first_epoch;
+                            let accumulated_interest = Self::calculate_interest(Decimal::from(last), self.interest, amount_returned); 
+                            total_amount = total_amount + accumulated_interest;
+                            info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
+                            
+                            interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
+                        }
+                    }
+                }
+                Err(()) => {
+                    println!("Invalid reward string");
+                    // Handle invalid input here
+                }
+            }
+            //calculate interest over the borrowing period
+            info!("Calculated interest {:?} ", interest_totals);  
+            let amount_to_be_returned = lender_data.borrow_amount + interest_totals;
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
             info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
             let total =   amount_to_be_returned + fees;
