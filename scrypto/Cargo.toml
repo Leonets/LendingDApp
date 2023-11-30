@@ -8,6 +8,7 @@ sbor = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.0.0" }
 scrypto = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.0.0" }
 proc-macro2 = "1.0.66"
 scrypto_math = { git = "https://github.com/ociswap/scrypto-math", branch = "main" }
+scrypto_avltree = { git = "https://github.com/ociswap/scrypto-avltree", version = "1.0.0" }
 
 [dev-dependencies]
 lending_dapp = { path = ".", features = ["test"] }

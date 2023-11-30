@@ -1,6 +1,7 @@
 use scrypto::prelude::*;
 use scrypto_math::*;
 use std::env;
+use scrypto_avltree::AvlTree;
 
 // Import the FromStr trait for parsing strings
 use std::str::FromStr;
@@ -78,9 +79,11 @@ mod lending_dapp {
             fund => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
+            borrow_interest => PUBLIC;
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
+            set_reward_type => restrict_to: [admin, OWNER];
             set_interest => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
@@ -102,6 +105,7 @@ mod lending_dapp {
         lendings_nft_manager: ResourceManager,
         period_length: Decimal,
         reward_type: String,
+        interest_kv: AvlTree<Decimal, Decimal>,
     }
 
     impl LendingDApp {
@@ -114,6 +118,9 @@ mod lending_dapp {
             reward_type: String,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
             
+            let mut tree: AvlTree<Decimal, Decimal> = AvlTree::new();
+            tree.insert(Decimal::from(Runtime::current_epoch().number()), interest);
+
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
 
@@ -261,6 +268,7 @@ mod lending_dapp {
                     lendings_nft_manager: nft_manager,
                     period_length: period_length,
                     reward_type: reward_type,
+                    interest_kv: tree,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -399,7 +407,6 @@ mod lending_dapp {
 
             //calculate reward
             let mut amount_returned = dec!(0);
-            // = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
 
             // Parse the string into the Reward enum
             match Reward::from_str(&self.reward_type) {
@@ -513,7 +520,10 @@ mod lending_dapp {
             let fees = dec!(10);
             //calculate interest
             let amount_returned = loan_repaied.amount();
-            let amount_to_be_returned = lender_data.borrow_amount + (lender_data.borrow_amount*self.interest/100);
+            let length = Runtime::current_epoch().number() - lender_data.start_borrow_epoch.number();
+            let interest = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
+            // fixed interest calculator (lender_data.borrow_amount*self.interest/100)
+            let amount_to_be_returned = lender_data.borrow_amount + interest;
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
             info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
             let total =   amount_to_be_returned + fees;
@@ -580,7 +590,15 @@ mod lending_dapp {
 
         // set the reward for borrowers
         pub fn set_interest(&mut self, interest: Decimal) {
-            self.interest = interest
+            self.interest = interest;
+
+            self.interest_kv.insert(Decimal::from(Runtime::current_epoch().number()), interest);
+        }
+
+        pub fn borrow_interest(&mut self, start_epoch: Decimal, end_epoch: Decimal) {
+            for (key, value) in self.interest_kv.range(start_epoch..end_epoch) {
+                info!("key: {}, value: {}", key, value);
+            }
         }
 
         //set minimum period length between consecutive lendings
@@ -591,6 +609,10 @@ mod lending_dapp {
         //withdraw some of the funds deposited
         pub fn withdraw_earnings(&mut self, amount: Decimal) -> Bucket {
             self.donations_xrd.take(amount)
+        }
+
+        pub fn set_reward_type(&mut self, reward_type: String) {
+            self.reward_type = reward_type
         }
 
         //withdraw the fees by the capital funded
@@ -615,27 +637,14 @@ mod lending_dapp {
             self.lendings.put(self.lnd_manager.mint(size_extended));
         }
 
-        //financial function
-        fn _calculate_interest(epochs: i32, percentage: f32, capital: f32) -> f32 {
-            let daily_rate = percentage / 100.0 / (365.0 * 24.0 * 12.0); // Assuming interest is calculated daily
-            let compound_factor = (1.0 + daily_rate).powi(epochs);
-            let interest = capital * (compound_factor - 1.0);
-            interest
-        }
-
-        fn calculate_interest(epochs: Decimal, _percentage: Decimal, capital: Decimal) -> Decimal {
-        
-            // let value = 365.0 * 24.0 * 12.0;
-            // let _value_decimal = Decimal::from_str(&(value).to_string()).unwrap();
+        //calculate the interest for the epochs at the percentage given with the capital provided
+        fn calculate_interest(epochs: Decimal, percentage: Decimal, capital: Decimal) -> Decimal {
             // Calculate daily rate
-            // let daily_rate = percentage / dec!(100) / dec!(105120);
-            let daily = dec!(0.00000048);
+            let daily_rate = percentage / dec!(100) / dec!(105120);
         
             // Assuming interest is calculated daily
-            let compound_factor = (dec!(1) + daily).pow(epochs);
-            // let ask: Decimal = Decimal::from(compound_factor);
+            let compound_factor = (dec!(1) + daily_rate).pow(epochs);
             let interest = capital * (compound_factor.unwrap() - dec!(1));
-
             let rounded = interest.checked_round(5, RoundingMode::ToNearestMidpointToEven);
         
             rounded.unwrap()
