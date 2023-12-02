@@ -65,7 +65,7 @@ pub struct LenderData {
 }
 
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
-struct CreditScore {
+pub struct CreditScore {
     #[mutable]
     amount_borrowed: Decimal,
     #[mutable]
@@ -88,6 +88,7 @@ mod lending_dapp {
             borrow => PUBLIC;
             repay => PUBLIC;
             borrow_interest => PUBLIC;
+            lend_reward => PUBLIC;
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
@@ -412,8 +413,9 @@ mod lending_dapp {
             let allowed_amount = lender_data.amount / 5;
             info!("Minimum amount : {:?} ", allowed_amount);  
 
+            let amount_to_be_returned = refund.amount();
             assert!(
-                refund.amount() >= allowed_amount,
+                amount_to_be_returned >= allowed_amount,
                 "You cannot get back less than 20% of your loan!"
             );
 
@@ -428,32 +430,58 @@ mod lending_dapp {
             //calculate reward
             let mut amount_returned = dec!(0);
 
-            // Parse the string into the Reward enum
-            match Reward::from_str(&self.reward_type) {
+            //calculate interest
+            let current_epoch = Runtime::current_epoch().number(); 
+            let length = current_epoch - lender_data.start_lending_epoch.number();
+
+            //calculate interest to be repaied with specified reward type 
+            let interest_totals = match Reward::from_str(&self.reward_type) {
                 Ok(reward) => {
                     // Match statement to handle different enum variants
                     match reward {
                         Reward::Fixed => {
                             info!("Handle Fixed reward logic here");
                             // Do something specific for Fixed reward
-                            amount_returned = num_xrds_to_return + (num_xrds_to_return*self.reward/100);
+                            num_xrds_to_return*self.reward/100
                         }
                         Reward::TimeBased => {
-                            info!("Handle TimeBased reward logic here");
+                            info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , lender_data.start_borrow_epoch.number(), current_epoch, amount_to_be_returned);
                             // Do something specific for TimeBased reward
-                            let length = Runtime::current_epoch().number() - lender_data.start_lending_epoch.number();
+
+                            let mut total_amount = dec!(0);
+                            let mut first_epoch = Decimal::from(lender_data.start_lending_epoch.number());
+                            let mut last_value = dec!(0);
+                            for (key, value) in self.interest_for_lendings.range(
+                                    Decimal::from(lender_data.start_lending_epoch.number())..Decimal::from(current_epoch)
+                                ) {
+                                
+                                let internal_length = key-first_epoch;
+                                info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
+                                let accumulated_interest = Self::calculate_interest(Decimal::from(internal_length), self.reward, amount_to_be_returned); 
+                                total_amount = total_amount + accumulated_interest;
+                                info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
+                                first_epoch = key;
+                                last_value = value; 
+                            }
+                            //TODO need to add the last run from first_epoch to current epoch
+                            let last = current_epoch - first_epoch;
+                            let accumulated_interest = Self::calculate_interest(Decimal::from(last), self.reward, amount_to_be_returned); 
+                            total_amount = total_amount + accumulated_interest;
+                            info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
                             
-                            let interest = Self::calculate_interest(Decimal::from(length), self.reward, num_xrds_to_return);
-                            amount_returned = num_xrds_to_return + interest;
-                            info!("Calculated interest {:?} ", interest);  
+                            // interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
+                            total_amount
                         }
                     }
                 }
                 Err(()) => {
                     println!("Invalid reward string");
                     // Handle invalid input here
+                    dec!(0)
                 }
-            }
+            };
+            info!("Calculated interest {} ", interest_totals);
+            amount_returned = num_xrds_to_return + interest_totals;
 
             //give back XRD token plus reward %
             info!("XRD tokens given back: {:?} ", amount_returned);  
@@ -562,17 +590,15 @@ mod lending_dapp {
             let interest = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
             // fixed interest calculator (lender_data.borrow_amount*self.interest/100)
 
-            //calculate interest to be repaied
-            let mut interest_totals = dec!(0);
-            // Parse the string into the Reward enum
-            match Reward::from_str(&self.reward_type) {
+            //calculate interest to be repaied based on the reward type
+            let interest_totals = match Reward::from_str(&self.reward_type) {
                 Ok(reward) => {
                     // Match statement to handle different enum variants
                     match reward {
                         Reward::Fixed => {
                             info!("Handle Fixed reward logic here");
                             // Do something specific for Fixed reward
-                            interest_totals = lender_data.borrow_amount*self.interest/100;
+                            lender_data.borrow_amount*self.interest/100
                         }
                         Reward::TimeBased => {
                             info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , lender_data.start_borrow_epoch.number(), current_epoch, amount_returned);
@@ -584,7 +610,7 @@ mod lending_dapp {
                             for (key, value) in self.interest_kv.range(
                                     Decimal::from(lender_data.start_borrow_epoch.number())..Decimal::from(current_epoch)
                                 ) {
-                                
+                                 
                                 let internal_length = key-first_epoch;
                                 info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
                                 let accumulated_interest = Self::calculate_interest(Decimal::from(internal_length), self.interest, amount_returned); 
@@ -598,16 +624,19 @@ mod lending_dapp {
                             let accumulated_interest = Self::calculate_interest(Decimal::from(last), self.interest, amount_returned); 
                             total_amount = total_amount + accumulated_interest;
                             info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
-                            
-                            interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
+                        
+                            // interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
+                            total_amount
                         }
                     }
                 }
                 Err(()) => {
                     println!("Invalid reward string");
                     // Handle invalid input here
+                    dec!(0)
                 }
-            }
+            };
+
             //calculate interest over the borrowing period
             info!("Calculated interest {:?} ", interest_totals);  
             let amount_to_be_returned = lender_data.borrow_amount + interest_totals;
@@ -686,6 +715,12 @@ mod lending_dapp {
 
         pub fn borrow_interest(&mut self, start_epoch: Decimal, end_epoch: Decimal) {
             for (key, value) in self.interest_kv.range(start_epoch..end_epoch) {
+                info!("key: {}, value: {}", key, value);
+            }
+        }
+
+        pub fn lend_reward(&mut self, start_epoch: Decimal, end_epoch: Decimal) {
+            for (key, value) in self.interest_for_lendings.range(start_epoch..end_epoch) {
                 info!("key: {}, value: {}", key, value);
             }
         }
