@@ -7,12 +7,12 @@ console.log("environment : ", environment)
 // Define constants based on the environment
 let dAppId, networkId;
 
-if (environment === 'Mainnet') {
-  dAppId = 'account_tdx_2_12y0nsx9';
+if (environment === 'production') {
+  dAppId = import.meta.env.VITE_DAPP_ID
   networkId = RadixNetwork.Mainnet;
 } else {
   // Default to Stokenet configuration
-  dAppId = 'account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl';
+  dAppId = import.meta.env.VITE_DAPP_ID
   networkId = RadixNetwork.Stokenet;
 }
 
@@ -25,23 +25,15 @@ const rdt = RadixDappToolkit({
 });
 console.log("dApp Toolkit: ", rdt)
 
-// Component Address: component_tdx_2_1cpt0u9amrge2mun4fm6wj5a36lllw3xdz3zhsr0e24z30q6he9282e
-// admin_badge address: resource_tdx_2_1t5scjm7jahrdlz7tpj65jtp6nfyn8yntta47v560etcdlh9vvtvkuh
-// owner_badge address: resource_tdx_2_1ths8ctje6ykw07a470yulksc7wraxlmjq3r9c7d58msr0l50qwjlyk
-// lnd_resource address: resource_tdx_2_1ntml7y49kxsan0y44298j3zs3fsv3khnv60am7se9mc7hwaa22fwp9
-// lnd_token address: resource_tdx_2_1t5afkgud2kw8hjmywtju272gpx9mukc3dqpvkxcn74sdwkee4emyg6
-
-
 // Global states
-let componentAddress = "component_tdx_2_1cpt0u9amrge2mun4fm6wj5a36lllw3xdz3zhsr0e24z30q6he9282e" //LendingDApp component address on stokenet
+let componentAddress = import.meta.env.VITE_COMP_ADDRESS //LendingDApp component address on stokenet
 // You receive this badge(your resource address will be different) when you instantiate the component
-let admin_badge = "resource_tdx_2_1t5scjm7jahrdlz7tpj65jtp6nfyn8yntta47v560etcdlh9vvtvkuh"
-let owner_badge = "resource_tdx_2_1ths8ctje6ykw07a470yulksc7wraxlmjq3r9c7d58msr0l50qwjlyk"
-let lnd_resourceAddress = "resource_tdx_2_1ntml7y49kxsan0y44298j3zs3fsv3khnv60am7se9mc7hwaa22fwp9" // XRD lender badge manager
-let lnd_tokenAddress = "resource_tdx_2_1t5afkgud2kw8hjmywtju272gpx9mukc3dqpvkxcn74sdwkee4emyg6" // LND token resource address
+let admin_badge = import.meta.env.VITE_ADMIN_BADGE
+let owner_badge = import.meta.env.VITE_OWNER_BADGE
+let lnd_resourceAddress = import.meta.env.VITE_LND_RESOURCE_ADDRESS // XRD lender badge manager
+let lnd_tokenAddress = import.meta.env.VITE_LND_TOKEN_ADDRESS // LND token resource address
 
-let xrdAddress = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc" //Stokenet XRD resource address
-
+let xrdAddress = import.meta.env.VITE_XRD //Stokenet XRD resource address
 
 let accountAddress
 let accountName
@@ -386,6 +378,3 @@ async function fetchLendingPoolSize(component, xrdAddress) {
       console.error('Error fetching data:', error);
   });
 }
-
-
-

@@ -148,7 +148,6 @@ mod lending_dapp {
                         "name"=>"LendingDapp Owner badge", locked;
                         "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
-                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }))
                     .divisibility(DIVISIBILITY_NONE)
                     .mint_initial_supply(1);
@@ -161,8 +160,6 @@ mod lending_dapp {
                     "name"=>"LendingDapp Admin badge", locked;
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
-                    // "dapp_definitions" => GlobalAddress::from("adg"),locked;
-                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                         minter => rule!(require(global_caller(component_address)));
@@ -180,7 +177,6 @@ mod lending_dapp {
                     "name" => "LendingDapp Staff_badge", locked;
                     "description" => "A badge to be used for some administrative function", locked;
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
-                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -205,7 +201,6 @@ mod lending_dapp {
                     "name" => "LendingDapp Benefactor_badge", locked;
                     "description" => "A badge to be used for rewarding benefactors", locked;
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
-                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -229,7 +224,6 @@ mod lending_dapp {
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/lending_token.png"), locked;
-                    // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -307,10 +301,6 @@ mod lending_dapp {
                         "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo3b.jpg"), locked;
                         "description" => "LendingDapp SmartContract for lending and borrowing service", locked;
                         "claimed_websites" =>  ["https://test-lending.stakingcoins.eu"], locked;
-                        // "dapp_definition" => GlobalAddress::from(dAppId), updatable;         
-                            // Array<String>(
-                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
-                        // "dapp_definitions" => [GlobalAddress::from(dAppId)], locked;
                     }
                 ))//specify what this roles means
                 .roles(roles!(
@@ -764,6 +754,10 @@ mod lending_dapp {
 
         //extend the maximum amount for allowing borrows
         pub fn extend_borrowing_pool(&mut self, size_extended: Decimal) {
+            assert!(
+                self.max_borrowing_limit + size_extended >= self.collected_xrd.amount() * 50 / 100,
+                "Max borrowing limit cannot be higher than 50% of total fund in the main pool !!"
+            );
             // adds to the level
             self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
         }
