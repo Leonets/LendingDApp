@@ -34,7 +34,7 @@
       Epoch of supplying liquidity: <div class="number" id="epochLiquidityFunded"></div>
       Epoch of redeeming liquidity: <div class="number" id="epochLiquidityReedemed"></div>
       <br>
-      Amount of your borrowings from the the pool: <div class="number" id="amountBorrowings"></div>
+      Amount of your borrowings: <div class="number" id="amountBorrowings"></div>
       Epoch of borrow: <div class="number" id="epochBorrow"></div>
       Epoch of repaying borrow: <div class="number" id="epochRepay"></div>
       <br>
@@ -42,12 +42,12 @@
       Current Epoch: <div class="number" id="currentEpoch"></div>
 
       <h1>Lending DApp</h1>
-      Registering here you'll be able to fund liquidity in the pool
+      Registering here you'll be able to fund/borrow liquidity in/from the pool
       <p><button id="register">Register</button></p>
       <div class="number" id="registerTxResult"></div>
     
       <br>
-      Supplying liquidity you will receive the same of LND token back and also an NFT
+      Supplying liquidity you will receive the same number of LND tokens back and also an updated NFT
       <p><button id="lendTokens">Supply Liquidity</button></p>
       <div class="number">
         <input type="text" placeholder="Number of Token" id="numberOfTokens">
@@ -69,6 +69,7 @@
       <div class="number">
         <input type="text" placeholder="Number of Token" id="numberOfFundedTokens">
       </div>
+      <div class="number" id="fundTxResult"></div>
     </div>
 
     <div class="right-container">
@@ -79,7 +80,7 @@
       Reward for liquidity funding: <div class="number" id="rewardForYou"></div>
       Length of the period beyond which liquidity can be provided again: <div class="number" id="periodLengthConfig"></div>
       Interest for borrowing liquidity: <div class="number" id="interestForYou"></div>
-      How interest is calculated (Fixed/TimeBased) over loans: <div class="number" id="rewardType"></div>
+      How interest is calculated (Fixed/TimeBased): <div class="number" id="rewardType"></div>
 
       <h1>Smart Contract Vaults</h1>
       Amount of main liquidity pool
@@ -88,6 +89,9 @@
       Amount of loans still accepted
       <div class="number" id="lendinsPool"></div>
 
+      Max Amount of borrowings accepted
+      <div class="number" id="borrowingsPool"></div>
+
       Amount of donations received
       <div class="number" id="donationsPool"></div>
 
@@ -95,18 +99,21 @@
       <div class="number" id="feePool"></div>
 
       <br>  <br>
-      Borrow liquidity !
+      Borrow liquidity (max 3% of the main pool until the max borrowing limit has not been reached) !<br>
+      Please provide a time when the borrowing will be repaid and you'll receive a CreditScore NFT !
       <p><button id="borrow">Borrow</button></p>
       <div class="number">
           <input type="text" placeholder="Number of Token" id="numberOfRequestedXrdTokens">
       </div>
+      <div class="number" id="borrowTxResult"></div>
 
       <br>  <br>
-      Repay borrowings !
+      Repay borrowings (fees and interest will be calculated over the time the borrow has been opened) !
       <p><button id="repay">Repay</button></p>
       <div class="number">
           <input type="text" placeholder="Number of Token" id="numberOfRepaiedXrdTokens">
       </div>
+      <div class="number" id="repayTxResult"></div>
     </div>
   </div>
 

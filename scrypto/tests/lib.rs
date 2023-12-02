@@ -24,7 +24,7 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     let reward_type = "fixed";
 
     let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest,symbol, period_length, reward_type.to_string(), package_address, &mut env,)?;
+        reward, interest,symbol, period_length, reward_type.to_string(), dec!(1000), package_address, &mut env,)?;
 
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
@@ -68,7 +68,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let reward_type = "fixed";
 
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest, symbol, period_length, reward_type.to_owned(), package_address, &mut env,)?;
+        reward, interest, symbol, period_length, reward_type.to_owned(), dec!(1000), package_address, &mut env,)?;
     
     // Act
     let _unused = env.with_auth_module_disabled(|env| {

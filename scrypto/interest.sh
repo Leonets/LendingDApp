@@ -12,7 +12,7 @@ echo "Publishing dapp"
 export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
 echo "Package = " $lendingapp_package
 
-output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
@@ -43,6 +43,8 @@ echo '>>> Fund Main Vault'
 resim run rtm/fund_main_pool.rtm
 resim run rtm/fund_main_pool.rtm
 # main pool 200
+resim run rtm/fund_main_pool_4000.rtm
+# main pool 4200
 
 echo '>>> Donate'
 
@@ -64,6 +66,23 @@ resim run rtm/lend_tokens.rtm
 
 resim show $account
 
+echo '>>> Set Reward 4 at epoch 100'
+resim set-current-epoch 100
+resim run rtm/set_reward_5.rtm
+
+echo '>>> Set Reward 8 at epoch 200'
+resim set-current-epoch 200
+resim run rtm/set_reward_8.rtm
+
+echo '>>> Set Reward 12 at epoch 300'
+resim set-current-epoch 300
+resim run rtm/set_reward_12.rtm
+
+echo '>>> Show Reward Values along epochs'
+resim run rtm/lend_reward.rtm
+
+resim set-current-epoch 400
+
 echo '>>> Takes back'
 
 # 1 epoch = 5min
@@ -72,7 +91,7 @@ echo '>>> Takes back'
 # 7920 epoch = 1month
 # 96.360 epoch = 1year
 
-resim set-current-epoch 96360
+# resim set-current-epoch 96360
 #resim call-method ${component} takes_back $lending_token:100
 resim run rtm/takes_back.rtm
 # fee 10

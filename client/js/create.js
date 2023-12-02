@@ -79,7 +79,8 @@ document.getElementById('instantiateComponent').onclick = async function () {
     Decimal("10")
     "${flavor}"
     Decimal("1728")
-    "timebased";
+    "timebased"
+    Decimal("1000");
   CALL_METHOD
     Address("${accountAddress}")
     "deposit_batch"

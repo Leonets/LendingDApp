@@ -64,6 +64,14 @@ pub struct LenderData {
     borrow_amount: Decimal
 }
 
+#[derive(NonFungibleData, ScryptoSbor, Clone)]
+struct CreditScore {
+    #[mutable]
+    amount_borrowed: Decimal,
+    #[mutable]
+    epoch_limit_for_repaying: Decimal,
+}
+
 #[blueprint]
 mod lending_dapp {
     enable_method_auth! {
@@ -89,6 +97,7 @@ mod lending_dapp {
             withdraw_earnings => restrict_to: [OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
+            extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
         }
     }
@@ -105,7 +114,10 @@ mod lending_dapp {
         lendings_nft_manager: ResourceManager,
         period_length: Decimal,
         reward_type: String,
+        interest_for_lendings: AvlTree<Decimal, Decimal>,
         interest_kv: AvlTree<Decimal, Decimal>,
+        max_borrowing_limit: Decimal,
+        credit_scores: AvlTree<String, CreditScore>,
     }
 
     impl LendingDApp {
@@ -116,10 +128,15 @@ mod lending_dapp {
             symbol: String,
             period_length: Decimal,
             reward_type: String,
+            max_limit: Decimal,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
             
-            let mut tree: AvlTree<Decimal, Decimal> = AvlTree::new();
-            tree.insert(Decimal::from(Runtime::current_epoch().number()), interest);
+            let mut borrow_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
+            borrow_tree.insert(Decimal::from(Runtime::current_epoch().number()), interest);
+            let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
+            lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
+
+            let mut credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -268,7 +285,10 @@ mod lending_dapp {
                     lendings_nft_manager: nft_manager,
                     period_length: period_length,
                     reward_type: reward_type,
-                    interest_kv: tree,
+                    interest_for_lendings: lend_tree,
+                    interest_kv: borrow_tree,
+                    max_borrowing_limit: max_limit,
+                    credit_scores: credit_scores,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -485,6 +505,21 @@ mod lending_dapp {
                 "You cannot borrow more than 3% of the main pool!"
             );
 
+            // Calculate if it is possible to borrow yet (33% of the level) 
+            let max_limit = self.max_borrowing_limit * 33 / 100;
+            info!("Max limit : {:?} ", max_limit);  
+            assert!(
+                max_limit + amount_requested >= max_limit,
+                "There is not availabilty for new borrowings!"
+            );
+
+            //prepare for checking credit score
+            let credit_score = CreditScore {
+                amount_borrowed: amount_requested,
+                epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + dec!(1000),
+            };
+            self.credit_scores.insert("account".to_string(), credit_score);
+
             //paying fees
             let fees = dec!(10);
             self.fee_xrd.put(self.collected_xrd.take(fees));
@@ -637,7 +672,9 @@ mod lending_dapp {
         //for admin only
         // set the reward for lenders
         pub fn set_reward(&mut self, reward: Decimal) {
-            self.reward = reward
+            self.reward = reward;
+
+            self.interest_for_lendings.insert(Decimal::from(Runtime::current_epoch().number()), reward);
         }
 
         // set the reward for borrowers
@@ -687,6 +724,13 @@ mod lending_dapp {
         pub fn extend_lending_pool(&mut self, size_extended: Decimal) {
             // mint some more lending tokens requires an admin or staff badge
             self.lendings.put(self.lnd_manager.mint(size_extended));
+        }
+
+
+        //extend the maximum amount for allowing borrows
+        pub fn extend_borrowing_pool(&mut self, size_extended: Decimal) {
+            // adds to the level
+            self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
         }
 
         //calculate the interest for the epochs at the percentage given with the capital provided

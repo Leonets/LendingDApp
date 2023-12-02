@@ -1,9 +1,10 @@
 body {
-  background-image: url("../images/BackgroundGradient.png");
-  color: #FFFFFF;
+  background-image: url("images/BackgroundGradient.png");
+  color: #333333;
   margin: 0;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  background-color: #FFFFFF;
   padding-left: 1.33rem;
   padding-right: 1.33rem;
   margin-bottom: 3.33rem;
@@ -15,17 +16,17 @@ body {
   align-items: left;
   border: none;
   font-size: x-large;
-  color: #ecf2f2;
+  color: #333333;
   min-width: 43%;
 }
 
 button {
   padding: 1rem;
-  background-color: #052CC0;
+  background-color: #A2FFAB;
   border-radius: 33rem;
-  border: none;
+  border: 2px solid #000000; 
   font-size: x-large;
-  color: #FF43CA;
+  color: #333333;
   min-width: 33%;
 }
 
@@ -39,7 +40,13 @@ input {
 }
 
 .number {
-  width: 40%;
+  width: 47%;
+}
+
+.number input[type="text"] {
+  border: 2px solid #000000; /* Black border with 2px width */
+  border-radius: 5px; /* Optional: Add border-radius for rounded corners */
+  padding: 0.5rem; /* Optional: Add padding for spacing inside the input */
 }
 
 .container {
