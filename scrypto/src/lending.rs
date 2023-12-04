@@ -1,15 +1,12 @@
 use scrypto::prelude::*;
-use scrypto_math::*;
 use std::env;
 use scrypto_avltree::AvlTree;
 use crate::utils::*;
-
-// Import the FromStr trait for parsing strings
 use std::str::FromStr;
 
 // Define the Reward enum
 #[derive(Debug)]
-enum Reward {
+pub enum Reward {
     Fixed,
     TimeBased,
 }
@@ -88,8 +85,6 @@ mod lending_dapp {
             fund => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
-            borrow_interest => PUBLIC;
-            lend_reward => PUBLIC;
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
@@ -389,61 +384,15 @@ mod lending_dapp {
             let amount_to_be_returned = refund.amount();
             self.lendings.put(refund);
 
-            //calculate reward
-            let mut amount_returned = dec!(0);
-
             //calculate interest
-            let current_epoch = Runtime::current_epoch().number(); 
-            let length = current_epoch - lender_data.start_lending_epoch.number();
-
-            //calculate interest to be repaied with specified reward type 
-            let interest_totals = match Reward::from_str(&self.reward_type) {
-                Ok(reward) => {
-                    // Match statement to handle different enum variants
-                    match reward {
-                        Reward::Fixed => {
-                            info!("Handle Fixed reward logic here");
-                            // Do something specific for Fixed reward
-                            amount_to_be_returned*self.reward/100
-                        }
-                        Reward::TimeBased => {
-                            info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , lender_data.start_borrow_epoch.number(), current_epoch, amount_to_be_returned);
-                            // Do something specific for TimeBased reward
-
-                            let mut total_amount = dec!(0);
-                            let mut first_epoch = Decimal::from(lender_data.start_lending_epoch.number());
-                            let mut last_value = dec!(0);
-                            for (key, value) in self.interest_for_lendings.range(
-                                    Decimal::from(lender_data.start_lending_epoch.number())..Decimal::from(current_epoch)
-                                ) {
-                                
-                                let internal_length = key-first_epoch;
-                                info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
-                                let accumulated_interest = Self::calculate_interest(Decimal::from(internal_length), self.reward, amount_to_be_returned); 
-                                total_amount = total_amount + accumulated_interest;
-                                info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
-                                first_epoch = key;
-                                last_value = value; 
-                            }
-                            //TODO need to add the last run from first_epoch to current epoch
-                            let last = current_epoch - first_epoch;
-                            let accumulated_interest = Self::calculate_interest(Decimal::from(last), self.reward, amount_to_be_returned); 
-                            total_amount = total_amount + accumulated_interest;
-                            info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
-                            
-                            // interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
-                            total_amount
-                        }
-                    }
-                }
-                Err(()) => {
-                    println!("Invalid reward string");
-                    // Handle invalid input here
-                    dec!(0)
-                }
-            };
+            let interest_totals = calculate_interests(
+                &self.reward_type, &self.reward,
+                lender_data.start_lending_epoch.number(),
+                &amount_to_be_returned, &self.interest_for_lendings);
             info!("Calculated interest {} ", interest_totals);
-            amount_returned = amount_to_be_returned + interest_totals;
+
+            //total amount 
+            let amount_returned = amount_to_be_returned + interest_totals;
 
             //give back XRD token plus reward %
             info!("XRD tokens given back: {:?} ", amount_returned);  
@@ -474,34 +423,15 @@ mod lending_dapp {
 
         //get some xrd  
         pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            assert!(
-                lender_badge.resource_address() == self.lendings_nft_manager.address(),
-                "Incorrect resource passed in for requesting a borrow"
-            );
+            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
 
             // Verify the user has not an open borrow
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
-            assert!(
-                lender_data.borrow_amount == dec!("0"),
-                "You cannot borrow before repaying back first"
-            );
-            info!("Amount of token borrowed : {:?} ", amount_requested);   
 
-            // Calculate the maximum percentage of the total (3%) 
-            let max_amount_allowed = self.collected_xrd.amount() * 3 / 100;
-            info!("Maximum amount allowed : {:?} ", max_amount_allowed);  
-            assert!(
-                max_amount_allowed >= amount_requested,
-                "You cannot borrow more than 3% of the main pool!"
-            );
-
-            // Calculate if it is possible to borrow yet (33% of the level) 
-            let max_limit = self.max_borrowing_limit * 33 / 100;
-            info!("Max limit : {:?} ", max_limit);  
-            assert!(
-                max_limit + amount_requested >= max_limit,
-                "There is not availabilty for new borrowings!"
-            );
+            // Applying rules: close the previous borrow first, checks the max percentage of the total, checks the max limit 
+            borrow_checks(lender_data.borrow_amount, amount_requested, 
+                self.collected_xrd.amount() * 3 / 100,
+                self.max_borrowing_limit * 100 / 100);
 
             //prepare for checking credit score
             let credit_score = CreditScore {
@@ -526,80 +456,24 @@ mod lending_dapp {
 
         //repay some xrd  
         pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            assert!(
-                lender_badge.resource_address() == self.lendings_nft_manager.address(),
-                "Incorrect resource passed in for repaying a borrow"
-            );
+            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
 
-            // Verify the user has not an open borrow
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
-            // Calculate the minimum amount (20%) of the current loan
-            let allowed_amount = lender_data.borrow_amount / 5;
-            info!("Minimum amount : {:?} ", allowed_amount);  
-            assert!(
-                loan_repaied.amount() >= allowed_amount,
-                "You cannot refund less than 20% of your loan!"
-            );
+
+            // Verify the user has requested back at least 20% of its current borrowing
+            repay_checks(lender_data.amount / 5, loan_repaied.amount());
 
             //paying fees
             let fees = dec!(10);
             //calculate interest
             let amount_returned = loan_repaied.amount();
-            let current_epoch = Runtime::current_epoch().number(); 
-            let length = current_epoch - lender_data.start_borrow_epoch.number();
             
-            
-            let interest = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
-            // fixed interest calculator (lender_data.borrow_amount*self.interest/100)
+            //calculate interest
+            let interest_totals = calculate_interests(
+                &self.reward_type, &self.interest,
+                lender_data.start_lending_epoch.number(),
+                &amount_returned, &self.interest_kv);
 
-            //calculate interest to be repaied based on the reward type
-            let interest_totals = match Reward::from_str(&self.reward_type) {
-                Ok(reward) => {
-                    // Match statement to handle different enum variants
-                    match reward {
-                        Reward::Fixed => {
-                            info!("Handle Fixed reward logic here");
-                            // Do something specific for Fixed reward
-                            lender_data.borrow_amount*self.interest/100
-                        }
-                        Reward::TimeBased => {
-                            info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , lender_data.start_borrow_epoch.number(), current_epoch, amount_returned);
-                            // Do something specific for TimeBased reward
-
-                            let mut total_amount = dec!(0);
-                            let mut first_epoch = Decimal::from(lender_data.start_borrow_epoch.number());
-                            let mut last_value = dec!(0);
-                            for (key, value) in self.interest_kv.range(
-                                    Decimal::from(lender_data.start_borrow_epoch.number())..Decimal::from(current_epoch)
-                                ) {
-                                 
-                                let internal_length = key-first_epoch;
-                                info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
-                                let accumulated_interest = Self::calculate_interest(Decimal::from(internal_length), self.interest, amount_returned); 
-                                total_amount = total_amount + accumulated_interest;
-                                info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
-                                first_epoch = key;
-                                last_value = value; 
-                            }
-                            //TODO need to add the last run from first_epoch to current epoch
-                            let last = current_epoch - first_epoch;
-                            let accumulated_interest = Self::calculate_interest(Decimal::from(last), self.interest, amount_returned); 
-                            total_amount = total_amount + accumulated_interest;
-                            info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
-                        
-                            // interest_totals = Self::calculate_interest(Decimal::from(length), self.interest, amount_returned);
-                            total_amount
-                        }
-                    }
-                }
-                Err(()) => {
-                    println!("Invalid reward string");
-                    // Handle invalid input here
-                    dec!(0)
-                }
-            };
-
-            //calculate interest over the borrowing period
             info!("Calculated interest {:?} ", interest_totals);  
             let amount_to_be_returned = lender_data.borrow_amount + interest_totals;
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
@@ -613,8 +487,8 @@ mod lending_dapp {
             let remaining:Decimal = total-amount_returned;
             info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);  
 
-            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());
             //repay the loan
             if remaining <= dec!("0") {
@@ -675,18 +549,6 @@ mod lending_dapp {
             self.interest_kv.insert(Decimal::from(Runtime::current_epoch().number()), interest);
         }
 
-        pub fn borrow_interest(&mut self, start_epoch: Decimal, end_epoch: Decimal) {
-            for (key, value) in self.interest_kv.range(start_epoch..end_epoch) {
-                info!("key: {}, value: {}", key, value);
-            }
-        }
-
-        pub fn lend_reward(&mut self, start_epoch: Decimal, end_epoch: Decimal) {
-            for (key, value) in self.interest_for_lendings.range(start_epoch..end_epoch) {
-                info!("key: {}, value: {}", key, value);
-            }
-        }
-
         //set minimum period length between consecutive lendings
         pub fn set_period_length(&mut self, period_length: Decimal) {
             self.period_length = period_length
@@ -734,20 +596,5 @@ mod lending_dapp {
             self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
         }
 
-        //calculate the interest for the epochs at the percentage given with the capital provided
-        fn calculate_interest(epochs: Decimal, percentage: Decimal, capital: Decimal) -> Decimal {
-            // Calculate daily rate
-            let daily_rate = percentage / dec!(100) / dec!(105120);
-        
-            // Assuming interest is calculated daily
-            let compound_factor = (dec!(1) + daily_rate).pow(epochs);
-            let interest = capital * (compound_factor.unwrap() - dec!(1));
-            let rounded = interest.checked_round(5, RoundingMode::ToNearestMidpointToEven);
-        
-            rounded.unwrap()
-        }
-
     }
-
-
 }
