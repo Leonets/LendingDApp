@@ -68,7 +68,7 @@ resim show $account
 
 echo '>>> Set Reward 4 at epoch 100'
 resim set-current-epoch 100
-resim run rtm/set_reward_5.rtm
+resim run rtm/set_reward_4.rtm
 
 echo '>>> Set Reward 8 at epoch 200'
 resim set-current-epoch 200

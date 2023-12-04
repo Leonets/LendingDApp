@@ -1,4 +1,5 @@
-use lending_dapp::test_bindings::*;
+use lending_dapp::lending::test_bindings::*;
+// use lending_dapp::lending::lending_dapp::*;
 // use lending_dapp::LenderData;
 use scrypto::*;
 use scrypto_test::prelude::*;
