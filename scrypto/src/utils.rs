@@ -100,28 +100,48 @@ pub fn calculate_interests(
                 Reward::TimeBased => {
                     info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , start_lending_epoch, current_epoch, amount_to_be_returned);
 
-                    let mut total_amount = dec!(0);
-                    let mut first_epoch = Decimal::from(start_lending_epoch);
-                    let mut last_value = dec!(0);
-                    for (key, value) in interest_for_lendings.range(
-                            Decimal::from(start_lending_epoch)..Decimal::from(current_epoch)
-                        ) {
+                    // let mut total_amount = dec!(0);
+                    // let mut first_epoch = Decimal::from(start_lending_epoch);
+                    // let mut last_value = dec!(0);
+                    // for (key, value) in interest_for_lendings.range(
+                    //         Decimal::from(start_lending_epoch)..Decimal::from(current_epoch)
+                    //     ) {
                         
-                        let internal_length = key-first_epoch;
-                        info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
-                        let accumulated_interest = calculate_interest(Decimal::from(internal_length), value, amount); 
-                        total_amount = total_amount + accumulated_interest;
-                        info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
-                        first_epoch = key;
-                        last_value = value; 
-                    }
-                    //need to add the last run from first_epoch to current epoch
-                    let last = current_epoch - first_epoch;
-                    let accumulated_interest = calculate_interest(Decimal::from(last), last_value, amount); 
-                    total_amount = total_amount + accumulated_interest;
-                    info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
+                    //     let internal_length = key-first_epoch;
+                    //     info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
+                    //     let accumulated_interest = calculate_interest(Decimal::from(internal_length), value, amount); 
+                    //     total_amount = total_amount + accumulated_interest;
+                    //     info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
+                    //     first_epoch = key;
+                    //     last_value = value; 
+                    // }
+                    // //need to add the last run from first_epoch to current epoch
+                    // let last = current_epoch - first_epoch;
+                    // let accumulated_interest = calculate_interest(Decimal::from(last), last_value, amount); 
+                    // total_amount = total_amount + accumulated_interest;
+                    // info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
                     
-                    total_amount
+                    // total_amount
+    
+                    // Use fold to calculate the total interest
+                    let total_amount = interest_for_lendings
+                        .range(Decimal::from(start_lending_epoch)..Decimal::from(current_epoch))
+                        .fold((dec!(0), Decimal::from(start_lending_epoch), dec!(0)), |(total, first_epoch, _last_value), (key, value)| {
+                            let internal_length = key - first_epoch;
+                            info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
+                            let accumulated_interest =
+                                calculate_interest(Decimal::from(internal_length), value, amount);
+                            info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total + accumulated_interest, first_epoch, key);
+                            (total + accumulated_interest, key, value)
+                        });
+    
+                    // Need to add the last run from first_epoch to current epoch
+                    let last = current_epoch - total_amount.1;
+                    let accumulated_interest =
+                        calculate_interest(Decimal::from(last), total_amount.2, amount);
+                    info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount.0 + accumulated_interest, total_amount.1, current_epoch);
+    
+                    total_amount.0 + accumulated_interest
                 }
             }
         }

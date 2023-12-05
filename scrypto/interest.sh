@@ -78,8 +78,8 @@ echo '>>> Set Reward 12 at epoch 300'
 resim set-current-epoch 300
 resim run rtm/set_reward_12.rtm
 
-echo '>>> Show Reward Values along epochs'
-resim run rtm/lend_reward.rtm
+# echo '>>> Show Reward Values along epochs'
+# resim run rtm/lend_reward.rtm
 
 resim set-current-epoch 400
 
@@ -135,8 +135,8 @@ echo '>>> Set Interest 10 at epoch 300'
 resim set-current-epoch 300
 resim run rtm/set_interest.rtm
 
-echo '>>> Show Interest Values along epochs'
-resim run rtm/borrow_interest.rtm
+# echo '>>> Show Interest Values along epochs'
+# resim run rtm/borrow_interest.rtm
 
 
 resim set-current-epoch 400
