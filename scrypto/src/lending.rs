@@ -115,6 +115,7 @@ mod lending_dapp {
         interest_for_borrowings: AvlTree<Decimal, Decimal>,
         max_borrowing_limit: Decimal,
         credit_scores: AvlTree<String, CreditScore>,
+        pool_component: Global<OneResourcePool>,
     }
 
     impl LendingDApp {
@@ -126,6 +127,8 @@ mod lending_dapp {
             period_length: Decimal,
             reward_type: String,
             max_limit: Decimal,
+            owner_role: OwnerRole,
+            resource_address: ResourceAddress,
         ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
             
             let mut borrow_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
@@ -133,7 +136,20 @@ mod lending_dapp {
             let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
-            let mut credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let mut _credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+
+            //TODO OneResourcePool
+            let (address_reservation, component_address) =
+                Runtime::allocate_component_address(LendingDApp::blueprint_id());
+            let global_component_caller_badge =
+                NonFungibleGlobalId::global_caller_badge(component_address);
+
+            let pool_component = Blueprint::<OneResourcePool>::instantiate( 
+                owner_role,
+                rule!(require(global_component_caller_badge)),
+                resource_address,
+                Some(address_reservation)
+            );
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -277,7 +293,8 @@ mod lending_dapp {
                     interest_for_lendings: lend_tree,
                     interest_for_borrowings: borrow_tree,
                     max_borrowing_limit: max_limit,
-                    credit_scores: credit_scores,
+                    credit_scores: _credit_scores,
+                    pool_component: pool_component,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -352,7 +369,8 @@ mod lending_dapp {
             info!("Amount of token received: {:?} ", num_xrds);   
 
             //take the XRD bucket as a new loan and put xrd token in main pool
-            self.collected_xrd.put(loan);
+            // self.collected_xrd.put(loan);
+            let _ = self.pool_component.contribute(loan);
 
             //prepare a bucket with lnd tokens to give back to the user 
             let token_received = self.lendings.take(num_xrds);
