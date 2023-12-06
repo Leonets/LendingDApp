@@ -1,0 +1,26 @@
+#currently not possible
+
+https://docs-babylon.radixdlt.com/main/scrypto/system/recalling-resources.html
+
+RECALL_FROM_VAULT
+    Address("<FUNGIBLE_VAULT_ADDRESS>")
+    Decimal("1")
+;
+RECALL_NON_FUNGIBLES_FROM_VAULT
+    Address("<NON_FUNGIBLE_VAULT_ADDRESS>")
+    Array<NonFungibleLocalId>(
+        NonFungibleLocalId("#123#"),
+        NonFungibleLocalId("#456#")
+    )
+;
+
+# you can try by getting out the vault address of the staff badge from this account
+
+account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9
+
+RECALL_NON_FUNGIBLES_FROM_VAULT
+    Address("<NON_FUNGIBLE_VAULT_ADDRESS>")
+    Array<NonFungibleLocalId>(
+        NonFungibleLocalId("{2129a03195844446-1a51ecd9fafa7049-e2cb5d54cf340df6-c13b97df6f345f5f}")
+    )
+;
