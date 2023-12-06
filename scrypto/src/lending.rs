@@ -135,8 +135,8 @@ mod lending_dapp {
             let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
-            let credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
-            let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
+            let mut credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let mut staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -424,7 +424,7 @@ mod lending_dapp {
         }
 
         //get some xrd  
-        pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+        pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket, user_account: String, borrow_expected_length: Decimal,) -> (Bucket, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
 
             // Verify the user has not an open borrow
@@ -438,9 +438,9 @@ mod lending_dapp {
             //prepare for checking credit score
             let credit_score = CreditScore {
                 amount_borrowed: amount_requested,
-                epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + dec!(1000),
+                epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length,
             };
-            self.credit_scores.insert("account".to_string(), credit_score);
+            self.credit_scores.insert(user_account, credit_score);
 
             //paying fees
             let fees = dec!(10);
