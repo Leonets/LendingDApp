@@ -96,6 +96,7 @@ mod lending_dapp {
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
+            recall_staff_badge => restrict_to: [admin, OWNER];
         }
     }
     struct LendingDApp {
@@ -115,6 +116,7 @@ mod lending_dapp {
         interest_for_borrowings: AvlTree<Decimal, Decimal>,
         max_borrowing_limit: Decimal,
         credit_scores: AvlTree<String, CreditScore>,
+        staff: AvlTree<u16, NonFungibleLocalId>,
     }
 
     impl LendingDApp {
@@ -133,7 +135,8 @@ mod lending_dapp {
             let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
-            let mut credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -278,6 +281,7 @@ mod lending_dapp {
                     interest_for_borrowings: borrow_tree,
                     max_borrowing_limit: max_limit,
                     credit_scores: credit_scores,
+                    staff: staff,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -569,9 +573,43 @@ mod lending_dapp {
             let staff_badge_bucket: Bucket = self
                 .staff_badge_resource_manager
                 .mint_ruid_non_fungible(StaffBadge {
-                    username: username,
+                    username: username.clone(),
                 });
+
+            //TODO
+            let id = staff_badge_bucket.as_non_fungible().non_fungible_local_id();
+            //prepare for checking credit score
+            // let _credit_score = CreditScore {
+            //     amount_borrowed: dec!(0),
+            //     epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + dec!(1000),
+            // };
+            let key = self.staff.get_length().to_u16().unwrap()+1; 
+            info!("Saving staff badge with key : {:?} and id {:?} for the username: {:?}  ",key, id, username);
+            self.staff.insert(key, id);
+
             staff_badge_bucket
+        }
+
+        pub fn recall_staff_badge(&mut self) {
+            for (_key, value) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
+                let vault_address: ResourceAddress = self.staff_badge_resource_manager.address();
+                info!("getting staff badge n° : {:?} ", _key);
+                info!("ready to try to recall the following LocalId: {:?} ", value);
+
+                //TODO code not working
+                // it is not currently possible to source the vault address from the Radix Engine, 
+                // so it must be determined from an off-ledger indexer/API, 
+                // and passed in through a transaction.
+                let _recalled_bucket: Bucket = scrypto_decode(&ScryptoVmV1Api::object_call_direct(
+                    vault_address.as_node_id(),
+                    NON_FUNGIBLE_VAULT_RECALL_NON_FUNGIBLES_IDENT,
+                    scrypto_encode(&NonFungibleVaultRecallNonFungiblesInput {
+                        non_fungible_local_ids: indexset!(value),
+                    })
+                    .unwrap(),
+                ))
+                .unwrap();
+            }
         }
 
         //extend the pool for accept lendings
