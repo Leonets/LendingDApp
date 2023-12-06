@@ -457,7 +457,7 @@ mod lending_dapp {
         }
 
         //repay some xrd  
-        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String) -> (Bucket, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
 
             let lender_data: LenderData = lender_badge.as_non_fungible().non_fungible().data();
@@ -487,7 +487,7 @@ mod lending_dapp {
             self.fee_xrd.put(loan_repaied.take(fees));
 
             let remaining:Decimal = total-amount_returned;
-            info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);  
+            info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);   
 
             // Update the data on the network
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
@@ -498,6 +498,8 @@ mod lending_dapp {
                 self.collected_xrd.put(loan_repaied.take(total-fees));
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
+                //remove the user account as a current borrower
+                self.credit_scores.remove(&user_account);
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
