@@ -143,16 +143,14 @@ mod lending_dapp {
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
             let global_component_caller_badge =
                 NonFungibleGlobalId::global_caller_badge(component_address);
-
+            //TODO instantiate OneResourcePool
             let pool_component = Blueprint::<OneResourcePool>::instantiate( 
-                owner_role,
+                owner_role.clone(),
                 rule!(require(global_component_caller_badge)),
                 resource_address,
-                Some(address_reservation)
+                // Some(address_reservation),
+                None
             );
-
-            let (address_reservation, component_address) =
-                Runtime::allocate_component_address(LendingDApp::blueprint_id());
 
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
@@ -297,9 +295,11 @@ mod lending_dapp {
                     pool_component: pool_component,
                 }
                 .instantiate()
-                .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
-                    owner_badge.resource_address()
-                ))))
+                .prepare_to_globalize(owner_role)
+                // .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
+                //     owner_badge.resource_address()
+
+                // ))))
                 .metadata(metadata!(
                     // roles {
                     //     metadata_setter => rule!(require(owner_badge.resource_address()));
@@ -370,10 +370,10 @@ mod lending_dapp {
 
             //take the XRD bucket as a new loan and put xrd token in main pool
             // self.collected_xrd.put(loan);
-            let _ = self.pool_component.contribute(loan);
+            let token_received = self.pool_component.contribute(loan);
 
             //prepare a bucket with lnd tokens to give back to the user 
-            let token_received = self.lendings.take(num_xrds);
+            // let token_received = self.lendings.take(num_xrds);
 
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
@@ -398,7 +398,7 @@ mod lending_dapp {
 
             //take the LND bucket to close the loan, and returns XRD tokens from the main pool
             let amount_to_be_returned = refund.amount();
-            self.lendings.put(refund);
+            // self.lendings.put(refund);
 
             //calculate interest
             let interest_totals = calculate_interests(
@@ -413,15 +413,17 @@ mod lending_dapp {
             //give back XRD token plus reward %
             info!("XRD tokens given back: {:?} ", amount_returned);  
             // Paying fees
-            let fees = if amount_returned > Decimal::from_str("10.0").unwrap() {
+            let _fees = if amount_returned > Decimal::from_str("10.0").unwrap() {
                 Decimal::from_str("10.0").unwrap()
             } else {
                 Decimal::from_str("0.0").unwrap()
             };
 
-            self.fee_xrd.put(self.collected_xrd.take(fees));
+            //TODO
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
+            let net_returned = self.pool_component.redeem(refund);
             //returning amount less fees
-            let net_returned = self.collected_xrd.take(amount_returned-fees);
+            // let net_returned = self.collected_xrd.take(amount_returned-fees);
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
@@ -446,7 +448,7 @@ mod lending_dapp {
 
             // Applying rules: close the previous borrow first, checks the max percentage of the total, checks the max limit 
             borrow_checks(lender_data.borrow_amount, amount_requested, 
-                self.collected_xrd.amount() * 3 / 100,
+                self.pool_component.get_vault_amount() * 3 / 100,
                 self.max_borrowing_limit * 100 / 100);
 
             //prepare for checking credit score

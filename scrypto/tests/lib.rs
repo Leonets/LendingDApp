@@ -23,9 +23,10 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     let symbol = String::from("LND");
     let period_length = Decimal::from(1728);
     let reward_type = "fixed";
+    let owner = OwnerRole::None;
 
     let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest,symbol, period_length, reward_type.to_string(), dec!(1000), package_address, &mut env,)?;
+        reward, interest,symbol, period_length, reward_type.to_string(), dec!(1000), owner, XRD, package_address, &mut env,)?;
 
     // Act
     let user_nft = lendingdapp.register(&mut env)?;
@@ -48,7 +49,6 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
 
-
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
 
     // Act
@@ -68,8 +68,10 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let period_length = Decimal::from(1728);
     let reward_type = "fixed";
 
+    let owner = OwnerRole::None;
+
     let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
-        reward, interest, symbol, period_length, reward_type.to_owned(), dec!(1000), package_address, &mut env,)?;
+        reward, interest, symbol, period_length, reward_type.to_owned(), dec!(1000), owner, XRD, package_address , &mut env,)?;
     
     // Act
     let _unused = env.with_auth_module_disabled(|env| {
@@ -96,7 +98,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
             // Verify that the nft has been correctly burned
             assert_eq!(nft.amount(&mut env)?, dec!("1"));
             // Verify that the reward has been received
-            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("95"));
+            assert_eq!(xrd_bucket.amount(&mut env)?, dec!("100"));
         }
         None => {
             // Verify that the reward has been received
