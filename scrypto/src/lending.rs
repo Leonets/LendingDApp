@@ -135,8 +135,8 @@ mod lending_dapp {
             let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
-            let mut credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
-            let mut staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
+            let credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());

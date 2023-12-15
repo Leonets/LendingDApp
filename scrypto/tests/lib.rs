@@ -48,7 +48,6 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
 
-
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
 
     // Act
