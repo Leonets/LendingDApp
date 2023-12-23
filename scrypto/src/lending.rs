@@ -64,11 +64,21 @@ pub struct LenderData {
 
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct CreditScore {
+    account: String,
     #[mutable]
     amount_borrowed: Decimal,
     #[mutable]
     epoch_limit_for_repaying: Decimal,
 }
+
+
+#[derive(NonFungibleData, ScryptoSbor, Clone)]
+pub struct Borrower {
+    name: String,
+    // Other fields...
+}
+
+
 
 #[blueprint]
 mod lending_dapp {
@@ -85,6 +95,7 @@ mod lending_dapp {
             fund => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
+            asking_repay => restrict_to: [admin, OWNER];
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
@@ -115,9 +126,12 @@ mod lending_dapp {
         interest_for_lendings: AvlTree<Decimal, Decimal>,
         interest_for_borrowings: AvlTree<Decimal, Decimal>,
         max_borrowing_limit: Decimal,
-        credit_scores: AvlTree<String, CreditScore>,
+        borrowers_positions: AvlTree<Decimal, CreditScore>,
         staff: AvlTree<u16, NonFungibleLocalId>,
+        borrowers_accounts: Vec<Borrower>,
     }
+
+
 
     impl LendingDApp {
         // given a reward, interest level and a symbol name, creates a ready-to-use Lending dApp
@@ -135,7 +149,8 @@ mod lending_dapp {
             let mut lend_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
-            let credit_scores: AvlTree<String, CreditScore> = AvlTree::new();
+            let borrowers_positions: AvlTree<Decimal, CreditScore> = AvlTree::new();
+            let borrowers_accounts: Vec<Borrower> = Vec::new();
             let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
 
             let (address_reservation, component_address) =
@@ -280,8 +295,9 @@ mod lending_dapp {
                     interest_for_lendings: lend_tree,
                     interest_for_borrowings: borrow_tree,
                     max_borrowing_limit: max_limit,
-                    credit_scores: credit_scores,
+                    borrowers_positions: borrowers_positions,
                     staff: staff,
+                    borrowers_accounts: borrowers_accounts,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -333,6 +349,27 @@ mod lending_dapp {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
             lender_badge.burn();
             None
+        }
+
+
+        //utility for asking borrow repay
+        pub fn asking_repay(&mut self)  {
+            let current_epoch = Decimal::from(Runtime::current_epoch().number());
+            let end_epoch = Decimal::from(current_epoch + 10000);
+            for (_key, _value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
+                match _value.epoch_limit_for_repaying > _key {
+                    true => {
+                        //payment is late
+                        info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
+                        _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, _key);
+                        //send an nft to the bad payer !!
+                    }
+                    false => {
+                        info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
+                        _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, current_epoch);
+                    }
+                }
+            }
         }
 
         //lend some xrd
@@ -435,12 +472,18 @@ mod lending_dapp {
                 self.collected_xrd.amount() * 3 / 100,
                 self.max_borrowing_limit * 100 / 100);
 
-            //prepare for checking credit score
+            //prepare for ordering and looking for the next expiring borrow
+            let epoch = Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length;
             let credit_score = CreditScore {
+                account: user_account.clone(),
                 amount_borrowed: amount_requested,
-                epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length,
+                epoch_limit_for_repaying: epoch,
             };
-            self.credit_scores.insert(user_account, credit_score);
+            self.borrowers_positions.insert(epoch, credit_score);
+            //saving the current account as a borrower account
+            // Assuming Borrower has a 'name' field of type String
+            self.borrowers_accounts.push(Borrower { name: String::from(user_account.clone()), /* other fields... */ });
+            info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.clone(), amount_requested, epoch);  
 
             //paying fees
             let fees = dec!(10);
@@ -499,7 +542,8 @@ mod lending_dapp {
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
                 //remove the user account as a current borrower
-                self.credit_scores.remove(&user_account);
+                // self.borrowers_accounts.retain(|&x| x != user_account);            
+                self.borrowers_accounts.retain(|borrower| borrower.name != user_account);
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 

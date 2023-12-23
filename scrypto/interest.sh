@@ -141,6 +141,10 @@ resim run rtm/set_interest.rtm
 
 resim set-current-epoch 400
 
+echo '>>> Someone is late ?'
+
+resim run rtm/asking_repay.rtm
+
 echo '>>> Repay'
 
 resim run rtm/repay.rtm
