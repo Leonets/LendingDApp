@@ -93,11 +93,42 @@ As the holder of the admin,owner or staff badge you can run `resim run rtm/exten
 
 # Quick test
 
-You can run ./lending_dapp.sh
+You can run:
+    - ./lending_dapp.sh for testing some of the main function
+    - ./interest.sh for testing some function about calculations over passive interest
+    - ./reward.sh for testing some function about calculations over active interest
+    - ./recall.sh for testing nft recalling
+    - ./flash_loan.sh for testing a demo of a flash loan
 
 # Unit test
 
 You can run 'scrypto test' from the 'scrypto' directory for testing the main functions (lend and takes_back)
+
+# Package building
+
+You can run 'scrypto build' from the 'scrypto' directory for building the packages for deploy
+
+# Application automation
+
+Some shortcut are available for testing, deploying and managing the dApp
+
+You can run (typescrypt):
+     - 'npm run' to look for all the available command
+     - 'npm run lending:deploy-lendingdapp' to deploy the package to stokenet
+     - 'npm run lending:asking_repay' to ask borrowers for repay if the expected epoch has been exceeded
+
+You can run (terraform):
+    - run 'npm run build' in the 'client' directory of the Frontend application to have the website compiled
+    - export.sh in the Frontend application for updating the remote website
+    
+# Local Application
+
+To local test the whole application you can:
+    - deploy the package
+    - extract the component and resource addresses
+    - save those value in .env in the Frontend application
+    - run 'npm run dev' in the 'client' directory of the Frontend application
+    - a website will be available at localhost:5173 for local testing with a remote stokenet deployed smart contract
 
 
 # TODO & Useful commands
