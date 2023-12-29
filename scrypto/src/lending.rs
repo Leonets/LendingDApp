@@ -353,16 +353,25 @@ mod lending_dapp {
 
 
         //utility for asking borrow repay
-        pub fn asking_repay(&mut self)  {
+        pub fn asking_repay(&mut self) -> Vec<String> {
             let current_epoch = Decimal::from(Runtime::current_epoch().number());
             let end_epoch = Decimal::from(current_epoch + 10000);
+            let mut late_payers_accounts: Vec<String> = Vec::new();
             for (_key, _value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
                 match _value.epoch_limit_for_repaying > _key {
                     true => {
                         //payment is late
                         info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
                         _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, _key);
+                        
+                        // mint a nft as 'bad payer' and send it to the account
+                        let staff_badge_bucket: Bucket = self
+                        .staff_badge_resource_manager
+                        .mint_ruid_non_fungible(StaffBadge {
+                            username: _value.account.clone(),
+                        });
                         //send an nft to the bad payer !!
+                        late_payers_accounts.push(_value.account.clone());
                     }
                     false => {
                         info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
@@ -370,6 +379,7 @@ mod lending_dapp {
                     }
                 }
             }
+            late_payers_accounts
         }
 
         //lend some xrd
