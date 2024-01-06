@@ -1,7 +1,27 @@
 use scrypto::prelude::*;
 use scrypto_avltree::AvlTree;
 use scrypto_math::*;
-use crate::lending::Reward;
+use std::env;
+
+// Define the Reward enum
+#[derive(Debug)]
+pub enum Reward {
+    Fixed,
+    TimeBased,
+}
+
+// Function to get the NFT icon URL based on the environment
+fn _get_nft_icon_url() -> String {
+    match env::var("ENVIRONMENT") {
+        Ok(environment) if environment == "production" => {
+            env::var("NFT_ICON_URL_PROD").unwrap_or_default()
+        }
+        _ => {
+            env::var("NFT_ICON_URL_NON_PROD").unwrap_or_default()
+        }
+    }
+}
+
 
 //for both lend and take_back
 pub fn assert_resource(res_addr: &ResourceAddress, expect_res_addr: &ResourceAddress){
@@ -9,12 +29,46 @@ pub fn assert_resource(res_addr: &ResourceAddress, expect_res_addr: &ResourceAdd
 }
 
 //for lending
+pub fn lend_complete_checks(start_epoch: u64, period_length: Decimal, current_epoch: u64, amount_lended: Decimal, reward_type: String){
+    match Reward::from_str(&reward_type) {      
+        Ok(reward) => {
+            match reward {
+                Reward::Fixed => {
+                    match start_epoch != 0 {
+                        true => {
+                            //if it is not the first time lending then checks epochs and amount
+                            lend_checks(start_epoch,period_length, Runtime::current_epoch().number(), amount_lended);                    
+                        }
+                        false => (),
+                    }
+                }
+                Reward::TimeBased => {
+                    lend_checks_time_based(amount_lended);                    
+                }
+            }
+        }
+        Err(()) => {
+            println!("Invalid reward string");
+            // Handle invalid input here
+            ()
+        }
+    };
+}
+
 pub fn lend_checks(start_epoch: u64, period_length: Decimal, current_epoch: u64, amount_lended: Decimal){
     //if it is not the first time lending then checks epochs and amount
     assert!(
         Decimal::from(start_epoch) + Decimal::from(period_length) <= Decimal::from(current_epoch),
         "No loan accepted if the previous loan period has not yet ended!"
     );
+    assert!(
+        amount_lended == dec!("0"),
+        "No loan accepted if previous is not closed yet!"
+    );
+}
+
+pub fn lend_checks_time_based(amount_lended: Decimal){
+    //no subsequent lends to remain simple
     assert!(
         amount_lended == dec!("0"),
         "No loan accepted if previous is not closed yet!"
@@ -30,6 +84,14 @@ pub fn lend_amount_checks(num_xrds: Decimal, min: u16, max: u16){
         num_xrds >= Decimal::from(min),
         "No loan approved below 100xrd at this time!"
     );
+}
+
+pub fn calculate_fees(amount_returned: Decimal) -> Decimal {
+    return if amount_returned > Decimal::from_str("10.0").unwrap() {
+        Decimal::from_str("10.0").unwrap()
+    } else {
+        Decimal::from_str("0.0").unwrap()
+    };
 }
 
 //for take_back
@@ -99,29 +161,6 @@ pub fn calculate_interests(
                 }
                 Reward::TimeBased => {
                     info!("Handle TimeBased logic here from epoch {} to epoch {} applied to capital {}" , start_lending_epoch, current_epoch, amount_to_be_returned);
-
-                    // let mut total_amount = dec!(0);
-                    // let mut first_epoch = Decimal::from(start_lending_epoch);
-                    // let mut last_value = dec!(0);
-                    // for (key, value) in interest_for_lendings.range(
-                    //         Decimal::from(start_lending_epoch)..Decimal::from(current_epoch)
-                    //     ) {
-                        
-                    //     let internal_length = key-first_epoch;
-                    //     info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
-                    //     let accumulated_interest = calculate_interest(Decimal::from(internal_length), value, amount); 
-                    //     total_amount = total_amount + accumulated_interest;
-                    //     info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, key);
-                    //     first_epoch = key;
-                    //     last_value = value; 
-                    // }
-                    // //need to add the last run from first_epoch to current epoch
-                    // let last = current_epoch - first_epoch;
-                    // let accumulated_interest = calculate_interest(Decimal::from(last), last_value, amount); 
-                    // total_amount = total_amount + accumulated_interest;
-                    // info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount, first_epoch, current_epoch);
-                    
-                    // total_amount
     
                     // Use fold to calculate the total interest
                     let total_amount = interest_for_lendings
@@ -165,4 +204,16 @@ fn calculate_interest(epochs: Decimal, percentage: Decimal, capital: Decimal) ->
     let rounded = interest.checked_round(5, RoundingMode::ToNearestMidpointToEven);
 
     rounded.unwrap()
+}
+
+// Implement the FromStr trait for parsing strings into Reward enum variants
+impl FromStr for Reward {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "fixed" => Ok(Reward::Fixed),
+            "timebased" => Ok(Reward::TimeBased),
+            _ => Err(()),
+        }
+    }
 }
