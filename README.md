@@ -23,7 +23,7 @@ At this point we can instantiate our Lending dApp locally
 `resim run rtm/instantiate_lending_dapp.rtm`
 
 That file has been built with the following bash command:
-`$ resim call-function ${package} LendingDApp instantiate_lending_dapp 100 LND --manifest rtm/instantiate_lending_dapp.rtm`
+`$ resim call-function ${package} LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
 
 The output of the instantiate is the following resources builded:
 New Entities: 6
@@ -41,6 +41,7 @@ resource3 -> staff_badge
 resource4 -> benefactor_badge
 resource5 -> lending_token
 resource6 -> lnd_manager
+resource7 -> bad_payer
 
 Store the returned component addres in the component environment variable 
 `export component=<component_address>`

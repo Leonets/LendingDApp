@@ -8,8 +8,11 @@ CALL_FUNCTION
     "LendingDApp"
     "instantiate_lending_dapp"
     Decimal("5")
+    Decimal("10")
     "LND"
     Decimal("1728")
+    "timebased"
+    Decimal("1000")
 ;
 CALL_METHOD
     Address("${account}")

@@ -14,4 +14,6 @@ export const config = {
   mnemonic: process.env.MNEMONIC,
   networkName: process.env.NETWORK_NAME,
   network: radixEngineClient.gatewayClient.networkConfig,
+  component: process.env.COMPONENT,
+  owner_badge: process.env.OWNER_BADGE,
 }

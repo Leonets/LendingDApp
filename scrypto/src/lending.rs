@@ -13,6 +13,15 @@ struct BenefactorBadge {
     amount_funded: Decimal
 }
 
+#[derive(NonFungibleData, ScryptoSbor)]
+struct BadPayerBadge {
+    account: String,
+    #[mutable]
+    amount_to_refund: Decimal,
+    #[mutable]
+    expected_borrow_epoch_timeline: Decimal,
+}
+
 
 //struct to store and show info about loan/borrow position in each account wallet
 #[derive(ScryptoSbor, NonFungibleData)]
@@ -77,9 +86,10 @@ mod lending_dapp {
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
             recall_staff_badge => restrict_to: [admin, OWNER];
+            mint_bad_payer  => restrict_to: [admin, OWNER];
         }
     }
-    struct LendingDApp<'a> {
+    struct LendingDApp<> {
         lendings: Vault,
         collected_xrd: Vault,
         fee_xrd: Vault,
@@ -100,6 +110,7 @@ mod lending_dapp {
         borrowers_accounts: Vec<Borrower>,
         late_payers_accounts: Vec<String>,
         late_payers_redeemed_accounts: Vec<String>,
+        badpayer_badge_resource_manager: ResourceManager,
     }
 
 
@@ -179,12 +190,12 @@ mod lending_dapp {
                     recaller => rule!(require(admin_badge.resource_address()));
                     recaller_updater => OWNER;
                 })
-                .create_with_no_initial_supply();
+            .create_with_no_initial_supply();
 
             let benefactor_badge =
                 ResourceBuilder::new_ruid_non_fungible::<BenefactorBadge>(OwnerRole::Updatable(rule!(
                     require(owner_badge.resource_address())
-                        || require(admin_badge.resource_address())
+                    || require(admin_badge.resource_address())
                 )))
                 .metadata(metadata!(init{
                     "name" => "LendingDapp Benefactor_badge", locked;
@@ -192,8 +203,32 @@ mod lending_dapp {
                     "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
-                         minter => rule!(require(global_caller(component_address)));
-                         minter_updater => OWNER;
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => OWNER;
+                ))
+                .burn_roles(burn_roles! (
+                    burner => rule!(require(admin_badge.resource_address()));
+                    burner_updater => OWNER;
+                ))
+                .recall_roles(recall_roles! {
+                    recaller => rule!(require(admin_badge.resource_address()));
+                    recaller_updater => OWNER;
+                })
+                .create_with_no_initial_supply();
+
+            let bad_payer =
+                ResourceBuilder::new_ruid_non_fungible::<BadPayerBadge>(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
+                .metadata(metadata!(init{
+                    "name" => "LendingDapp BadPayer", locked;
+                    "description" => "A signal to indicate that the account has not repaid the loan", locked;
+                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/badPayer.jpg"), locked;
+                }))
+                .mint_roles(mint_roles! (
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => OWNER;
                 ))
                 .burn_roles(burn_roles! (
                     burner => rule!(require(admin_badge.resource_address()));
@@ -275,6 +310,7 @@ mod lending_dapp {
                     borrowers_accounts: borrowers_accounts,
                     late_payers_accounts: late_payers_accounts,
                     late_payers_redeemed_accounts: late_payers_redeemed_accounts,
+                    badpayer_badge_resource_manager: bad_payer,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -342,44 +378,48 @@ mod lending_dapp {
         // }
 
         //utility for asking borrow repay
-        pub fn asking_repay(&mut self)  {
+        pub fn asking_repay(&mut self) {
             let current_epoch = Decimal::from(Runtime::current_epoch().number());
             let end_epoch = Decimal::from(current_epoch + 10000);
-            for (_key, _value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
+            // let bad_payer_bucket: Option<Bucket>;
+            for (_key, value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
                 // Check if the account still exists in the vector of borrowers
                 // This means that first we need to check if the borrower has already repaid its loan
-                if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == _value.account) {
+                if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == value.account) {
                     // If found, check if it needs to repay
-                    info!("Account {} is already a borrower", _value.account);
-                    match _value.epoch_limit_for_repaying > _key {
+                    info!("Account {} is already a borrower", value.account);
+                    match current_epoch > value.epoch_limit_for_repaying {
                         true => {
                             //payment is late
                             info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
-                            _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, _key);
+                            value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
                             //mint a nft as 'bad payer' and send it to the account
-                            // let staff_badge_bucket: Bucket = self
-                            // .staff_badge_resource_manager
-                            // .mint_ruid_non_fungible(StaffBadge {
-                            //     username: _value.account.clone(),
-                            // });
+                            // bad_payer_bucket = Some(self
+                            // .badpayer_badge_resource_manager
+                            // .mint_ruid_non_fungible(BadPayerBadge {
+                            //     account: value.account.clone(),
+                            //     amount_to_refund: value.amount_borrowed,
+                            //     expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
+                            // }));
                             //TODO send an nft to the bad payer !! 
                             //prepare for sending an nft from tx manifest build inside the frontend
-                            self.late_payers_accounts.push(_value.account.clone());
+                            self.late_payers_accounts.push(value.account.clone());
                         }
                         false => {
                             //payment is not yet late
                             info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
-                            _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, current_epoch);
+                            value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                         }
                     }
                 } else {
                     // If not found, it does need to be removed also from borrowers_positions !!
                     // self.borrowers_accounts.push(Borrower { name: String::from(user_account), /* other fields if any */ });
-                    println!("Account {} and its position has to be removed as a borrower", _value.account);
+                    info!("Account {} and its position has to be removed as a borrower", value.account);
                 }
             }
             // late_payers_accounts
+            info!("Late payers accounts before reorg {:?}", self.late_payers_accounts);
 
             //TODO needs to find the accounts that:
             // - are present in the late_payer list but not in the borrowers_account list
@@ -391,8 +431,15 @@ mod lending_dapp {
             .cloned()
             .collect();
 
+            info!("Accounts have repaid {:?}", accounts_to_redeem);
             // Insert the found accounts into late_payers_redeemed_accounts
             self.late_payers_redeemed_accounts.extend(accounts_to_redeem);
+
+            // Remove the redeemed accounts from late_payers_accounts
+            self.late_payers_accounts.retain(|account| !self.late_payers_redeemed_accounts.contains(account));
+
+            info!("Late payers accounts after reorg {:?}", self.late_payers_accounts);
+            info!("Redeemed Late payers accounts after reorg {:?}", self.late_payers_redeemed_accounts);
         }
 
 
@@ -650,6 +697,23 @@ mod lending_dapp {
             self.staff.insert(key, id);
 
             staff_badge_bucket
+        }
+
+        //mint a bad payer nft
+        pub fn mint_bad_payer(&mut self) -> Bucket {
+            let mut bad_payer_bucket = self.badpayer_badge_resource_manager.create_empty_bucket();
+            for index in 1..=5 {
+                println!("Current number: {}", index);
+                let nft = self
+                .badpayer_badge_resource_manager
+                .mint_ruid_non_fungible(BadPayerBadge {
+                    account: index.to_string(),
+                    amount_to_refund: dec!(1),
+                    expected_borrow_epoch_timeline: dec!(1),
+                });
+                bad_payer_bucket.put(nft);
+            }
+            bad_payer_bucket
         }
 
         pub fn recall_staff_badge(&mut self) {

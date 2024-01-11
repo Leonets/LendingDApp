@@ -16,10 +16,12 @@ output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
-export staff_badge=`echo $output | cut -d " " -f4`
-export benefactor_badge=`echo $output | cut -d " " -f5`
-export lending_token=`echo $output | cut -d " " -f6`
-export lnd_manager=`echo $output | cut -d " " -f7`
+export benefactor_badge=`echo $output | cut -d " " -f4`
+export bad_payer=`echo $output | cut -d " " -f5`
+export staff_badge=`echo $output | cut -d " " -f6`
+export lending_token=`echo $output | cut -d " " -f7`
+export lnd_manager=`echo $output | cut -d " " -f8`
+
 
 
 export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh
@@ -31,6 +33,7 @@ echo 'staff_badge = '$staff_badge
 echo 'lending_token = ' $lending_token
 echo 'lnd_manager = ' $lnd_manager
 echo 'benefactor_badge = ' $benefactor_badge
+echo 'bad_payer = ' $bad_payer
 
 echo ' '
 echo 'account = ' $account
@@ -140,9 +143,11 @@ resim run rtm/set_interest.rtm
 
 
 resim set-current-epoch 400
-
 echo '>>> Someone is late ?'
+resim run rtm/asking_repay.rtm
 
+resim set-current-epoch 1701
+echo '>>> Now someone should be late '
 resim run rtm/asking_repay.rtm
 
 echo '>>> Repay'
@@ -150,6 +155,10 @@ echo '>>> Repay'
 resim run rtm/repay.rtm
 # fee 10
 # main pool 5
+
+echo '>>> Check again how are the list late_payers and redeemed late payers'
+resim run rtm/asking_repay.rtm
+
 
 resim show $account
 

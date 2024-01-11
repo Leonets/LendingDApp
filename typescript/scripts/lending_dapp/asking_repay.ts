@@ -1,4 +1,4 @@
-import { radixEngineClient } from '../../config'
+import { config, radixEngineClient } from '../../config'
 import { logger } from '../../helpers'
 
 export const sendTransactionManifest = (lock_fee = 100) => {
@@ -7,6 +7,7 @@ export const sendTransactionManifest = (lock_fee = 100) => {
     .andThen(({ wellKnownAddresses, convertStringManifest }) => {
       logger.info('Starting.... but not using this address', wellKnownAddresses)
       logger.info('lock_fee.... ', lock_fee)
+      
       return convertStringManifest(`
           CALL_METHOD
               Address("${wellKnownAddresses.accountAddress}")
@@ -16,10 +17,10 @@ export const sendTransactionManifest = (lock_fee = 100) => {
           CALL_METHOD
               Address("${wellKnownAddresses.accountAddress}")
               "create_proof_of_amount"    
-              Address("resource_tdx_2_1t542hvj28mgl6wggrltfl0k7pfq9h0hzlywvrq4y75gvpx46kv5mud")
+              Address("${config.owner_badge}")
               Decimal("1");
           CALL_METHOD
-              Address("component_tdx_2_1cpc7lq4d0yzly0htf2na98xrkp5wvrtps32f9mnftk0qtayzljff5n")
+              Address("${config.component}")
               "asking_repay"
           ;
           CALL_METHOD
