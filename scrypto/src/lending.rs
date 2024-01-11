@@ -79,7 +79,7 @@ mod lending_dapp {
             recall_staff_badge => restrict_to: [admin, OWNER];
         }
     }
-    struct LendingDApp {
+    struct LendingDApp<'a> {
         lendings: Vault,
         collected_xrd: Vault,
         fee_xrd: Vault,
@@ -98,6 +98,8 @@ mod lending_dapp {
         borrowers_positions: AvlTree<Decimal, CreditScore>,
         staff: AvlTree<u16, NonFungibleLocalId>,
         borrowers_accounts: Vec<Borrower>,
+        late_payers_accounts: Vec<String>,
+        late_payers_redeemed_accounts: Vec<String>,
     }
 
 
@@ -123,6 +125,8 @@ mod lending_dapp {
             let borrowers_positions: AvlTree<Decimal, CreditScore> = AvlTree::new();
             let borrowers_accounts: Vec<Borrower> = Vec::new();
             let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
+            let late_payers_accounts: Vec<String> = Vec::new();
+            let late_payers_redeemed_accounts: Vec<String> = Vec::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -269,6 +273,8 @@ mod lending_dapp {
                     borrowers_positions: borrowers_positions,
                     staff: staff,
                     borrowers_accounts: borrowers_accounts,
+                    late_payers_accounts: late_payers_accounts,
+                    late_payers_redeemed_accounts: late_payers_redeemed_accounts,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -322,36 +328,73 @@ mod lending_dapp {
             None
         }
 
+        // fn add_borrower(&mut self, user_account: String) {
+        //     // Check if the account already exists in the vector
+        //     if let Some(index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == user_account) {
+        //         // If found, remove the element
+        //         self.borrowers_accounts.remove(index);
+        //         info!("Account {} removed from the vector.", user_account);
+        //     } else {
+        //         // If not found, add the new account to the vector
+        //         self.borrowers_accounts.push(Borrower { name: String::from(user_account.clone()), /* other fields if any */ });
+        //         info!("Account {} added to the vector.", user_account.clone());
+        //     }
+        // }
 
         //utility for asking borrow repay
-        pub fn asking_repay(&mut self) -> Vec<String> {
+        pub fn asking_repay(&mut self)  {
             let current_epoch = Decimal::from(Runtime::current_epoch().number());
             let end_epoch = Decimal::from(current_epoch + 10000);
-            let mut late_payers_accounts: Vec<String> = Vec::new();
             for (_key, _value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
-                match _value.epoch_limit_for_repaying > _key {
-                    true => {
-                        //payment is late
-                        info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
-                        _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, _key);
-                        
-                        //mint a nft as 'bad payer' and send it to the account
-                        let staff_badge_bucket: Bucket = self
-                        .staff_badge_resource_manager
-                        .mint_ruid_non_fungible(StaffBadge {
-                            username: _value.account.clone(),
-                        });
-                        //send an nft to the bad payer !!
-                        late_payers_accounts.push(_value.account.clone());
+                // Check if the account still exists in the vector of borrowers
+                // This means that first we need to check if the borrower has already repaid its loan
+                if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == _value.account) {
+                    // If found, check if it needs to repay
+                    info!("Account {} is already a borrower", _value.account);
+                    match _value.epoch_limit_for_repaying > _key {
+                        true => {
+                            //payment is late
+                            info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
+                            _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, _key);
+                            
+                            //mint a nft as 'bad payer' and send it to the account
+                            // let staff_badge_bucket: Bucket = self
+                            // .staff_badge_resource_manager
+                            // .mint_ruid_non_fungible(StaffBadge {
+                            //     username: _value.account.clone(),
+                            // });
+                            //TODO send an nft to the bad payer !! 
+                            //prepare for sending an nft from tx manifest build inside the frontend
+                            self.late_payers_accounts.push(_value.account.clone());
+                        }
+                        false => {
+                            //payment is not yet late
+                            info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
+                            _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, current_epoch);
+                        }
                     }
-                    false => {
-                        info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
-                        _value.account, _value.amount_borrowed, _value.epoch_limit_for_repaying, current_epoch);
-                    }
+                } else {
+                    // If not found, it does need to be removed also from borrowers_positions !!
+                    // self.borrowers_accounts.push(Borrower { name: String::from(user_account), /* other fields if any */ });
+                    println!("Account {} and its position has to be removed as a borrower", _value.account);
                 }
             }
-            late_payers_accounts
+            // late_payers_accounts
+
+            //TODO needs to find the accounts that:
+            // - are present in the late_payer list but not in the borrowers_account list
+            // - accounts found has to be inserted in the 'redeemed late payers' for then recalling the nft
+            // Find accounts in late_payers_accounts but not in borrowers_accounts
+            let accounts_to_redeem: Vec<String> = self.late_payers_accounts
+            .iter()
+            .filter(|account| !self.borrowers_accounts.iter().any(|borrower| borrower.name == **account))
+            .cloned()
+            .collect();
+
+            // Insert the found accounts into late_payers_redeemed_accounts
+            self.late_payers_redeemed_accounts.extend(accounts_to_redeem);
         }
+
 
         //lend some xrd
         pub fn lend_tokens(&mut self, loan: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
@@ -492,7 +535,7 @@ mod lending_dapp {
             let amount_to_be_returned = lender_data.borrow_amount + interest_totals;
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
             info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
-            let total =   amount_to_be_returned + fees;
+            let total = amount_to_be_returned + fees;
             info!("Total Amount to repay with interest and fees: {:?} ", total);  
 
             //paying fees
@@ -513,6 +556,9 @@ mod lending_dapp {
                 //remove the user account as a current borrower
                 // self.borrowers_accounts.retain(|&x| x != user_account);            
                 self.borrowers_accounts.retain(|borrower| borrower.name != user_account);
+                //remove also from the late_payers (if present)
+                //TODO not sure if this has to be removed from here
+                // self.late_payers_accounts.retain(|account| account != user_account);
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 

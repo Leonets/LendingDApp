@@ -29,7 +29,7 @@ pub fn assert_resource(res_addr: &ResourceAddress, expect_res_addr: &ResourceAdd
 }
 
 //for lending
-pub fn lend_complete_checks(start_epoch: u64, period_length: Decimal, current_epoch: u64, amount_lended: Decimal, reward_type: String){
+pub fn lend_complete_checks(start_epoch: u64, period_length: Decimal, _current_epoch: u64, amount_lended: Decimal, reward_type: String){
     match Reward::from_str(&reward_type) {      
         Ok(reward) => {
             match reward {
