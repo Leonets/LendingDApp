@@ -16,4 +16,8 @@ export const config = {
   network: radixEngineClient.gatewayClient.networkConfig,
   component: process.env.COMPONENT,
   owner_badge: process.env.OWNER_BADGE,
+
+  bad_payer: process.env.BAD_PAYER,
+  smart_contract_owner_address: process.env.SC_OWNER,
+  dapp_id: process.env.DAPP_ID
 }

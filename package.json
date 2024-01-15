@@ -28,7 +28,9 @@
     "gw:status": "npm run esm ./typescript/scripts/gw/status.ts",
     "lending:deploy-lendingdapp": "npm run esm ./typescript/scripts/lending_dapp/deploy_lendingdapp.ts",
     "lending:extend_lending_pool": "npm run esm ./typescript/scripts/lending_dapp/extend_lending_pool.ts",
-    "lending:asking_repay": "npm run esm ./typescript/scripts/lending_dapp/asking_repay.ts"
+    "lending:asking_repay": "npm run esm ./typescript/scripts/lending_dapp/asking_repay.ts",
+    "lending:send_bad_payer_nft": "npm run esm ./typescript/scripts/lending_dapp/send_nft_to_bad_payers.ts",
+    "lending:recall_bad_payer_nft": "npm run esm ./typescript/scripts/lending_dapp/recall_nft_from_bad_payers.ts"
   },
   "license": "SEE LICENSE",
   "dependencies": {

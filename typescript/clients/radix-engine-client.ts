@@ -149,7 +149,6 @@ export const RadixEngineClient = ({
       createTransactionHeader(signerPublicKey),
     ])
       .map(([builder, transactionHeader]) => {
-        logger.info('public key.... ', signerPublicKey)
         return {
           builder,
           transactionHeader,
@@ -157,7 +156,6 @@ export const RadixEngineClient = ({
         }
       })
       .andThen(({ builder, transactionHeader, signerPrivateKey }) => {
-        logger.info('private key.... ', signerPrivateKey)
         try {
           return ok(
             builder

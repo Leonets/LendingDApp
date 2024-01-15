@@ -5,8 +5,8 @@ export const sendTransactionManifest = (lock_fee = 100) => {
   return radixEngineClient
     .getManifestBuilder()
     .andThen(({ wellKnownAddresses, convertStringManifest }) => {
-      logger.info('Starting.... but not using this address', wellKnownAddresses)
-      logger.info('lock_fee.... ', lock_fee)
+      logger.info('Starting.... with logger', lock_fee);
+      console.info('Starting .... with console');
       
       return convertStringManifest(`
           CALL_METHOD
@@ -29,7 +29,7 @@ export const sendTransactionManifest = (lock_fee = 100) => {
               Expression("ENTIRE_WORKTOP")
               Enum<0u8>()
           ;          
-    `)
+        `)
         .andThen(radixEngineClient.submitTransaction)
         .andThen(({ txId }) =>
           radixEngineClient.gatewayClient
@@ -43,4 +43,5 @@ export const sendTransactionManifest = (lock_fee = 100) => {
 sendTransactionManifest()
   .mapErr((error) => {
     logger.error('Error executing transaction:', error);
+    console.error('Error executing transaction:', error);
   });

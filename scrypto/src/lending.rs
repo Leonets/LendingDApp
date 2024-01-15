@@ -364,19 +364,6 @@ mod lending_dapp {
             None
         }
 
-        // fn add_borrower(&mut self, user_account: String) {
-        //     // Check if the account already exists in the vector
-        //     if let Some(index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == user_account) {
-        //         // If found, remove the element
-        //         self.borrowers_accounts.remove(index);
-        //         info!("Account {} removed from the vector.", user_account);
-        //     } else {
-        //         // If not found, add the new account to the vector
-        //         self.borrowers_accounts.push(Borrower { name: String::from(user_account.clone()), /* other fields if any */ });
-        //         info!("Account {} added to the vector.", user_account.clone());
-        //     }
-        // }
-
         //utility for asking borrow repay
         pub fn asking_repay(&mut self) {
             let current_epoch = Decimal::from(Runtime::current_epoch().number());
