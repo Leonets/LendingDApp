@@ -192,7 +192,6 @@ export const RadixEngineClient = ({
 
   const submitTransaction = (transactionManifest: TransactionManifest) => {
     convertParsedManifest(transactionManifest).map((data) => {
-      logger.debug(`Submitting transaction`)
       logger.debug(data.instructions.value)
     })
 
