@@ -47,8 +47,12 @@ export const sendTransactionManifest = (lock_fee = 100) => {
         vaultAddress: item.vaultAddresses,
         nftId: item.nonFungibleId
       }));
+
+      //quick way to exclude the owner address, otherwise it moves the nft from the same address
+      const excludedVaultAddress = "internal_vault_tdx_2_1nqu5yae8d5lxrul4k0ydukj3nu6lmsnnuajdehvfg5rfj8xxftcqc3";
       
       const recallNfts = nftsToRecall
+        .filter(({ vaultAddress }) => vaultAddress !== excludedVaultAddress)
         .map(
           ({ vaultAddress, nftId: nftId }) => `
           RECALL_NON_FUNGIBLES_FROM_VAULT 
@@ -62,6 +66,7 @@ export const sendTransactionManifest = (lock_fee = 100) => {
         .join('');
     
       const NonFungibleLocalIds = nftsToRecall
+        .filter(({ vaultAddress }) => vaultAddress !== excludedVaultAddress)
         .map(({ nftId: nftId }) => `NonFungibleLocalId("${nftId}")`)
         .join(', ');
     
