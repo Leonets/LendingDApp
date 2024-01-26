@@ -16,7 +16,7 @@ SET_METADATA
     Address("account_tdx_2_129ggufxnqcnuw2pywl2222pf8zecwgzg0hd27xjgkcvnh7es9g0v4s")
     "icon_url"
     Enum<13u8>(
-        "https://test-lending.stakingcoins.eu/images/logo3b.jpg"
+        "https://test.zerocollateral.eu/images/logo3b.jpg"
     )
 ;
 SET_METADATA
@@ -31,7 +31,7 @@ SET_METADATA
     "claimed_websites"
     Enum<142u8>(
         Array<String>(
-            "https://test-lending.stakingcoins.eu"
+            "https://test.zerocollateral.eu"
         )
     )
 ;
