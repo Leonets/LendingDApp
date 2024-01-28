@@ -117,6 +117,8 @@ You can run (typescrypt):
      - 'npm run' to look for all the available command
      - 'npm run lending:deploy-lendingdapp' to deploy the package to stokenet
      - 'npm run lending:asking_repay' to ask borrowers for repay if the expected epoch has been exceeded
+     - 'npm run lending:send_bad_payer_nft': to send to late borrowers the BadPayer NFT
+     - 'npm run lending:recall_bad_payer_nft': tp recall the BadPayer NFT from the borrowers that have repaid the loan
 
 You can run (terraform):
     - run 'npm run build' in the 'client' directory of the Frontend application to have the website compiled
@@ -130,6 +132,14 @@ To local test the whole application you can:
     - save those value in .env in the Frontend application
     - run 'npm run dev' in the 'client' directory of the Frontend application
     - a website will be available at localhost:5173 for local testing with a remote stokenet deployed smart contract
+
+# Application Architecture
+Let's describe which is the architecture of the whole dApp
+
+    - Vaults: 4 vaults are managed by the contract
+    - Data: Some vectors and trees are managed by the contract 
+    - Processes:
+    - Metadata: 
 
 
 # TODO & Useful commands

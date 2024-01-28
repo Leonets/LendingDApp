@@ -35,6 +35,8 @@ pub struct LenderData {
     #[mutable]
     start_borrow_epoch: Epoch,
     #[mutable]
+    expected_end_borrow_epoch: Decimal,
+    #[mutable]
     end_borrow_epoch: Epoch,
     #[mutable]
     borrow_amount: Decimal
@@ -74,6 +76,7 @@ mod lending_dapp {
             borrow => PUBLIC;
             repay => PUBLIC;
             asking_repay => restrict_to: [admin, OWNER];
+            clean_data => restrict_to: [admin, OWNER];
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
@@ -350,6 +353,7 @@ mod lending_dapp {
                     end_lending_epoch: Epoch::of(0),
                     amount: dec!("0"),
                     start_borrow_epoch: Epoch::of(0),
+                    expected_end_borrow_epoch: dec!(0),
                     end_borrow_epoch: Epoch::of(0),
                     borrow_amount: dec!("0")
                 }
@@ -391,7 +395,10 @@ mod lending_dapp {
                             // }));
                             //TODO send an nft to the bad payer !! 
                             //prepare for sending an nft from tx manifest build inside the frontend
-                            self.late_payers_accounts.push(value.account.clone());
+                            // Check if the element is not already in the vector before pushing it
+                            if !self.late_payers_accounts.contains(&value.account) {
+                                self.late_payers_accounts.push(value.account.clone());
+                            }
                         }
                         false => {
                             //payment is not yet late
@@ -419,7 +426,7 @@ mod lending_dapp {
             .collect();
 
             info!("Accounts have repaid {:?}", accounts_to_redeem);
-            // Insert the found accounts into late_payers_redeemed_accounts
+            // Insert the found accounts into late_payers_redeemed_accounts for then recalling the nft
             self.late_payers_redeemed_accounts.extend(accounts_to_redeem);
 
             // Remove the redeemed accounts from late_payers_accounts
@@ -428,6 +435,12 @@ mod lending_dapp {
             info!("Late payers accounts after reorg {:?}", self.late_payers_accounts);
             info!("Redeemed Late payers accounts after reorg {:?}", self.late_payers_redeemed_accounts);
         }
+
+        //utility for asking borrow repay
+        pub fn clean_data(&mut self) {
+            self.late_payers_redeemed_accounts.clear();
+        }
+
 
 
         //lend some xrd
@@ -541,6 +554,7 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
+            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", epoch);
             self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
             return (xrd_to_return,Some(lender_badge))                
         }
@@ -580,7 +594,6 @@ mod lending_dapp {
 
             //Update the data on the network
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());
             //repay the loan
             if remaining <= dec!("0") {
                 info!("Setting loan as closed ");  
@@ -593,6 +606,11 @@ mod lending_dapp {
                 //remove also from the late_payers (if present)
                 //TODO not sure if this has to be removed from here
                 // self.late_payers_accounts.retain(|account| account != user_account);
+
+                //Update epoch on NFT
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", dec!(0));
+                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());    
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
