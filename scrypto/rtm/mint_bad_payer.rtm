@@ -23,7 +23,7 @@ CALL_METHOD
 CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     "create_proof_of_amount"
-    Address("resource_tdx_2_1t52wjk29s76m7k4ssn6pf0pgrq2w3p74rtwsqkxxdth764kvp8jndk")
+    Address("resource_tdx_2_1t5nmm2vzedwj82apkh20a4tfksjfxatjz6hyu9lnhx0tatzxgffvqg")
     Decimal("1")
 ;
 CALL_METHOD

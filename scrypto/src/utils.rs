@@ -75,6 +75,13 @@ pub fn lend_checks_time_based(amount_lended: Decimal){
     );
 }
 
+pub fn lend_ongoing(num_xrds: Decimal, max: u16){
+    assert!(
+        num_xrds <= Decimal::from(max),
+        "You have some tokens in the contract, please take back/repay before unregistering!"
+    );
+}
+
 pub fn lend_amount_checks(num_xrds: Decimal, min: u16, max: u16){
     assert!(
         num_xrds <= Decimal::from(max),
@@ -125,7 +132,16 @@ pub fn borrow_checks(
     );
 }
 
-
+//for borrowings
+pub fn borrow_epoch_max_length_checks(
+    borrow_epoch_max_allowed_length: Decimal, borrow_epochs_requested: Decimal){
+    // Check the borrow epochs length
+    info!("Max length of the borrow in epochs : {:?} ", borrow_epoch_max_allowed_length);  
+    assert!(
+        borrow_epoch_max_allowed_length >= borrow_epochs_requested,
+        "You cannot borrow for more than epochs : {:?} ", borrow_epoch_max_allowed_length
+    );
+}
 
 //for repay
 pub fn repay_checks(allowed_amount: Decimal, repaied_amount: Decimal){

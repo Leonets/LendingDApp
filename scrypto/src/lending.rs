@@ -81,6 +81,7 @@ mod lending_dapp {
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [admin, OWNER];
             set_reward_type => restrict_to: [admin, OWNER];
+            set_borrow_epoch_max_length => restrict_to: [admin, OWNER];
             set_interest => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
@@ -99,6 +100,7 @@ mod lending_dapp {
         donations_xrd: Vault,
         reward: Decimal,
         interest: Decimal,
+        borrow_epoch_max_lenght: Decimal,
         lnd_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
         benefactor_badge_resource_manager: ResourceManager,
@@ -149,7 +151,7 @@ mod lending_dapp {
                 ResourceBuilder::new_fungible(OwnerRole::None)
                     .metadata(metadata!(init{
                         "name"=>"LendingDapp Owner badge", locked;
-                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
                     }))
                     .divisibility(DIVISIBILITY_NONE)
@@ -161,7 +163,7 @@ mod lending_dapp {
                 ))))
                 .metadata(metadata!(init{
                     "name"=>"LendingDapp Admin badge", locked;
-                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
                 }))
                 .mint_roles(mint_roles! (
@@ -179,7 +181,7 @@ mod lending_dapp {
                 .metadata(metadata!(init{
                     "name" => "LendingDapp Staff_badge", locked;
                     "description" => "A badge to be used for some administrative function", locked;
-                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -203,7 +205,7 @@ mod lending_dapp {
                 .metadata(metadata!(init{
                     "name" => "LendingDapp Benefactor_badge", locked;
                     "description" => "A badge to be used for rewarding benefactors", locked;
-                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
                     minter => rule!(require(global_caller(component_address)));
@@ -227,7 +229,7 @@ mod lending_dapp {
                 .metadata(metadata!(init{
                     "name" => "LendingDapp BadPayer", locked;
                     "description" => "A signal to indicate that the account has not repaid the loan", locked;
-                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/badPayer.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/badPayer.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
                     minter => rule!(require(global_caller(component_address)));
@@ -250,7 +252,7 @@ mod lending_dapp {
                     "name" => "LendingToken", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
-                    "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/lending_token.png"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logoSlimToken.png"), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -264,7 +266,7 @@ mod lending_dapp {
                 .metadata(metadata!(
                     init {
                         "name" => "LendingDapp NFT", locked;
-                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/lending_nft.png"), locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/logoSlimNft.png"), locked;
                         // "icon_url" => Url::of(get_nft_icon_url()), locked;
                         "description" => "An NFT containing information about your liquidity", locked;
                         // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
@@ -300,6 +302,7 @@ mod lending_dapp {
                     donations_xrd: Vault::new(XRD),
                     reward: reward,
                     interest: interest,
+                    borrow_epoch_max_lenght: dec!(518000),
                     staff_badge_resource_manager: staff_badge,
                     benefactor_badge_resource_manager: benefactor_badge,
                     lendings_nft_manager: nft_manager,
@@ -328,9 +331,9 @@ mod lending_dapp {
                     // },
                     init {
                         "name" => "LendingDapp", locked;
-                        "icon_url" => Url::of("https://test-lending.stakingcoins.eu/images/logo3b.jpg"), locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo3b.jpg"), locked;
                         "description" => "LendingDapp SmartContract for lending and borrowing service", locked;
-                        "claimed_websites" =>  ["https://test-lending.stakingcoins.eu"], locked;
+                        "claimed_websites" =>  ["https://test.zerocollateral.eu"], locked;
                     }
                 ))//specify what this roles means
                 .roles(roles!(
@@ -342,6 +345,40 @@ mod lending_dapp {
  
             return (component, admin_badge, owner_badge);
         }
+
+        //register to the platform
+        // pub fn register(&mut self, badge: Option<Bucket>) -> Bucket {
+        //     match badge {
+        //         Some(user_nft) => {
+        //             // Handle the case when there is a value (Some)
+        //             // You can access the fields of the Bucket using 'b'
+        //             // Additional logic for handling Some(b) case if needed
+        //             println!("Registering with badge: {:?}", user_nft);
+        //             assert!(true,"You are already registerd !!!");
+        //             user_nft
+        //         }
+        //         None => {
+        //             // Handle the case when there is no value (None)
+        //             // Additional logic for handling None case if needed
+        //             println!("Registering without badge");
+        //             // You need to decide what to return in case of None; here, I'm using a default value
+        //             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+        //             let lender_badge = self.lendings_nft_manager
+        //             .mint_ruid_non_fungible(
+        //                 LenderData {
+        //                     start_lending_epoch: Epoch::of(0),
+        //                     end_lending_epoch: Epoch::of(0),
+        //                     amount: dec!("0"),
+        //                     start_borrow_epoch: Epoch::of(0),
+        //                     expected_end_borrow_epoch: dec!(0),
+        //                     end_borrow_epoch: Epoch::of(0),
+        //                     borrow_amount: dec!("0")
+        //                 }
+        //             );
+        //             lender_badge
+        //         }
+        //     }
+        // }
 
         //register to the platform
         pub fn register(&mut self) -> Bucket {
@@ -364,6 +401,11 @@ mod lending_dapp {
         //unregister from the platform
         pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
+            let non_fung_bucket = lender_badge.as_non_fungible();
+            let amount_lended = non_fung_bucket.non_fungible::<LenderData>().data().amount;
+            lend_ongoing(amount_lended, 100);
+            let amount_borrowed = non_fung_bucket.non_fungible::<LenderData>().data().borrow_amount;
+            lend_ongoing(amount_borrowed, 100);
             lender_badge.burn();
             None
         }
@@ -530,6 +572,7 @@ mod lending_dapp {
             borrow_checks(lender_data.borrow_amount, amount_requested, 
                 self.collected_xrd.amount() * 3 / 100,
                 self.max_borrowing_limit * 100 / 100);
+            borrow_epoch_max_length_checks(self.borrow_epoch_max_lenght,borrow_expected_length);
 
             //prepare for ordering and looking for the next expiring borrow
             let epoch = Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length;
@@ -675,6 +718,11 @@ mod lending_dapp {
         //set the reward type, if fixed or timebased
         pub fn set_reward_type(&mut self, reward_type: String) {
             self.reward_type = reward_type
+        }
+
+        //set the max lenght of a borrow in epochs
+        pub fn set_borrow_epoch_max_length(&mut self, borrow_epoch_max_lenght: Decimal) {
+            self.borrow_epoch_max_lenght = borrow_epoch_max_lenght
         }
 
         //withdraw the fees generated by the component

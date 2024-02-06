@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-01-27T10:19:59.621Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.21 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="Oc0aUwEfzOsZNA_DzLAl" version="22.1.21" type="device">
+<mxfile host="Electron" modified="2024-01-30T22:11:36.591Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.21 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="jG8y4zqbdEPo1f73OXgO" version="22.1.21" type="device">
   <diagram name="Page-1" id="54c02804-9d69-ba3f-8aca-1021b27b8050">
     <mxGraphModel dx="1290" dy="635" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
@@ -7,19 +7,13 @@
         <mxCell id="7c3a617817c5cf35-16" value="" style="html=1;shadow=0;dashed=0;align=center;verticalAlign=middle;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;direction=north;notch=0;strokeWidth=2;fillColor=#CCCCCC;fontSize=14;fontColor=#000000;strokeColor=none;" parent="1" vertex="1">
           <mxGeometry x="39" y="595" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="7c3a617817c5cf35-4" value="1000" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.infographic.shadedCube;isoAngle=15;fillColor=#10739E;strokeColor=none;fontFamily=Helvetica;fontSize=20;align=center;strokeWidth=2;" parent="1" vertex="1">
-          <mxGeometry x="59" y="445" width="120" height="110" as="geometry" />
-        </mxCell>
-        <mxCell id="7c3a617817c5cf35-7" value="0" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.infographic.shadedCube;isoAngle=15;fillColor=#F2931E;strokeColor=none;fontFamily=Helvetica;fontSize=20;align=center;strokeWidth=2;" parent="1" vertex="1">
-          <mxGeometry x="259" y="460" width="120" height="95" as="geometry" />
-        </mxCell>
         <mxCell id="7c3a617817c5cf35-8" value="2000" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.infographic.shadedCube;isoAngle=15;fillColor=#AE4132;strokeColor=none;fontFamily=Helvetica;fontSize=20;align=center;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="564" y="365" width="120" height="190" as="geometry" />
         </mxCell>
         <mxCell id="7c3a617817c5cf35-10" value="500" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=mxgraph.infographic.shadedCube;isoAngle=15;fillColor=#12AAB5;strokeColor=none;fontFamily=Helvetica;fontSize=20;align=center;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="893" y="450" width="120" height="105" as="geometry" />
         </mxCell>
-        <mxCell id="7c3a617817c5cf35-11" value="&lt;h1&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Lendings&lt;/span&gt;&lt;br&gt;&lt;/h1&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Contenitore dei fungible tokens assegnati a chi fornisce liquidità&lt;/span&gt;&lt;/div&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;strokeWidth=2;fillColor=none;gradientColor=none;fontSize=14;align=center;" parent="1" vertex="1">
+        <mxCell id="7c3a617817c5cf35-11" value="&lt;h1&gt;&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: &amp;quot;Droid Sans Mono&amp;quot;, &amp;quot;monospace&amp;quot;, monospace; font-weight: normal; font-size: 12px; line-height: 16px;&quot;&gt;AvlTree&amp;lt;&lt;span style=&quot;color: #4ec9b0;&quot;&gt;Decimal&lt;/span&gt;, &lt;span style=&quot;color: #4ec9b0;&quot;&gt;Decimal&lt;/span&gt;&amp;gt;&lt;/div&gt;&lt;/h1&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Albero che contiene la % di interesse (e le sue variazioni nel tempo) con la quale si ricompensano i fornitori di liquidità&lt;/span&gt;&lt;/div&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;strokeWidth=2;fillColor=none;gradientColor=none;fontSize=14;align=center;" parent="1" vertex="1">
           <mxGeometry x="18" y="655" width="202" height="140" as="geometry" />
         </mxCell>
         <mxCell id="7c3a617817c5cf35-13" value="&lt;h1&gt;Main Vault&lt;/h1&gt;&lt;p&gt;Contenitore principale che raccoglie la liquidità fornita dai &#39;supplier&#39; e permette il prelievo da parte dei &#39;borrower&#39;&lt;/p&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;strokeWidth=2;fillColor=none;gradientColor=none;fontSize=14;align=center;" parent="1" vertex="1">
@@ -34,11 +28,17 @@
         <mxCell id="7c3a617817c5cf35-19" value="" style="html=1;shadow=0;dashed=0;align=center;verticalAlign=middle;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;direction=north;notch=0;strokeWidth=2;fillColor=#CCCCCC;fontSize=14;fontColor=#000000;strokeColor=none;" parent="1" vertex="1">
           <mxGeometry x="874" y="595" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="AOj93E6qKk-X4wnYrxzE-1" value="" style="html=1;shadow=0;dashed=0;align=center;verticalAlign=middle;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;direction=north;notch=0;strokeWidth=2;fillColor=#CCCCCC;fontSize=14;fontColor=#000000;strokeColor=none;" vertex="1" parent="1">
-          <mxGeometry x="239" y="590" width="160" height="60" as="geometry" />
+        <mxCell id="AOj93E6qKk-X4wnYrxzE-1" value="" style="html=1;shadow=0;dashed=0;align=center;verticalAlign=middle;shape=mxgraph.arrows2.arrow;dy=0.6;dx=40;direction=north;notch=0;strokeWidth=2;fillColor=#CCCCCC;fontSize=14;fontColor=#000000;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="239" y="595" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="AOj93E6qKk-X4wnYrxzE-2" value="&lt;h1&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Fee&lt;/span&gt;&lt;br&gt;&lt;/h1&gt;&lt;div&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;Contenitore delle fee raccolte dalle operazioni eseguite dal contratto&lt;/span&gt;&lt;/div&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;strokeWidth=2;fillColor=none;gradientColor=none;fontSize=14;align=center;" vertex="1" parent="1">
-          <mxGeometry x="218" y="650" width="202" height="140" as="geometry" />
+        <mxCell id="AOj93E6qKk-X4wnYrxzE-2" value="&lt;h1 style=&quot;border-color: var(--border-color);&quot;&gt;&lt;div style=&quot;border-color: var(--border-color); color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: &amp;quot;Droid Sans Mono&amp;quot;, &amp;quot;monospace&amp;quot;, monospace; font-weight: normal; font-size: 12px; line-height: 16px;&quot;&gt;AvlTree&amp;lt;Decimal,&amp;nbsp;&lt;span style=&quot;border-color: var(--border-color); color: rgb(78, 201, 176);&quot;&gt;Decimal&lt;/span&gt;&amp;gt;&lt;/div&gt;&lt;/h1&gt;&lt;h1&gt;&lt;div style=&quot;border-color: var(--border-color); font-size: 14px; font-weight: 400;&quot;&gt;&lt;span style=&quot;border-color: var(--border-color); background-color: initial;&quot;&gt;Albero che contiene la % di interesse (e le sue variazioni nel tempo) che viene addebitata a chi richiede&amp;nbsp; liquidità in prestito&lt;/span&gt;&lt;/div&gt;&lt;/h1&gt;" style="text;html=1;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;strokeWidth=2;fillColor=none;gradientColor=none;fontSize=14;align=center;" parent="1" vertex="1">
+          <mxGeometry x="218" y="655" width="202" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="2gU1CMO9xjn-bq0Fzze3-7" value="Epoch 1000 - Interest 3%&lt;br&gt;Epoch 1500 - Interest 4%&lt;br&gt;Epoch 9000 - Interest 5%&lt;br&gt;Epoch 14000 - Interest 4,5%" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="450" width="170" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="2gU1CMO9xjn-bq0Fzze3-8" value="Epoch 1000 - Interest 7%&lt;br&gt;Epoch 1900 - Interest 8%&lt;br&gt;Epoch 9500 - Interest 9%&lt;br&gt;Epoch 12000 - Interest 8,5%" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="234" y="450" width="170" height="110" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
