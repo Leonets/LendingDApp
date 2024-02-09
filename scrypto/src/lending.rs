@@ -56,7 +56,6 @@ pub struct CreditScore {
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct Borrower {
     name: String,
-    // Other fields...
 }
 
 
@@ -117,8 +116,6 @@ mod lending_dapp {
         late_payers_redeemed_accounts: Vec<String>,
         badpayer_badge_resource_manager: ResourceManager,
     }
-
-
 
     impl LendingDApp {
         // given a reward, interest level and a symbol name, creates a ready-to-use Lending dApp
@@ -403,9 +400,9 @@ mod lending_dapp {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
             let non_fung_bucket = lender_badge.as_non_fungible();
             let amount_lended = non_fung_bucket.non_fungible::<LenderData>().data().amount;
-            lend_ongoing(amount_lended, 100);
+            lend_ongoing(amount_lended, 10);
             let amount_borrowed = non_fung_bucket.non_fungible::<LenderData>().data().borrow_amount;
-            lend_ongoing(amount_borrowed, 100);
+            lend_ongoing(amount_borrowed, 10);
             lender_badge.burn();
             None
         }
@@ -457,7 +454,7 @@ mod lending_dapp {
             // late_payers_accounts
             info!("Late payers accounts before reorg {:?}", self.late_payers_accounts);
 
-            //TODO needs to find the accounts that:
+            //It needs to find the accounts that:
             // - are present in the late_payer list but not in the borrowers_account list
             // - accounts found has to be inserted in the 'redeemed late payers' for then recalling the nft
             // Find accounts in late_payers_accounts but not in borrowers_accounts
@@ -478,11 +475,10 @@ mod lending_dapp {
             info!("Redeemed Late payers accounts after reorg {:?}", self.late_payers_redeemed_accounts);
         }
 
-        //utility for asking borrow repay
+        //utility for cleaning data after recalling BadPayer NFTs
         pub fn clean_data(&mut self) {
             self.late_payers_redeemed_accounts.clear();
         }
-
 
 
         //lend some xrd
@@ -583,7 +579,6 @@ mod lending_dapp {
             };
             self.borrowers_positions.insert(epoch, credit_score);
             //saving the current account as a borrower account
-            // Assuming Borrower has a 'name' field of type String
             self.borrowers_accounts.push(Borrower { name: String::from(user_account.clone()), /* other fields... */ });
             info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.clone(), amount_requested, epoch);  
 
@@ -643,12 +638,8 @@ mod lending_dapp {
                 self.collected_xrd.put(loan_repaied.take(total-fees));
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
-                //remove the user account as a current borrower
-                // self.borrowers_accounts.retain(|&x| x != user_account);            
+                //remove the user account as a current borrower      
                 self.borrowers_accounts.retain(|borrower| borrower.name != user_account);
-                //remove also from the late_payers (if present)
-                //TODO not sure if this has to be removed from here
-                // self.late_payers_accounts.retain(|account| account != user_account);
 
                 //Update epoch on NFT
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
@@ -738,13 +729,7 @@ mod lending_dapp {
                     username: username.clone(),
                 });
 
-            //TODO
             let id = staff_badge_bucket.as_non_fungible().non_fungible_local_id();
-            //prepare for checking credit score
-            // let _credit_score = CreditScore {
-            //     amount_borrowed: dec!(0),
-            //     epoch_limit_for_repaying: Decimal::from(Runtime::current_epoch().number()) + dec!(1000),
-            // };
             let key = self.staff.get_length().to_u16().unwrap()+1; 
             info!("Saving staff badge with key : {:?} and id {:?} for the username: {:?}  ",key, id, username);
             self.staff.insert(key, id);
@@ -769,6 +754,7 @@ mod lending_dapp {
             bad_payer_bucket
         }
 
+        //TODO code not working
         pub fn recall_staff_badge(&mut self) {
             for (_key, value) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
                 let vault_address: ResourceAddress = self.staff_badge_resource_manager.address();

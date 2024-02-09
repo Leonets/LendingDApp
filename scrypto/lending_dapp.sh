@@ -65,6 +65,9 @@ resim set-current-epoch 1
 #resim call-method ${component} lend_tokens $xrd:100
 resim run rtm/lend_tokens.rtm
 
+#enable this to test the unregister function
+#resim run rtm/unregister.rtm
+
 resim show $account
 
 echo '>>> Takes back'
