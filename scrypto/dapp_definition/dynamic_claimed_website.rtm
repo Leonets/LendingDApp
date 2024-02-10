@@ -1,0 +1,41 @@
+SET_METADATA
+    Address("$DAPP_ID$")
+    "account_type"
+    Enum<0u8>(
+        "dapp definition"
+    )
+;
+
+SET_METADATA
+    Address("$DAPP_ID$")
+    "name"
+    Enum<0u8>(
+        "Lending dApp"
+    )
+;
+
+SET_METADATA
+    Address("$DAPP_ID$")
+    "icon_url"
+    Enum<13u8>(
+        "https://test.zerocollateral.eu/images/logo3b.jpg"
+    )
+;
+
+SET_METADATA
+    Address("$DAPP_ID$")
+    "description"
+    Enum<0u8>(
+        "Loan Service"
+    )
+;
+
+SET_METADATA
+    Address("$DAPP_ID$")
+    "claimed_websites"
+    Enum<142u8>(
+        Array<String>(
+            "https://test.zerocollateral.eu"
+        )
+    )
+;

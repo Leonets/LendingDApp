@@ -109,13 +109,16 @@ You can run 'scrypto test' from the 'scrypto' directory for testing the main fun
 
 You can run 'scrypto build' from the 'scrypto' directory for building the packages for deploy
 
-# Application automation
+# Application automation (some of this have been moved to the repo 'LendingDappProcesses)
 
 Some shortcut are available for testing, deploying and managing the dApp
 
 You can run (typescrypt):
      - 'npm run' to look for all the available command
      - 'npm run lending:deploy-lendingdapp' to deploy the package to stokenet
+     - 'npm run lending:extend_lending_pool' to extend the lending pool
+
+You can run (typescrypt) from the 'Processes' repo:
      - 'npm run lending:asking_repay' to ask borrowers for repay if the expected epoch has been exceeded
      - 'npm run lending:send_bad_payer_nft': to send to late borrowers the BadPayer NFT
      - 'npm run lending:recall_bad_payer_nft': tp recall the BadPayer NFT from the borrowers that have repaid the loan
@@ -133,7 +136,8 @@ To local test the whole application you can:
     - run 'npm run dev' in the 'client' directory of the Frontend application
     - a website will be available at localhost:5173 for local testing with a remote stokenet deployed smart contract
 
-# Application Architecture
+# Application Architecture (TODO)
+
 Let's describe which is the architecture of the whole dApp
 
     - Vaults: 4 vaults are managed by the contract
@@ -147,3 +151,24 @@ Let's describe which is the architecture of the whole dApp
 //to update the package without resetting resim 
 
 resim publish . --package-address $package
+
+# Managing Smart Contract Upgrade
+At the moment of this writing there is no upgradability in the smart contract so until this gets deployed in the mainnet each new smart contract overrides the preceding one, this are the operation needed in the e layers:
+
+- Scrypto layer (repo 'LendingDApp')
+    - execute bash script for testing and 'scrypto test'
+    - deploy the smart contract: 'npm run lending:deploy-lendingdapp'
+    - use the return 'tx-id' for looking up in the dashboard all the component and resources created
+    - fill the new values in the .env file (this are needed for executing the 'npm run')
+    - execute 'node replaceValues.js' to have the files 'claimed_entities.rtm' and 'claimed_website.rtm' ready in directory scrypto/dapp_definition/
+    - executes the two transactions with the dashboard
+
+- Frontend layer (repo 'LendingDApp-Frontend')
+    - fill the new values in the .env* file (this are needed for Javascript/Typescript inside the website)
+    - fill the dApp id (if changed) inside /client/public/.well-known/radix.json
+    - executes the export of the dApp website (/deploy/export.sh)
+
+- Processes layer (repo 'LendingDApp-Processes')
+    - fill the new values in the .env* file (this are needed for executing the 'npm run')
+    - manually send .env to the server (it is not managed with Terraform)
+    - executes the export (if changed) of the dApp process (/deploy/export.sh)

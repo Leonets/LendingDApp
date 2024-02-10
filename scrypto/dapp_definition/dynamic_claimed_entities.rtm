@@ -5,18 +5,18 @@
 # a tale account id (dapp_definition)
 
 SET_METADATA
-    Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+    Address("$DAPP_ID$")
     "claimed_entities"
     Enum<136u8>(
         Array<Address>(
-            Address("component_tdx_2_1cq8evjn7qma5cekdwweuq8xg3wfq083gthlw9qsutyhfrdzm9yefsu"),
-            Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl"),
-            Address("resource_tdx_2_1t5nmm2vzedwj82apkh20a4tfksjfxatjz6hyu9lnhx0tatzxgffvqg"),
-            Address("resource_tdx_2_1n2nja7km2ee9te3zz4rwsg2d37uwgagt3evwtfdgfyv206lnxwsr0t"),
-            Address("resource_tdx_2_1nftt2f6sp76f3kqd3rghrm5rygygmldga7hk4vw2vq9f6d9wt8n9kk"),
-            Address("resource_tdx_2_1ntf87tyccrns7f25nvjlpvkruqqweyzewl7eehhkj27fazh2khq4v7"),
-            Address("resource_tdx_2_1t5av4dsr6ul3wu8mkjztm283x08dqy2rnzgr7tvgkqtyuk9yxcjmxu"),
-            Address("resource_tdx_2_1ng4nzdxxgr89lgldg0w3z33fxlyvhd7k4dum96t70rh2parrpa6dvt")
+            Address("$VITE_COMP_ADDRESS$"),
+            Address("$VITE_OWNER_BADGE$"),
+            Address("$VITE_ADMIN_BADGE$"),
+            Address("$VITE_STAFF_BADGE_ADDRESS$"),
+            Address("$VITE_BENEFACTOR_BADGE_ADDRESS$"),
+            Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$"),
+            Address("$VITE_LND_TOKEN_ADDRESS$"),
+            Address("$VITE_LND_RESOURCE_ADDRESS$")
         )
     )
 ;
@@ -27,15 +27,15 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("component_tdx_2_1cq8evjn7qma5cekdwweuq8xg3wfq083gthlw9qsutyhfrdzm9yefsu")
+    Address("$VITE_COMP_ADDRESS$")
      #Address("COMP_ADDRESS")
     "dapp_definition"
     Enum<8u8>(
-        Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+        Address("$DAPP_ID$")
         #Address("DAPP_ID")
     )
 ;
@@ -53,16 +53,16 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
@@ -76,16 +76,16 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1t5nmm2vzedwj82apkh20a4tfksjfxatjz6hyu9lnhx0tatzxgffvqg")
+    Address("$VITE_ADMIN_BADGE$")
     #Address("ADMIN_BADGE")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
@@ -98,27 +98,27 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1n2nja7km2ee9te3zz4rwsg2d37uwgagt3evwtfdgfyv206lnxwsr0t")
+    Address("$VITE_STAFF_BADGE_ADDRESS$")
     #Address("STAFF_BADGE")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
 ;
 SET_METADATA
-    Address("resource_tdx_2_1nftt2f6sp76f3kqd3rghrm5rygygmldga7hk4vw2vq9f6d9wt8n9kk")
+    Address("$VITE_BENEFACTOR_BADGE_ADDRESS$")
     #Address("BENEFACTOR_BADGE_ADDRESS")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
@@ -131,16 +131,16 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1t5av4dsr6ul3wu8mkjztm283x08dqy2rnzgr7tvgkqtyuk9yxcjmxu")
+    Address("$VITE_LND_TOKEN_ADDRESS$")
     #Address("LND_TOKEN")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
@@ -151,16 +151,16 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1ng4nzdxxgr89lgldg0w3z33fxlyvhd7k4dum96t70rh2parrpa6dvt")
+    Address("$VITE_LND_RESOURCE_ADDRESS$")
     #Address("LEND_NFT_MANAGER")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
@@ -172,16 +172,16 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1tky7hs2l5yyus3aqkry5mk8dndxwsvgsd358k2unqn3kl26pw0ukwl")
+    Address("$VITE_OWNER_BADGE$")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1ntf87tyccrns7f25nvjlpvkruqqweyzewl7eehhkj27fazh2khq4v7")
+    Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$")
     #Address("BAD_PAYER")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            Address("$DAPP_ID$")
             #Address("DAPP_ID")
         )
     )
