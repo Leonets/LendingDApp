@@ -83,6 +83,7 @@ mod lending_dapp {
             set_borrow_epoch_max_length => restrict_to: [admin, OWNER];
             set_interest => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
+            set_max_percentage_allowed_for_account  => restrict_to: [admin, OWNER];
             withdraw_earnings => restrict_to: [OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
@@ -90,6 +91,7 @@ mod lending_dapp {
             mint_staff_badge => restrict_to: [admin, OWNER];
             recall_staff_badge => restrict_to: [admin, OWNER];
             mint_bad_payer  => restrict_to: [admin, OWNER];
+            mint_bad_payer_vault  => restrict_to: [admin, OWNER];
         }
     }
     struct LendingDApp<> {
@@ -100,6 +102,7 @@ mod lending_dapp {
         reward: Decimal,
         interest: Decimal,
         borrow_epoch_max_lenght: Decimal,
+        max_percentage_allowed_for_account: u32,
         lnd_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
         benefactor_badge_resource_manager: ResourceManager,
@@ -115,6 +118,7 @@ mod lending_dapp {
         late_payers_accounts: Vec<String>,
         late_payers_redeemed_accounts: Vec<String>,
         badpayer_badge_resource_manager: ResourceManager,
+        badpayer_vault: Vault,
     }
 
     impl LendingDApp {
@@ -300,6 +304,7 @@ mod lending_dapp {
                     reward: reward,
                     interest: interest,
                     borrow_epoch_max_lenght: dec!(518000),
+                    max_percentage_allowed_for_account: 3,
                     staff_badge_resource_manager: staff_badge,
                     benefactor_badge_resource_manager: benefactor_badge,
                     lendings_nft_manager: nft_manager,
@@ -314,6 +319,7 @@ mod lending_dapp {
                     late_payers_accounts: late_payers_accounts,
                     late_payers_redeemed_accounts: late_payers_redeemed_accounts,
                     badpayer_badge_resource_manager: bad_payer,
+                    badpayer_vault: Vault::new(bad_payer.address()),
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -425,13 +431,14 @@ mod lending_dapp {
                             value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
                             //mint a nft as 'bad payer' and send it to the account
-                            // bad_payer_bucket = Some(self
-                            // .badpayer_badge_resource_manager
-                            // .mint_ruid_non_fungible(BadPayerBadge {
-                            //     account: value.account.clone(),
-                            //     amount_to_refund: value.amount_borrowed,
-                            //     expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
-                            // }));
+                            let nft = self
+                            .badpayer_badge_resource_manager
+                            .mint_ruid_non_fungible(BadPayerBadge {
+                                account: value.account.clone(),
+                                amount_to_refund: value.amount_borrowed,
+                                expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
+                            });
+                            self.badpayer_vault.put(nft);
                             //TODO send an nft to the bad payer !! 
                             //prepare for sending an nft from tx manifest build inside the frontend
                             // Check if the element is not already in the vector before pushing it
@@ -566,8 +573,11 @@ mod lending_dapp {
 
             // Applying rules: close the previous borrow first, checks the max percentage of the total, checks the max limit 
             borrow_checks(lender_data.borrow_amount, amount_requested, 
-                self.collected_xrd.amount() * 3 / 100,
-                self.max_borrowing_limit * 100 / 100);
+                self.collected_xrd.amount() * self.max_percentage_allowed_for_account / 100,
+                self.collected_xrd.amount() * 50 / 100,
+                self.badpayer_vault.amount(), self.max_percentage_allowed_for_account);
+            // TODO max_limit should be self.collected_xrd.amount() * 50 / 100 (50% of main vault) 
+            // or self.max_borrowing_limit * 100 / 100 (100% of what has been specified as max_borrowing_amount by admin)
             borrow_epoch_max_length_checks(self.borrow_epoch_max_lenght,borrow_expected_length);
 
             //prepare for ordering and looking for the next expiring borrow
@@ -716,6 +726,11 @@ mod lending_dapp {
             self.borrow_epoch_max_lenght = borrow_epoch_max_lenght
         }
 
+        //set the max lenght of a borrow in epochs
+        pub fn set_max_percentage_allowed_for_account(&mut self, max_percentage_allowed_for_account: u32) {
+            self.max_percentage_allowed_for_account = max_percentage_allowed_for_account
+        }
+
         //withdraw the fees generated by the component
         pub fn withdraw_fees(&mut self, amount: Decimal) -> Bucket {
             self.fee_xrd.take(amount)
@@ -735,6 +750,23 @@ mod lending_dapp {
             self.staff.insert(key, id);
 
             staff_badge_bucket
+        }
+
+        //init the bad payer vault with the amount of maximum badpayer allowed
+        pub fn mint_bad_payer_vault(&mut self) {
+            let _max = 50 / self.max_percentage_allowed_for_account;
+            info!("Ready to mint BadPayer: {}", _max);
+            // for index in 1..= max  {
+            //     info!("Current number: {}", index);
+            //     let nft = self
+            //     .badpayer_badge_resource_manager
+            //     .mint_ruid_non_fungible(BadPayerBadge {
+            //         account: index.to_string(),
+            //         amount_to_refund: dec!(0),
+            //         expected_borrow_epoch_timeline: dec!(0),
+            //     });
+            //     self.badpayer_vault.put(nft);
+            // }
         }
 
         //mint a bad payer nft

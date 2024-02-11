@@ -2,6 +2,8 @@ import { ResultAsync } from 'neverthrow'
 import { deployPackage, loadBinaryFromPath, logger } from '../../helpers'
 import { radixEngineClient } from '../../config'
 
+import * as fs from 'fs';
+
 const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string) =>
   radixEngineClient
     .getManifestBuilder()
@@ -39,7 +41,20 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
           .andThen((txId) =>
             radixEngineClient.gatewayClient
               .getCommittedDetails(txId)
-              .map((res): string => res.createdEntities[0].entity_address)
+              // .map((res): string => res.createdEntities[0].entity_address)
+              .map((res) => {
+                const entities = res.createdEntities;
+                const entityMap: Record<string, string> = {}; 
+
+                entities.forEach((entity, index) => {
+                    entityMap[`entity_${index + 1}`] = entity.entity_address;
+                    //TODO the next should create with the right keys
+                    // entityMap[predefinedKeys[index]] = entity.entity_address;
+                });
+
+                writeToPropertyFile(entityMap,"entities.properties");
+                return entityMap;
+            })
           )
     )
 
@@ -57,3 +72,35 @@ ResultAsync.combine([
   .mapErr((error) => {
     logger.error(error)
   })
+
+
+  // Example usage:
+  const predefinedKeys = [
+    "VITE_COMP_ADDRESS",
+    "VITE_OWNER_BADGE",
+    "VITE_ADMIN_BADGE",
+    "VITE_STAFF_BADGE_ADDRESS",
+    "VITE_BENEFACTOR_BADGE_ADDRESS",
+    "VITE_BAD_PAYER_RESOURCE_ADDRESS",
+    "VITE_LND_TOKEN_ADDRESS",
+    "VITE_LND_RESOURCE_ADDRESS"
+    ];
+
+
+  const writeToPropertyFile = (entityMap: Record<string, string>, fileName: string) => {
+    const lines: string[] = [];
+
+    for (const key in entityMap) {
+        if (entityMap.hasOwnProperty(key)) {
+            const line = `${key}=${entityMap[key]}`;
+            lines.push(line);
+        }
+    }
+
+    try {
+        fs.writeFileSync(fileName, lines.join('\n'));
+        console.log(`Property file written to ${fileName}`);
+    } catch (error) {
+        console.error(`Error writing property file: ${error}`);
+    }
+};

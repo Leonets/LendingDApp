@@ -155,3 +155,7 @@ resim run rtm/pools.rtm
 # fee vault -> 30
 # donations vault -> 180
 # main pool -> 100
+
+# echo '>>> Init BadPayer Vault'
+
+# resim run rtm/init_badpayer.rtm

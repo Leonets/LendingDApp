@@ -113,7 +113,8 @@ pub fn take_back_checks(allowed_amount: Decimal, amount_to_be_returned: &Decimal
 //for borrowings
 pub fn borrow_checks(
         borrow_amount: Decimal, amount_requested: Decimal, 
-        max_amount_allowed: Decimal, max_limit: Decimal){
+        max_amount_allowed: Decimal, max_limit: Decimal, 
+        current_number_of_badpayer: Decimal, max_percentage_allowed_for_account: u32){
 
     assert!(borrow_amount == dec!("0"), "You cannot borrow before repaying back first");
     info!("Amount of token borrowed : {:?} ", amount_requested);   
@@ -130,6 +131,15 @@ pub fn borrow_checks(
         max_limit + amount_requested >= max_limit,
         "There is not availabilty for new borrowings!"
     );
+
+    //Calculate how many BadPayer are out
+    let max_number_of_badpayer = 50 / max_percentage_allowed_for_account;
+    info!("Current number of BadPayer: {:?} Max number accepted {:?} ", current_number_of_badpayer, max_number_of_badpayer);  
+    assert!(
+        Decimal::from(max_number_of_badpayer) >= current_number_of_badpayer + 1,
+        "There is not availabilty for new borrowings because of current number of BadPayer is high!"
+    );
+    
 }
 
 //for borrowings
