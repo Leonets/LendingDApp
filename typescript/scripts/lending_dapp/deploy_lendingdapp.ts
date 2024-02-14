@@ -47,9 +47,9 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
                 const entityMap: Record<string, string> = {}; 
 
                 entities.forEach((entity, index) => {
-                    entityMap[`entity_${index + 1}`] = entity.entity_address;
+                    // entityMap[`entity_${index + 1}`] = entity.entity_address;
                     //TODO the next should create with the right keys
-                    // entityMap[predefinedKeys[index]] = entity.entity_address;
+                    entityMap[predefinedKeys[index]] = entity.entity_address;
                 });
 
                 writeToPropertyFile(entityMap,"entities.properties");
@@ -74,7 +74,7 @@ ResultAsync.combine([
   })
 
 
-  // Example usage:
+  // // Example usage:
   const predefinedKeys = [
     "VITE_COMP_ADDRESS",
     "VITE_OWNER_BADGE",

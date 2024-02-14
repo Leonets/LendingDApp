@@ -2,6 +2,11 @@ use scrypto::prelude::*;
 use scrypto_avltree::AvlTree;
 use crate::utils::*;
 
+// #[derive(ScryptoSbor, ScryptoEvent)]
+// struct RegisteredEvent {
+//     data: String,
+// }
+
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
     username: String
@@ -386,6 +391,7 @@ mod lending_dapp {
         //register to the platform
         pub fn register(&mut self) -> Bucket {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+
             let lender_badge = self.lendings_nft_manager
             .mint_ruid_non_fungible(
                 LenderData {
@@ -430,15 +436,20 @@ mod lending_dapp {
                             info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
                             value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
+                            //TODO better not to mint a BadPayer until it will be possible to 
+                            //directly send it to the account!!
+                            //at now, the BadPayer is sent by the component's account holder by using RET
+
                             //mint a nft as 'bad payer' and send it to the account
-                            let nft = self
-                            .badpayer_badge_resource_manager
-                            .mint_ruid_non_fungible(BadPayerBadge {
-                                account: value.account.clone(),
-                                amount_to_refund: value.amount_borrowed,
-                                expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
-                            });
-                            self.badpayer_vault.put(nft);
+                            // let nft = self
+                            // .badpayer_badge_resource_manager
+                            // .mint_ruid_non_fungible(BadPayerBadge {
+                            //     account: value.account.clone(),
+                            //     amount_to_refund: value.amount_borrowed,
+                            //     expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
+                            // });
+                            // self.badpayer_vault.put(nft);
+
                             //TODO send an nft to the bad payer !! 
                             //prepare for sending an nft from tx manifest build inside the frontend
                             // Check if the element is not already in the vector before pushing it
@@ -496,6 +507,9 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = non_fung_bucket.non_fungible_local_id();
             let start_epoch = non_fung_bucket.non_fungible::<LenderData>().data().start_lending_epoch;
             let amount_lended = non_fung_bucket.non_fungible::<LenderData>().data().amount;
+
+            // let data = String::from("{nft_local_id} is lending some {amount_lended}");
+            // Runtime::emit_event(RegisteredEvent { data });
 
             lend_complete_checks(start_epoch.number(),self.period_length, Runtime::current_epoch().number(), amount_lended, self.reward_type.clone());                    
             let num_xrds = loan.amount();
