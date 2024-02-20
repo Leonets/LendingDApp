@@ -10,7 +10,7 @@ CALL_METHOD
     Decimal("1");
 CALL_METHOD
     Address("${component}")
-    "mint_bad_payer"
+    "mint_bad_payer_vault"
 ;
 CALL_METHOD
     Address("${account}")

@@ -172,3 +172,21 @@ At the moment of this writing there is no upgradability in the smart contract so
     - fill the new values in the .env* file (this are needed for executing the 'npm run')
     - manually send .env to the server (it is not managed with Terraform)
     - executes the export (if changed) of the dApp process (/deploy/export.sh)
+
+
+# Managing Smart Contract QUICK Upgrade 
+
+- Scrypto layer (repo 'LendingDApp')
+    - deploy the smart contract: 'npm run lending:deploy-lendingdapp' (this will fill the file entities.properties with new component addresses)
+    - execute 'node replaceValues.js' to have the files 'claimed_entities.rtm' and 'claimed_website.rtm' ready in directory scrypto/dapp_definition/
+    - executes the two transactions with the dashboard
+
+- Frontend layer (repo 'LendingDApp-Frontend')
+    - fill the new values in the .env* file (no seed phrase present)
+    - executes the export of the dApp website (/deploy/export.sh)
+
+- Processes layer (repo 'LendingDApp-Processes')
+    - fill the new values in the .env* file (seed phrase present!!)
+    - [MANUALLY] send .env to the server (it is not managed with Terraform)
+    - [OPT] executes the export if any of the dApp process have been changed (/deploy/export.sh)
+
