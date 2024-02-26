@@ -191,7 +191,7 @@ pub fn calculate_interests(
                     // Use fold to calculate the total interest
                     let total_amount = interest_for_lendings
                         .range(Decimal::from(start_lending_epoch)..Decimal::from(current_epoch))
-                        .fold((dec!(0), Decimal::from(start_lending_epoch), dec!(0)), |(total, first_epoch, _last_value), (key, value)| {
+                        .fold((dec!(0), Decimal::from(start_lending_epoch), dec!(0)), |(total, first_epoch, _last_value), (key, value, _next_key)| {
                             let internal_length = key - first_epoch;
                             info!("epoch: {}, interest %: {}, length of the period: {}", key, value, internal_length);
                             let accumulated_interest =

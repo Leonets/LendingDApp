@@ -20,7 +20,7 @@ CALL_METHOD
     Decimal("100")
     Bucket("bucket2")
     "account_address1"
-    Decimal("1700")
+    Decimal("500")
 ;
 CALL_METHOD
     Address("${account}")

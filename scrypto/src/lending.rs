@@ -422,9 +422,12 @@ mod lending_dapp {
         //utility for asking borrow repay
         pub fn asking_repay(&mut self) {
             let current_epoch = Decimal::from(Runtime::current_epoch().number());
-            let end_epoch = Decimal::from(current_epoch + 10000);
+            let start_epoch = Decimal::from(current_epoch - 288);
+            //Looks for loan that are expiring between current_epoch and end_epoch
+            info!("Fetching BorrowersPosition from epoch: {} to epoch: {} ",start_epoch, current_epoch);
             // let bad_payer_bucket: Option<Bucket>;
-            for (_key, value) in self.borrowers_positions.range_back(current_epoch..end_epoch) {
+            for (_key, value, _next_key) in self.borrowers_positions.range(start_epoch..current_epoch) {
+                info!("Expiration epoch of borrow {} of account {}", _key, value.account);
                 // Check if the account still exists in the vector of borrowers
                 // This means that first we need to check if the borrower has already repaid its loan
                 if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == value.account) {
@@ -475,7 +478,6 @@ mod lending_dapp {
             //It needs to find the accounts that:
             // - are present in the late_payer list but not in the borrowers_account list
             // - accounts found has to be inserted in the 'redeemed late payers' for then recalling the nft
-            // Find accounts in late_payers_accounts but not in borrowers_accounts
             let accounts_to_redeem: Vec<String> = self.late_payers_accounts
             .iter()
             .filter(|account| !self.borrowers_accounts.iter().any(|borrower| borrower.name == **account))
@@ -802,7 +804,7 @@ mod lending_dapp {
 
         //TODO code not working
         pub fn recall_staff_badge(&mut self) {
-            for (_key, value) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
+            for (_key, value, _next_key) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
                 let vault_address: ResourceAddress = self.staff_badge_resource_manager.address();
                 info!("getting staff badge n° : {:?} ", _key);
                 info!("ready to try to recall the following LocalId: {:?} ", value);

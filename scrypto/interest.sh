@@ -119,7 +119,7 @@ echo '>>> Set Interest'
 resim set-current-epoch 0
 
 echo '>>> Borrow'
-
+resim set-current-epoch 10
 resim run rtm/borrow.rtm
 # fee 10
 
@@ -141,12 +141,23 @@ resim run rtm/set_interest.rtm
 # echo '>>> Show Interest Values along epochs'
 # resim run rtm/borrow_interest.rtm
 
+resim set-current-epoch 100
+echo '>>> Someone is late ?'
+resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 400
 echo '>>> Someone is late ?'
 resim run rtm/asking_repay.rtm
 
-resim set-current-epoch 1701
+resim set-current-epoch 500
+echo '>>> Someone is late ?'
+resim run rtm/asking_repay.rtm
+
+resim set-current-epoch 600
+echo '>>> Someone is late ?'
+resim run rtm/asking_repay.rtm
+
+resim set-current-epoch 2000
 echo '>>> Now someone should be late '
 resim run rtm/asking_repay.rtm
 
