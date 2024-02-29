@@ -22,7 +22,7 @@ fs.readFile('scrypto/dapp_definition/dynamic_claimed_entities.rtm', 'utf8', (err
       console.error('Error writing updated file:', err);
       return;
     }
-    console.log('File updated successfully!');
+    console.log('File entities_v1 updated successfully!');
   });
 });
 
@@ -44,6 +44,6 @@ fs.readFile('scrypto/dapp_definition/dynamic_claimed_website.rtm', 'utf8', (err,
       console.error('Error writing updated file:', err);
       return;
     }
-    console.log('File updated successfully!');
+    console.log('File website_v1 updated successfully!');
   });
 });

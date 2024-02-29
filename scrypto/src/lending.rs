@@ -2,11 +2,6 @@ use scrypto::prelude::*;
 use scrypto_avltree::AvlTree;
 use crate::utils::*;
 
-// #[derive(ScryptoSbor, ScryptoEvent)]
-// struct RegisteredEvent {
-//     data: String,
-// }
-
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
     username: String
@@ -18,6 +13,9 @@ struct BenefactorBadge {
     amount_funded: Decimal
 }
 
+//struct to store data about an unsecured loan
+//used for sending to a badpayer
+//todo nft now is send without info about account/amount/epoch
 #[derive(NonFungibleData, ScryptoSbor)]
 struct BadPayerBadge {
     account: String,
@@ -48,6 +46,7 @@ pub struct LenderData {
 }
 
 //struct to store info about each borrowing position
+//used for calculate when a loan does not get repaid in time
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct CreditScore {
     account: String,
@@ -127,7 +126,7 @@ mod lending_dapp {
     }
 
     impl LendingDApp {
-        // given a reward, interest level and a symbol name, creates a ready-to-use Lending dApp
+        // given a reward, interest level,symbol name, reward_type, max_borrowing_limit creates a ready-to-use Lending dApp
         pub fn instantiate_lending_dapp(
             reward: Decimal,
             interest: Decimal,
@@ -266,7 +265,7 @@ mod lending_dapp {
                 ))
                 .mint_initial_supply(1000);
 
-            // Create a badge to identify this user who lends xrd tokens
+            // Create a badge to identify any account that interacts with the dApp
             let nft_manager =
                 ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
                 .metadata(metadata!(
@@ -291,11 +290,7 @@ mod lending_dapp {
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
                     non_fungible_data_updater => rule!(require(global_caller(component_address)));
                     non_fungible_data_updater_updater => OWNER;
-                )) 
-                // .deposit_roles(deposit_roles!(
-                //     depositor => rule!(deny_all);
-                //     depositor_updater => rule!(deny_all);
-                // ))                 
+                ))           
                 .create_with_no_initial_supply();
 
             // populate a LendingDApp struct and instantiate a new component
@@ -391,7 +386,6 @@ mod lending_dapp {
         //register to the platform
         pub fn register(&mut self) -> Bucket {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
-
             let lender_badge = self.lendings_nft_manager
             .mint_ruid_non_fungible(
                 LenderData {
@@ -407,7 +401,7 @@ mod lending_dapp {
             lender_badge
         }
 
-        //unregister from the platform
+        //unregister from the platform (useful for stokenet test)
         pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
             let non_fung_bucket = lender_badge.as_non_fungible();
@@ -439,9 +433,8 @@ mod lending_dapp {
                             info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
                             value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
-                            //TODO better not to mint a BadPayer until it will be possible to 
-                            //directly send it to the account!!
-                            //at now, the BadPayer is sent by the component's account holder by using RET
+                            //TODO better not to mint a BadPayer until it will be possible to directly send it to the account!!
+                            //Now, the BadPayer is sent by the component's account holder by using RET
 
                             //mint a nft as 'bad payer' and send it to the account
                             // let nft = self
@@ -453,9 +446,9 @@ mod lending_dapp {
                             // });
                             // self.badpayer_vault.put(nft);
 
-                            //TODO send an nft to the bad payer !! 
-                            //prepare for sending an nft from tx manifest build inside the frontend
-                            // Check if the element is not already in the vector before pushing it
+                            //TODO send an nft to the bad payer directly from the smart contract !! 
+                            //Now this only prepare a vector that then will be used to send an nft (using a tx manifest build with an npm process)
+                            //Check if the element is not already in the vector before pushing it
                             if !self.late_payers_accounts.contains(&value.account) {
                                 self.late_payers_accounts.push(value.account.clone());
                             }
@@ -472,7 +465,6 @@ mod lending_dapp {
                     info!("Account {} and its position has to be removed as a borrower", value.account);
                 }
             }
-            // late_payers_accounts
             info!("Late payers accounts before reorg {:?}", self.late_payers_accounts);
 
             //It needs to find the accounts that:
@@ -500,7 +492,6 @@ mod lending_dapp {
             self.late_payers_redeemed_accounts.clear();
         }
 
-
         //lend some xrd
         pub fn lend_tokens(&mut self, loan: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
             assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
@@ -509,9 +500,6 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = non_fung_bucket.non_fungible_local_id();
             let start_epoch = non_fung_bucket.non_fungible::<LenderData>().data().start_lending_epoch;
             let amount_lended = non_fung_bucket.non_fungible::<LenderData>().data().amount;
-
-            // let data = String::from("{nft_local_id} is lending some {amount_lended}");
-            // Runtime::emit_event(RegisteredEvent { data });
 
             lend_complete_checks(start_epoch.number(),self.period_length, Runtime::current_epoch().number(), amount_lended, self.reward_type.clone());                    
             let num_xrds = loan.amount();
@@ -573,7 +561,6 @@ mod lending_dapp {
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))                
             } else {
-                // self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
                 self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))
             }
@@ -838,7 +825,6 @@ mod lending_dapp {
             );
             // adds to the level
             self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
-            //TODO need to check the available amount in the pool before extending the max 
         }
 
     }

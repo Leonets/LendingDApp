@@ -23,6 +23,7 @@ SET_METADATA
 
 
 # Questa è la controfirma, cioè l'associazione della dapp_definition al componente, tramite l'uso dell'owner badge
+# funziona 
 CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
@@ -147,6 +148,7 @@ SET_METADATA
 ;
 
 #nft manager
+# Unauthorized ??
 CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
