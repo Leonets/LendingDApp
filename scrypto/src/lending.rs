@@ -350,40 +350,6 @@ mod lending_dapp {
         }
 
         //register to the platform
-        // pub fn register(&mut self, badge: Option<Bucket>) -> Bucket {
-        //     match badge {
-        //         Some(user_nft) => {
-        //             // Handle the case when there is a value (Some)
-        //             // You can access the fields of the Bucket using 'b'
-        //             // Additional logic for handling Some(b) case if needed
-        //             println!("Registering with badge: {:?}", user_nft);
-        //             assert!(true,"You are already registerd !!!");
-        //             user_nft
-        //         }
-        //         None => {
-        //             // Handle the case when there is no value (None)
-        //             // Additional logic for handling None case if needed
-        //             println!("Registering without badge");
-        //             // You need to decide what to return in case of None; here, I'm using a default value
-        //             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
-        //             let lender_badge = self.lendings_nft_manager
-        //             .mint_ruid_non_fungible(
-        //                 LenderData {
-        //                     start_lending_epoch: Epoch::of(0),
-        //                     end_lending_epoch: Epoch::of(0),
-        //                     amount: dec!("0"),
-        //                     start_borrow_epoch: Epoch::of(0),
-        //                     expected_end_borrow_epoch: dec!(0),
-        //                     end_borrow_epoch: Epoch::of(0),
-        //                     borrow_amount: dec!("0")
-        //                 }
-        //             );
-        //             lender_badge
-        //         }
-        //     }
-        // }
-
-        //register to the platform
         pub fn register(&mut self) -> Bucket {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let lender_badge = self.lendings_nft_manager
@@ -434,7 +400,7 @@ mod lending_dapp {
                             value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
                             //TODO better not to mint a BadPayer until it will be possible to directly send it to the account!!
-                            //Now, the BadPayer is sent by the component's account holder by using RET
+                            //Now, the BadPayer is sent by the component's account holder by using RET (using nom run lending:send_bad_payer_nft)
 
                             //mint a nft as 'bad payer' and send it to the account
                             // let nft = self
@@ -444,7 +410,13 @@ mod lending_dapp {
                             //     amount_to_refund: value.amount_borrowed,
                             //     expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
                             // });
-                            // self.badpayer_vault.put(nft);
+                            
+                            //TODO here... we send an NFT to an Account having know its address
+                            //it can't be used here because we should be sent more NFT to different accounts
+                            // let accountComp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
+                            // let comp: Global<AnyComponent> = Global::from(accountComp);
+                            //TODO how to create a NonFungibleBucket instead of a Bucket
+                            // let bucket: Option<Bucket> = comp.call::<(Bucket,Option<ResourceOrNonFungible>),_>("try_deposit_or_refund", &(nft, None));
 
                             //TODO send an nft to the bad payer directly from the smart contract !! 
                             //Now this only prepare a vector that then will be used to send an nft (using a tx manifest build with an npm process)
@@ -489,6 +461,7 @@ mod lending_dapp {
 
         //utility for cleaning data after recalling BadPayer NFTs
         pub fn clean_data(&mut self) {
+            //no problem cleaning in advance since this vector can be easily rebuild by the asking_repay function
             self.late_payers_redeemed_accounts.clear();
         }
 
@@ -755,24 +728,11 @@ mod lending_dapp {
             staff_badge_bucket
         }
 
-        //init the bad payer vault with the amount of maximum badpayer allowed
-        pub fn mint_bad_payer_vault(&mut self) {
-            let _max = 50 / self.max_percentage_allowed_for_account;
-            info!("Ready to mint BadPayer: {}", _max);
-            // for index in 1..= max  {
-            //     info!("Current number: {}", index);
-            //     let nft = self
-            //     .badpayer_badge_resource_manager
-            //     .mint_ruid_non_fungible(BadPayerBadge {
-            //         account: index.to_string(),
-            //         amount_to_refund: dec!(0),
-            //         expected_borrow_epoch_timeline: dec!(0),
-            //     });
-            //     self.badpayer_vault.put(nft);
-            // }
-        }
 
-        //mint a bad payer nft
+
+
+        //mint some bad payer nfts, this are minted in the account/owner account
+        //and these will be used for sending to BadPayer accounts (and hopefully recalling)
         pub fn mint_bad_payer(&mut self) -> Bucket {
             let mut bad_payer_bucket = self.badpayer_badge_resource_manager.create_empty_bucket();
             for index in 1..=5 {
@@ -789,29 +749,6 @@ mod lending_dapp {
             bad_payer_bucket
         }
 
-        //TODO code not working
-        pub fn recall_staff_badge(&mut self) {
-            for (_key, value, _next_key) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
-                let vault_address: ResourceAddress = self.staff_badge_resource_manager.address();
-                info!("getting staff badge n° : {:?} ", _key);
-                info!("ready to try to recall the following LocalId: {:?} ", value);
-
-                //TODO code not working
-                // it is not currently possible to source the vault address from the Radix Engine, 
-                // so it must be determined from an off-ledger indexer/API, 
-                // and passed in through a transaction.
-                let _recalled_bucket: Bucket = scrypto_decode(&ScryptoVmV1Api::object_call_direct(
-                    vault_address.as_node_id(),
-                    NON_FUNGIBLE_VAULT_RECALL_NON_FUNGIBLES_IDENT,
-                    scrypto_encode(&NonFungibleVaultRecallNonFungiblesInput {
-                        non_fungible_local_ids: indexset!(value),
-                    })
-                    .unwrap(),
-                ))
-                .unwrap();
-            }
-        }
-
         //extend the pool for accept lendings
         pub fn extend_lending_pool(&mut self, size_extended: Decimal) {
             self.lendings.put(self.lnd_manager.mint(size_extended));
@@ -826,6 +763,85 @@ mod lending_dapp {
             // adds to the level
             self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
         }
+
+
+        //Code not working or not used or to be removed
+        // 
+        //TODO perhaps to be removed
+        //init the bad payer vault with the amount of maximum badpayer allowed
+        pub fn mint_bad_payer_vault(&mut self) {
+            let _max = 50 / self.max_percentage_allowed_for_account;
+            info!("Ready to mint BadPayer: {}", _max);
+            // for index in 1..= max  {
+            //     info!("Current number: {}", index);
+            //     let nft = self
+            //     .badpayer_badge_resource_manager
+            //     .mint_ruid_non_fungible(BadPayerBadge {
+            //         account: index.to_string(),
+            //         amount_to_refund: dec!(0),
+            //         expected_borrow_epoch_timeline: dec!(0),
+            //     });
+            //     self.badpayer_vault.put(nft);
+            // }
+        // }
+        // 
+        //
+        //register to the platform
+        // pub fn register(&mut self, badge: Option<Bucket>) -> Bucket {
+        //     match badge {
+        //         Some(user_nft) => {
+        //             // Handle the case when there is a value (Some)
+        //             // You can access the fields of the Bucket using 'b'
+        //             // Additional logic for handling Some(b) case if needed
+        //             println!("Registering with badge: {:?}", user_nft);
+        //             assert!(true,"You are already registerd !!!");
+        //             user_nft
+        //         }
+        //         None => {
+        //             // Handle the case when there is no value (None)
+        //             // Additional logic for handling None case if needed
+        //             println!("Registering without badge");
+        //             // You need to decide what to return in case of None; here, I'm using a default value
+        //             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+        //             let lender_badge = self.lendings_nft_manager
+        //             .mint_ruid_non_fungible(
+        //                 LenderData {
+        //                     start_lending_epoch: Epoch::of(0),
+        //                     end_lending_epoch: Epoch::of(0),
+        //                     amount: dec!("0"),
+        //                     start_borrow_epoch: Epoch::of(0),
+        //                     expected_end_borrow_epoch: dec!(0),
+        //                     end_borrow_epoch: Epoch::of(0),
+        //                     borrow_amount: dec!("0")
+        //                 }
+        //             );
+        //             lender_badge
+        //         }
+        //     }
+        // }
+        //
+        //TODO code not working
+        // pub fn recall_staff_badge(&mut self) {
+        //     for (_key, value, _next_key) in self.staff.range(1..self.staff.get_length().to_u16().unwrap()) {
+        //         let vault_address: ResourceAddress = self.staff_badge_resource_manager.address();
+        //         info!("getting staff badge n° : {:?} ", _key);
+        //         info!("ready to try to recall the following LocalId: {:?} ", value);
+
+        //         //TODO code not working
+        //         // it is not currently possible to source the vault address from the Radix Engine, 
+        //         // so it must be determined from an off-ledger indexer/API, 
+        //         // and passed in through a transaction.
+        //         let _recalled_bucket: Bucket = scrypto_decode(&ScryptoVmV1Api::object_call_direct(
+        //             vault_address.as_node_id(),
+        //             NON_FUNGIBLE_VAULT_RECALL_NON_FUNGIBLES_IDENT,
+        //             scrypto_encode(&NonFungibleVaultRecallNonFungiblesInput {
+        //                 non_fungible_local_ids: indexset!(value),
+        //             })
+        //             .unwrap(),
+        //         ))
+        //         .unwrap();
+        //     }
+        // }        
 
     }
 }
