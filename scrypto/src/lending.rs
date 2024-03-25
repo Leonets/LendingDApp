@@ -93,7 +93,7 @@ mod lending_dapp {
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
-            recall_staff_badge => restrict_to: [admin, OWNER];
+            // recall_staff_badge => restrict_to: [admin, OWNER];
             mint_bad_payer  => restrict_to: [admin, OWNER];
             mint_bad_payer_vault  => restrict_to: [admin, OWNER];
         }
@@ -123,6 +123,7 @@ mod lending_dapp {
         late_payers_redeemed_accounts: Vec<String>,
         badpayer_badge_resource_manager: ResourceManager,
         badpayer_vault: Vault,
+        late_payers_accounts_history: Vec<String>,
     }
 
     impl LendingDApp {
@@ -148,6 +149,7 @@ mod lending_dapp {
             let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
             let late_payers_accounts: Vec<String> = Vec::new();
             let late_payers_redeemed_accounts: Vec<String> = Vec::new();
+            let late_payers_accounts_history: Vec<String> = Vec::new();
 
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(LendingDApp::blueprint_id());
@@ -155,7 +157,7 @@ mod lending_dapp {
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
                     .metadata(metadata!(init{
-                        "name"=>"LendingDapp Owner badge", locked;
+                        "name"=>"ZeroCollateral Owner badge", locked;
                         "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
                     }))
@@ -167,7 +169,7 @@ mod lending_dapp {
                     owner_badge.resource_address()
                 ))))
                 .metadata(metadata!(init{
-                    "name"=>"LendingDapp Admin badge", locked;
+                    "name"=>"ZeroCollateral Admin badge", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
                 }))
@@ -184,7 +186,7 @@ mod lending_dapp {
                         || require(admin_badge.resource_address())
                 )))
                 .metadata(metadata!(init{
-                    "name" => "LendingDapp Staff_badge", locked;
+                    "name" => "ZeroCollateral Staff_badge", locked;
                     "description" => "A badge to be used for some administrative function", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                 }))
@@ -208,7 +210,7 @@ mod lending_dapp {
                     || require(admin_badge.resource_address())
                 )))
                 .metadata(metadata!(init{
-                    "name" => "LendingDapp Benefactor_badge", locked;
+                    "name" => "ZeroCollateral Benefactor_badge", locked;
                     "description" => "A badge to be used for rewarding benefactors", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                 }))
@@ -232,7 +234,7 @@ mod lending_dapp {
                         || require(admin_badge.resource_address())
                 )))
                 .metadata(metadata!(init{
-                    "name" => "LendingDapp BadPayer", locked;
+                    "name" => "ZeroCollateral BadPayer", locked;
                     "description" => "A signal to indicate that the account has not repaid the loan", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/badPayer.jpg"), locked;
                 }))
@@ -270,7 +272,7 @@ mod lending_dapp {
                 ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
                 .metadata(metadata!(
                     init {
-                        "name" => "LendingDapp NFT", locked;
+                        "name" => "ZeroCollateral NFT", locked;
                         "icon_url" => Url::of("https://test.zerocollateral.eu/images/logoSlimNft.png"), locked;
                         // "icon_url" => Url::of(get_nft_icon_url()), locked;
                         "description" => "An NFT containing information about your liquidity", locked;
@@ -293,7 +295,7 @@ mod lending_dapp {
                 ))           
                 .create_with_no_initial_supply();
 
-            // populate a LendingDApp struct and instantiate a new component
+            // populate a ZeroCollateral struct and instantiate a new component
             let component = 
                 Self {
                     lnd_manager: lendings_bucket.resource_manager(),
@@ -320,6 +322,7 @@ mod lending_dapp {
                     late_payers_redeemed_accounts: late_payers_redeemed_accounts,
                     badpayer_badge_resource_manager: bad_payer,
                     badpayer_vault: Vault::new(bad_payer.address()),
+                    late_payers_accounts_history: late_payers_accounts_history,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -333,9 +336,9 @@ mod lending_dapp {
                     //     metadata_locker_updater => rule!(allow_all);
                     // },
                     init {
-                        "name" => "LendingDapp", locked;
+                        "name" => "ZeroCollateral", locked;
                         "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo3b.jpg"), locked;
-                        "description" => "LendingDapp SmartContract for lending and borrowing service", locked;
+                        "description" => "ZeroCollateral SmartContract for lending and borrowing service", locked;
                         "claimed_websites" =>  ["https://test.zerocollateral.eu"], locked;
                     }
                 ))//specify what this roles means
@@ -423,6 +426,9 @@ mod lending_dapp {
                             //Check if the element is not already in the vector before pushing it
                             if !self.late_payers_accounts.contains(&value.account) {
                                 self.late_payers_accounts.push(value.account.clone());
+                            }
+                            if !self.late_payers_accounts_history.contains(&value.account) {
+                                self.late_payers_accounts_history.push(value.account.clone());
                             }
                         }
                         false => {
@@ -783,7 +789,7 @@ mod lending_dapp {
             //     });
             //     self.badpayer_vault.put(nft);
             // }
-        // }
+        }
         // 
         //
         //register to the platform
