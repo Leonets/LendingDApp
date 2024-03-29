@@ -48,7 +48,7 @@ pub struct LenderData {
 //struct to store info about each borrowing position
 //used for calculate when a loan does not get repaid in time
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
-pub struct CreditScore {
+pub struct BorrowerData {
     account: String,
     #[mutable]
     amount_borrowed: Decimal,
@@ -60,6 +60,16 @@ pub struct CreditScore {
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct Borrower {
     name: String,
+}
+
+#[derive(ScryptoSbor, NonFungibleData)]
+pub struct YieldTokenData {
+    underlying_lsu_resource: ResourceAddress,
+    underlying_lsu_amount: Decimal,
+    redemption_value_at_start: Decimal,
+    yield_claimed: Decimal,
+    // maturity_date: UtcDateTime,
+    maturity_date: Decimal,
 }
 
 
@@ -75,7 +85,6 @@ mod lending_dapp {
             unregister => PUBLIC;
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
-            fund => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
             asking_repay => restrict_to: [admin, OWNER];
@@ -96,6 +105,11 @@ mod lending_dapp {
             // recall_staff_badge => restrict_to: [admin, OWNER];
             mint_bad_payer  => restrict_to: [admin, OWNER];
             mint_bad_payer_vault  => restrict_to: [admin, OWNER];
+            //new
+            // maturity_date  => restrict_to: [admin, OWNER];
+            // check_maturity  => restrict_to: [admin, OWNER];
+            tokenize_yield  => PUBLIC;
+            redeem => PUBLIC;
         }
     }
     struct LendingDApp<> {
@@ -116,7 +130,7 @@ mod lending_dapp {
         interest_for_lendings: AvlTree<Decimal, Decimal>,
         interest_for_borrowings: AvlTree<Decimal, Decimal>,
         max_borrowing_limit: Decimal,
-        borrowers_positions: AvlTree<Decimal, CreditScore>,
+        borrowers_positions: AvlTree<Decimal, BorrowerData>,
         staff: AvlTree<u16, NonFungibleLocalId>,
         borrowers_accounts: Vec<Borrower>,
         late_payers_accounts: Vec<String>,
@@ -124,6 +138,8 @@ mod lending_dapp {
         badpayer_badge_resource_manager: ResourceManager,
         badpayer_vault: Vault,
         late_payers_accounts_history: Vec<String>,
+        pt_resource_manager: ResourceManager,
+        yt_resource_manager: ResourceManager,
     }
 
     impl LendingDApp {
@@ -144,7 +160,7 @@ mod lending_dapp {
             lend_tree.insert(Decimal::from(Runtime::current_epoch().number()), reward);
 
             //data struct for holding info about account, expected repaying epoch and amount for borrowers
-            let borrowers_positions: AvlTree<Decimal, CreditScore> = AvlTree::new();
+            let borrowers_positions: AvlTree<Decimal, BorrowerData> = AvlTree::new();
             let borrowers_accounts: Vec<Borrower> = Vec::new();
             let staff: AvlTree<u16, NonFungibleLocalId> = AvlTree::new();
             let late_payers_accounts: Vec<String> = Vec::new();
@@ -158,7 +174,7 @@ mod lending_dapp {
                 ResourceBuilder::new_fungible(OwnerRole::None)
                     .metadata(metadata!(init{
                         "name"=>"ZeroCollateral Owner badge", locked;
-                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/owner.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
                     }))
                     .divisibility(DIVISIBILITY_NONE)
@@ -259,7 +275,7 @@ mod lending_dapp {
                     "name" => "LendingToken", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
-                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logoSlimToken.png"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/liquidzero.png"), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -267,13 +283,56 @@ mod lending_dapp {
                 ))
                 .mint_initial_supply(1000);
 
+            let pt_rm: ResourceManager = ResourceBuilder::new_fungible(OwnerRole::None)
+                .divisibility(DIVISIBILITY_MAXIMUM)
+                .metadata(metadata! {
+                    init {
+                        "name" => "Principal Token", locked;
+                        "symbol" => "PT", locked;
+                        "yield_tokenizer_component" => GlobalAddress::from(component_address), locked;
+                    }
+                })
+                .mint_roles(mint_roles! {
+                    minter => rule!(allow_all);
+                    // minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(deny_all);
+                })
+                .burn_roles(burn_roles! {
+                    burner => rule!(require(global_caller(component_address)));
+                    burner_updater => rule!(deny_all);
+                })
+                .create_with_no_initial_supply();
+
+            let yt_rm: ResourceManager = 
+                ResourceBuilder::new_ruid_non_fungible::<YieldTokenData>(OwnerRole::None)
+                .metadata(metadata! {
+                    init {
+                        "name" => "Yield Receipt", locked;
+                        "symbol" => "YT", locked;
+                        "yield_tokenizer_component" => GlobalAddress::from(component_address), locked;
+                    }
+                })
+                .mint_roles(mint_roles! {
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(deny_all);
+                })
+                .burn_roles(burn_roles! {
+                    burner => rule!(allow_all);
+                    burner_updater => rule!(deny_all);
+                })
+                .non_fungible_data_update_roles(non_fungible_data_update_roles! {
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
+                    non_fungible_data_updater_updater => rule!(deny_all);
+                })
+                .create_with_no_initial_supply();
+
             // Create a badge to identify any account that interacts with the dApp
             let nft_manager =
                 ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
                 .metadata(metadata!(
                     init {
                         "name" => "ZeroCollateral NFT", locked;
-                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/logoSlimNft.png"), locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/creditscore.png"), locked;
                         // "icon_url" => Url::of(get_nft_icon_url()), locked;
                         "description" => "An NFT containing information about your liquidity", locked;
                         // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
@@ -323,6 +382,8 @@ mod lending_dapp {
                     badpayer_badge_resource_manager: bad_payer,
                     badpayer_vault: Vault::new(bad_payer.address()),
                     late_payers_accounts_history: late_payers_accounts_history,
+                    pt_resource_manager: pt_rm,
+                    yt_resource_manager: yt_rm
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -380,6 +441,83 @@ mod lending_dapp {
             lend_ongoing(amount_borrowed, 10);
             lender_badge.burn();
             None
+        }
+
+        // pub fn maturity_date(&self) -> UtcDateTime {
+        //     self.maturity_date()
+        // }
+
+        // /// Checks whether maturity date has been reached.
+        // pub fn check_maturity(&self) -> bool {
+        //     Clock::current_time_comparison(
+        //         self.maturity_date().to_instant(), 
+        //         TimePrecision::Second, 
+        //         TimeComparisonOperator::Gte
+        //     )
+        // }
+
+        // tokenize
+        pub fn tokenize_yield(
+            &mut self, 
+            lsu_token: FungibleBucket,
+            maturity_date: Decimal
+        ) -> (FungibleBucket, NonFungibleBucket) {
+            // assert_ne!(self.check_maturity(), true, "The expiry date has passed!");
+            assert_eq!(lsu_token.resource_address(), self.lendings_nft_manager.address());
+
+            let lsu_amount = lsu_token.amount();
+            let redemption_value = lsu_token.amount();
+                // self.lsu_validator_component
+                //     .get_redemption_value(lsu_token.amount());
+
+            let pt_bucket = 
+                self.pt_resource_manager.mint(lsu_amount).as_fungible();
+
+            let maturity_epoch = Decimal::from(Runtime::current_epoch().number()) + maturity_date;
+
+            let yt_bucket = 
+                self.yt_resource_manager
+                .mint_ruid_non_fungible(
+                    YieldTokenData {
+                        underlying_lsu_resource: self.lendings_nft_manager.address(),
+                        underlying_lsu_amount: lsu_amount,
+                        redemption_value_at_start: redemption_value,
+                        yield_claimed: Decimal::ZERO,
+                        maturity_date: maturity_epoch
+                    }
+                ).as_non_fungible();
+                
+            self.lendings.put(lsu_token.into());
+
+            return (pt_bucket, yt_bucket)
+        }        
+
+        //redeem
+        pub fn redeem(
+            &mut self, 
+            pt_bucket: FungibleBucket, 
+            yt_bucket: NonFungibleBucket, 
+            yt_redeem_amount: Decimal,
+        ) -> (Bucket, Option<NonFungibleBucket>) {
+            let mut data: YieldTokenData = yt_bucket.non_fungible().data();    
+            assert!(data.underlying_lsu_amount >= yt_redeem_amount);            
+            assert_eq!(pt_bucket.amount(), yt_redeem_amount);
+            assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
+            assert_eq!(yt_bucket.resource_address(), self.yt_resource_manager.address());
+
+            let lsu_bucket = self.lendings.take(pt_bucket.amount());
+
+            let option_yt_bucket: Option<NonFungibleBucket> = if data.underlying_lsu_amount > yt_redeem_amount {
+                data.underlying_lsu_amount -= yt_redeem_amount;
+                Some(yt_bucket)
+            } else {
+                yt_bucket.burn();
+                None
+            };
+
+            pt_bucket.burn();
+
+            return (lsu_bucket, option_yt_bucket)
         }
 
         //utility for asking borrow repay
@@ -564,7 +702,7 @@ mod lending_dapp {
 
             //prepare for ordering and looking for the next expiring borrow
             let epoch = Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length;
-            let credit_score = CreditScore {
+            let credit_score = BorrowerData {
                 account: user_account.clone(),
                 amount_borrowed: amount_requested,
                 epoch_limit_for_repaying: epoch,
@@ -656,22 +794,6 @@ mod lending_dapp {
         pub fn fund_main_pool(&mut self, fund: Bucket)  {
             info!("Fund received to fund the main vault: {:?} ", fund.amount());  
             self.collected_xrd.put(fund);
-        }
-
-        //for development funding
-        pub fn fund(&mut self, fund: Bucket) -> Bucket {
-            //take the XRD bucket for funding the development
-            let amount = fund.amount();
-            info!("Fund received to support development: {:?} ", amount);  
-            self.donations_xrd.put(fund);
-
-            //TODO manage subsequent funding
-            let benefactor_badge_bucket: Bucket = self
-            .benefactor_badge_resource_manager
-            .mint_ruid_non_fungible(BenefactorBadge {
-                amount_funded: amount
-            });
-            benefactor_badge_bucket
         }
 
         //for admin only

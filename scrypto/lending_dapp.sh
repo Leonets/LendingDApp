@@ -47,10 +47,10 @@ resim run rtm/fund_main_pool.rtm
 resim run rtm/fund_main_pool_4000.rtm
 # main pool 4200
 
-echo '>>> Donate'
+# echo '>>> Donate'
 
-resim run rtm/fund.rtm
-resim run rtm/fund.rtm
+# resim run rtm/fund.rtm
+# resim run rtm/fund.rtm
 # donations 200
 
 echo '>>> Register'
