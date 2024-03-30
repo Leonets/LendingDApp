@@ -27,12 +27,14 @@ That file has been built with the following bash command:
 
 The output of the instantiate is the following resources builded:
 New Entities: 6
-└─ Component: component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p
-├─ Resource: resource_sim1th0fzfanrvjucld6yr798c52zxcpmcvz9aqmm75t2r9kzzwylqh6q0
-├─ Resource: resource_sim1t4tyehgwmxyrm60u07k7j8rt60z790c2k5m4z6qgvjv84wezct6uz9
-├─ Resource: resource_sim1ntrx9nqkpvta3qtqt7j88mq36dlug0t0r6w07u8lfnsksm4z7g807r
-├─ Resource: resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr
-└─ Resource: resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml
+└─ Component: component_sim1crmulhl5yrk6hh4jsyldps5sdrp08r5v9wusupvzxgqvhlp4k00px7
+├─ Resource: resource_sim1thcrjys3fae93ske3zdt4gp4528qx97y469pdnzdq98rp0y9q5cwpk
+├─ Resource: resource_sim1t44qmcqlmtsqns8ckwjttvffjk4j4smkhlkt0qv94caftlj5yn8sru
+├─ Resource: resource_sim1ngmgdmk6pe9vvl7xam5wndd7tgze7fh03c4mhk4k5x6p8ar8el9cjx
+├─ Resource: resource_sim1ngq0mhhwakhauvfvde3e5hl03t6z78ltrjznykavnqst3gkz9m2ynd
+├─ Resource: resource_sim1ntlg9ev2wca0rknf0dz8uafuh7hqpcnz986uacd74kkrtsf0fg8hpd
+├─ Resource: resource_sim1th0g8myrfsgzkgm5nsyhqkwa9n3stta6ptrd59u0cdadwm6n6f6gcz
+└─ Resource: resource_sim1n2s6zv387nx3nanngmqs97vr6q4ac9qgf46xg568nut7gkjph2eeen
 
 where the order is the following:
 resource1 -> owner_badge
