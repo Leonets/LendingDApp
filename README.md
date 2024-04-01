@@ -27,21 +27,27 @@ That file has been built with the following bash command:
 
 The output of the instantiate is the following resources builded:
 New Entities: 6
-└─ Component: component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p
-├─ Resource: resource_sim1th0fzfanrvjucld6yr798c52zxcpmcvz9aqmm75t2r9kzzwylqh6q0
-├─ Resource: resource_sim1t4tyehgwmxyrm60u07k7j8rt60z790c2k5m4z6qgvjv84wezct6uz9
-├─ Resource: resource_sim1ntrx9nqkpvta3qtqt7j88mq36dlug0t0r6w07u8lfnsksm4z7g807r
-├─ Resource: resource_sim1t4zcslfcrkkcmg2fnc2t9a7r4ypxn8276s2e2eq20x2sdje3wwpysr
-└─ Resource: resource_sim1ngrczk30tngnmgl688tlfzmed4k8m7pnpcr6smf2ujug3ujxst5eml
+└─ Component: component_sim1crmulhl5yrk6hh4jsyldps5sdrp08r5v9wusupvzxgqvhlp4k00px7
+├─ Resource: resource_sim1thcrjys3fae93ske3zdt4gp4528qx97y469pdnzdq98rp0y9q5cwpk
+├─ Resource: resource_sim1t44qmcqlmtsqns8ckwjttvffjk4j4smkhlkt0qv94caftlj5yn8sru
+├─ Resource: resource_sim1ngmgdmk6pe9vvl7xam5wndd7tgze7fh03c4mhk4k5x6p8ar8el9cjx
+├─ Resource: resource_sim1ngq0mhhwakhauvfvde3e5hl03t6z78ltrjznykavnqst3gkz9m2ynd
+├─ Resource: resource_sim1ntlg9ev2wca0rknf0dz8uafuh7hqpcnz986uacd74kkrtsf0fg8hpd
+├─ Resource: resource_sim1th0g8myrfsgzkgm5nsyhqkwa9n3stta6ptrd59u0cdadwm6n6f6gcz
+├─ Resource: resource_sim1tks6zv387nx3nanngmqs97vr6q4ac9qgf46xg568nut7gkjpay2rc9
+├─ Resource: resource_sim1ntzlsav52gfaauezctsn0nzqr2jaw0cwqul5rfkjvllpn2w3ayu5yr
+└─ Resource: resource_sim1nfmwp29pu4lhcqh8zfm4949pwsz98sq338klwxjsvxuq90wzz2u8a9
 
 where the order is the following:
 resource1 -> owner_badge
 resource2 -> admin_badge
 resource3 -> staff_badge
 resource4 -> benefactor_badge
-resource5 -> lending_token
-resource6 -> lnd_manager
-resource7 -> bad_payer
+resource5 -> bad_payer
+resource6 -> lending_token
+resource7 -> lnd_manager
+resource8 -> principal_token
+resource9 -> yield_token
 
 Store the returned component addres in the component environment variable 
 `export component=<component_address>`
@@ -60,10 +66,14 @@ That is the resource with the symbol you created the dApp (LendingToken, A token
 Let's also set the xrd address as an environment variable 
 `export xrd=resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3`
 
+You can now register to the platform
+`resim call-method ${component} register  --manifest rtm/register.rtm`
+Then export the resource received (CreditScore Nft) as $badge
+
 You can also run the lend_tokens.rtm transaction manifest to takes back the XRD loan `resim run rtm/lend_tokens.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} lend_tokens $xrd:100  --manifest rtm/lend_tokens.rtm`
+`resim call-method ${component} lend_tokens $xrd:100 $badge:1 --manifest rtm/lend_tokens.rtm`
 
 
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`

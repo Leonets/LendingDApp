@@ -110,6 +110,7 @@ mod lending_dapp {
             // check_maturity  => restrict_to: [admin, OWNER];
             tokenize_yield  => PUBLIC;
             redeem => PUBLIC;
+            redeem1 => PUBLIC;
         }
     }
     struct LendingDApp<> {
@@ -174,6 +175,7 @@ mod lending_dapp {
                 ResourceBuilder::new_fungible(OwnerRole::None)
                     .metadata(metadata!(init{
                         "name"=>"ZeroCollateral Owner badge", locked;
+                        "symbol" => "Zero Owner", locked;
                         "icon_url" => Url::of("https://test.zerocollateral.eu/images/owner.jpg"), locked;
                         "description" => "A badge to be used for some extra-special administrative function", locked;
                     }))
@@ -186,6 +188,7 @@ mod lending_dapp {
                 ))))
                 .metadata(metadata!(init{
                     "name"=>"ZeroCollateral Admin badge", locked;
+                    "symbol" => "Zero Admin", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
                 }))
@@ -203,6 +206,7 @@ mod lending_dapp {
                 )))
                 .metadata(metadata!(init{
                     "name" => "ZeroCollateral Staff_badge", locked;
+                    "symbol" => "Zero Staff", locked;
                     "description" => "A badge to be used for some administrative function", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
                 }))
@@ -251,6 +255,7 @@ mod lending_dapp {
                 )))
                 .metadata(metadata!(init{
                     "name" => "ZeroCollateral BadPayer", locked;
+                    "symbol" => "BADPAYER", locked;
                     "description" => "A signal to indicate that the account has not repaid the loan", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/badPayer.jpg"), locked;
                 }))
@@ -282,6 +287,35 @@ mod lending_dapp {
                          minter_updater => OWNER;
                 ))
                 .mint_initial_supply(1000);
+
+                        // Create a badge to identify any account that interacts with the dApp
+            let nft_manager =
+                ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
+                .metadata(metadata!(
+                    init {
+                        "name" => "ZeroCollateral NFT", locked;
+                        "symbol" => "POSITION and CREDIT_SCORE", locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/creditscore.png"), locked;
+                        // "icon_url" => Url::of(get_nft_icon_url()), locked;
+                        "description" => "An NFT containing information about your liquidity and your credit score", locked;
+                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
+                    }
+                ))
+                .mint_roles(mint_roles!(
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(require(global_caller(component_address)));
+                ))
+                .burn_roles(burn_roles!(
+                    burner => rule!(require(global_caller(component_address)));
+                    burner_updater => OWNER;
+                ))
+                // Here we are allowing anyone (AllowAll) to update the NFT metadata.
+                // The second parameter (DenyAll) specifies that no one can update this rule.
+                .non_fungible_data_update_roles(non_fungible_data_update_roles!(
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
+                    non_fungible_data_updater_updater => OWNER;
+                ))           
+                .create_with_no_initial_supply();
 
             let pt_rm: ResourceManager = ResourceBuilder::new_fungible(OwnerRole::None)
                 .divisibility(DIVISIBILITY_MAXIMUM)
@@ -324,34 +358,6 @@ mod lending_dapp {
                     non_fungible_data_updater => rule!(require(global_caller(component_address)));
                     non_fungible_data_updater_updater => rule!(deny_all);
                 })
-                .create_with_no_initial_supply();
-
-            // Create a badge to identify any account that interacts with the dApp
-            let nft_manager =
-                ResourceBuilder::new_ruid_non_fungible::<LenderData>(OwnerRole::None)
-                .metadata(metadata!(
-                    init {
-                        "name" => "ZeroCollateral NFT", locked;
-                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/creditscore.png"), locked;
-                        // "icon_url" => Url::of(get_nft_icon_url()), locked;
-                        "description" => "An NFT containing information about your liquidity", locked;
-                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
-                    }
-                ))
-                .mint_roles(mint_roles!(
-                    minter => rule!(require(global_caller(component_address)));
-                    minter_updater => rule!(require(global_caller(component_address)));
-                ))
-                .burn_roles(burn_roles!(
-                    burner => rule!(require(global_caller(component_address)));
-                    burner_updater => OWNER;
-                ))
-                // Here we are allowing anyone (AllowAll) to update the NFT metadata.
-                // The second parameter (DenyAll) specifies that no one can update this rule.
-                .non_fungible_data_update_roles(non_fungible_data_update_roles!(
-                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
-                    non_fungible_data_updater_updater => OWNER;
-                ))           
                 .create_with_no_initial_supply();
 
             // populate a ZeroCollateral struct and instantiate a new component
@@ -413,7 +419,7 @@ mod lending_dapp {
             return (component, admin_badge, owner_badge);
         }
 
-        //register to the platform
+        // register to the platform
         pub fn register(&mut self) -> Bucket {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let lender_badge = self.lendings_nft_manager
@@ -430,6 +436,8 @@ mod lending_dapp {
             );
             lender_badge
         }
+
+    
 
         //unregister from the platform (useful for stokenet test)
         pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
@@ -459,11 +467,11 @@ mod lending_dapp {
         // tokenize
         pub fn tokenize_yield(
             &mut self, 
-            lsu_token: FungibleBucket,
+            lsu_token: Bucket,
             maturity_date: Decimal
         ) -> (FungibleBucket, NonFungibleBucket) {
             // assert_ne!(self.check_maturity(), true, "The expiry date has passed!");
-            assert_eq!(lsu_token.resource_address(), self.lendings_nft_manager.address());
+            assert_eq!(lsu_token.resource_address(), self.lnd_manager.address());
 
             let lsu_amount = lsu_token.amount();
             let redemption_value = lsu_token.amount();
@@ -490,16 +498,16 @@ mod lending_dapp {
             self.lendings.put(lsu_token.into());
 
             return (pt_bucket, yt_bucket)
-        }        
+        }     
 
         //redeem
         pub fn redeem(
             &mut self, 
-            pt_bucket: FungibleBucket, 
-            yt_bucket: NonFungibleBucket, 
+            pt_bucket: Bucket, 
+            yt_bucket: Bucket, 
             yt_redeem_amount: Decimal,
-        ) -> (Bucket, Option<NonFungibleBucket>) {
-            let mut data: YieldTokenData = yt_bucket.non_fungible().data();    
+        ) -> (Bucket, Option<Bucket>) {
+            let mut data: YieldTokenData = yt_bucket.as_non_fungible().non_fungible().data();    
             assert!(data.underlying_lsu_amount >= yt_redeem_amount);            
             assert_eq!(pt_bucket.amount(), yt_redeem_amount);
             assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
@@ -507,7 +515,7 @@ mod lending_dapp {
 
             let lsu_bucket = self.lendings.take(pt_bucket.amount());
 
-            let option_yt_bucket: Option<NonFungibleBucket> = if data.underlying_lsu_amount > yt_redeem_amount {
+            let option_yt_bucket: Option<Bucket> = if data.underlying_lsu_amount > yt_redeem_amount {
                 data.underlying_lsu_amount -= yt_redeem_amount;
                 Some(yt_bucket)
             } else {
@@ -519,6 +527,17 @@ mod lending_dapp {
 
             return (lsu_bucket, option_yt_bucket)
         }
+
+        // redeem YT
+        // YT deve restituire un numero di ZSU in base al calcolo
+        // degli interessi dalla data che risulta nel YT NFT 
+        // e fino al momento attuale
+
+        //swap YT
+        // lo swap deve ritornare lo stesso numero di token che ritornerebbero facendo take back
+        // se l'interesse è rimasto lo stesso
+        // se invece l'interesse è cambiato deve applicare un'addizionale od una differenza
+        // in base al calcolo con maucalay
 
         //utility for asking borrow repay
         pub fn asking_repay(&mut self) {

@@ -1,0 +1,28 @@
+CALL_METHOD
+    Address("${component_test}")
+    "lock_fee"
+    Decimal("5000")
+;
+CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${lending_token}")
+    Decimal("50")
+;
+TAKE_FROM_WORKTOP
+    Address("${lending_token}")
+    Decimal("50")
+    Bucket("bucket1")
+;
+CALL_METHOD
+    Address("${component}")
+    "tokenize_yield"
+    Bucket("bucket1")
+    Decimal("200")
+;
+CALL_METHOD
+    Address("${account}")
+    "try_deposit_batch_or_refund"
+    Expression("ENTIRE_WORKTOP")
+    Enum<0u8>()
+;
