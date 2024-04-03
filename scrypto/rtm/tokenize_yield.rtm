@@ -15,10 +15,22 @@ TAKE_FROM_WORKTOP
     Bucket("bucket1")
 ;
 CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${lnd_manager}")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("${lnd_manager}")
+    Decimal("1")
+    Bucket("bucket2")
+;
+CALL_METHOD
     Address("${component}")
     "tokenize_yield"
     Bucket("bucket1")
     Decimal("200")
+    Bucket("bucket2")
 ;
 CALL_METHOD
     Address("${account}")

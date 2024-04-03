@@ -18,8 +18,11 @@ export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
 export staff_badge=`echo $output | cut -d " " -f4`
 export benefactor_badge=`echo $output | cut -d " " -f5`
-export lending_token=`echo $output | cut -d " " -f6`
-export lnd_manager=`echo $output | cut -d " " -f7`
+export bad_payer=`echo $output | cut -d " " -f6`
+export lending_token=`echo $output | cut -d " " -f7`
+export lnd_manager=`echo $output | cut -d " " -f8`
+export pt=`echo $output | cut -d " " -f9`
+export yt=`echo $output | cut -d " " -f10`
 
 
 export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh
@@ -66,11 +69,11 @@ resim show $staff_badge
 echo '>>> Owner Account with all the resources'
 resim show $account
 
-echo '>>> Recall Staff'
-resim run rtm/recall_staff_badge.rtm
+# echo '>>> Recall Staff'
+# resim run rtm/recall_staff_badge.rtm
 
-echo '>>> Staff Badge Info After recall'
-resim show $staff_badge
+# echo '>>> Staff Badge Info After recall'
+# resim show $staff_badge
 
 echo '>>> Owner Account After recall with all the resources'
 resim show $account

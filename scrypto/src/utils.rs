@@ -177,7 +177,7 @@ pub fn calculate_interests(
     let fixed = *reward_fixed;
     let current_epoch = Runtime::current_epoch().number(); 
         
-        //calculate interest to be repaied with specified reward type 
+    //calculate interest to be repaied with specified reward type 
     return match Reward::from_str(reward_type) {
         Ok(reward) => {
             match reward {
@@ -242,4 +242,11 @@ impl FromStr for Reward {
             _ => Err(()),
         }
     }
+}
+
+// /// Checks whether maturity date has been reached.
+pub fn check_maturity(maturity_date: Decimal) -> bool {
+    let maturity = maturity_date.to_string().parse::<u64>().unwrap();
+    let current_epoch = Runtime::current_epoch().number();
+    maturity > current_epoch
 }

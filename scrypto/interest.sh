@@ -16,11 +16,13 @@ output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
-export benefactor_badge=`echo $output | cut -d " " -f4`
-export bad_payer=`echo $output | cut -d " " -f5`
-export staff_badge=`echo $output | cut -d " " -f6`
+export staff_badge=`echo $output | cut -d " " -f4`
+export benefactor_badge=`echo $output | cut -d " " -f5`
+export bad_payer=`echo $output | cut -d " " -f6`
 export lending_token=`echo $output | cut -d " " -f7`
 export lnd_manager=`echo $output | cut -d " " -f8`
+export pt=`echo $output | cut -d " " -f9`
+export yt=`echo $output | cut -d " " -f10`
 
 
 

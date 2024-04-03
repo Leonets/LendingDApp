@@ -18,8 +18,11 @@ export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
 export staff_badge=`echo $output | cut -d " " -f4`
 export benefactor_badge=`echo $output | cut -d " " -f5`
-export lending_token=`echo $output | cut -d " " -f6`
-export lnd_manager=`echo $output | cut -d " " -f7`
+export bad_payer=`echo $output | cut -d " " -f6`
+export lending_token=`echo $output | cut -d " " -f7`
+export lnd_manager=`echo $output | cut -d " " -f8`
+export pt=`echo $output | cut -d " " -f9`
+export yt=`echo $output | cut -d " " -f10`
 
 
 export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh
