@@ -71,9 +71,9 @@ pub struct Borrower {
 
 #[derive(ScryptoSbor, NonFungibleData)]
 pub struct YieldTokenData {
-    underlying_lsu_resource: ResourceAddress,
-    underlying_lsu_amount: Decimal,
-    redemption_value_at_start: Decimal,
+    underlying_resource: ResourceAddress,
+    underlying_amount: Decimal,
+    interest_totals: Decimal,
     yield_claimed: Decimal,
     // maturity_date: UtcDateTime,
     maturity_date: Decimal,
@@ -113,6 +113,8 @@ mod lending_dapp {
             // recall_staff_badge => restrict_to: [admin, OWNER];
             mint_bad_payer  => restrict_to: [admin, OWNER];
             mint_bad_payer_vault  => restrict_to: [admin, OWNER];
+            //config
+            config  => restrict_to: [admin, OWNER];
             //new
             // maturity_date  => restrict_to: [admin, OWNER];
             // check_maturity  => restrict_to: [admin, OWNER];
@@ -122,8 +124,8 @@ mod lending_dapp {
             claim_yield => PUBLIC;
         }
     }
-    struct LendingDApp<> {
-        lendings: Vault,
+    struct ZeroCollateral<> {
+        zeros: Vault,
         collected_xrd: Vault,
         fee_xrd: Vault,
         donations_xrd: Vault,
@@ -134,7 +136,7 @@ mod lending_dapp {
         zsu_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
         benefactor_badge_resource_manager: ResourceManager,
-        lendings_nft_manager: ResourceManager,
+        nft_manager: ResourceManager,
         period_length: Decimal,
         reward_type: String,
         interest_for_lendings: AvlTree<Decimal, Decimal>,
@@ -152,7 +154,7 @@ mod lending_dapp {
         yt_resource_manager: ResourceManager,
     }
 
-    impl LendingDApp {
+    impl ZeroCollateral {
         // given a reward, interest level,symbol name, reward_type, max_borrowing_limit creates a ready-to-use Lending dApp
         pub fn instantiate_lending_dapp(
             reward: Decimal,
@@ -161,7 +163,7 @@ mod lending_dapp {
             period_length: Decimal,
             reward_type: String,
             max_borrowing_limit: Decimal,
-        ) -> (Global<LendingDApp>, FungibleBucket, FungibleBucket) {
+        ) -> (Global<ZeroCollateral>, FungibleBucket, FungibleBucket) {
             
             //data struct for holding interest levels for loan/borrow
             let mut borrow_tree: AvlTree<Decimal, Decimal> = AvlTree::new();
@@ -178,7 +180,7 @@ mod lending_dapp {
             let late_payers_accounts_history: Vec<String> = Vec::new();
 
             let (address_reservation, component_address) =
-                Runtime::allocate_component_address(LendingDApp::blueprint_id());
+                Runtime::allocate_component_address(ZeroCollateral::blueprint_id());
 
             let owner_badge = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
@@ -283,10 +285,10 @@ mod lending_dapp {
                 .create_with_no_initial_supply();
 
             // create a new LND resource, with a fixed quantity of 1000
-            let lendings_bucket = 
+            let zeros_bucket = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
                 .metadata(metadata!(init{
-                    "name" => "LendingToken", locked;
+                    "name" => "ZeroUnitToken", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
                     "icon_url" => Url::of("https://test.zerocollateral.eu/images/liquidzero.png"), locked;
@@ -372,8 +374,8 @@ mod lending_dapp {
             // populate a ZeroCollateral struct and instantiate a new component
             let component = 
                 Self {
-                    zsu_manager: lendings_bucket.resource_manager(),
-                    lendings: Vault::with_bucket(lendings_bucket.into()),
+                    zsu_manager: zeros_bucket.resource_manager(),
+                    zeros: Vault::with_bucket(zeros_bucket.into()),
                     collected_xrd: Vault::new(XRD),
                     fee_xrd: Vault::new(XRD),
                     donations_xrd: Vault::new(XRD),
@@ -383,7 +385,7 @@ mod lending_dapp {
                     max_percentage_allowed_for_account: 3,
                     staff_badge_resource_manager: staff_badge,
                     benefactor_badge_resource_manager: benefactor_badge,
-                    lendings_nft_manager: nft_manager,
+                    nft_manager: nft_manager,
                     period_length: period_length,
                     reward_type: reward_type,
                     interest_for_lendings: lend_tree,
@@ -428,19 +430,21 @@ mod lending_dapp {
             return (component, admin_badge, owner_badge);
         }
 
+
+
         // register to the platform
         pub fn register(&mut self) -> Bucket {
             let yield_token = YieldTokenData {
-                underlying_lsu_resource: self.lendings_nft_manager.address(),
-                underlying_lsu_amount: dec!(0),
-                redemption_value_at_start: dec!(0),
+                underlying_resource: self.nft_manager.address(),
+                underlying_amount: dec!(0),
+                interest_totals: dec!(0),
                 yield_claimed: dec!(0),
                 maturity_date: dec!(0),
                 principal_returned: false,
             };
 
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
-            let lender_badge = self.lendings_nft_manager
+            let lender_badge = self.nft_manager
             .mint_ruid_non_fungible(
                 CreditScore {
                     start_lending_epoch: Epoch::of(0),
@@ -510,28 +514,27 @@ mod lending_dapp {
                 &String::from("Fixed"), &extra_interest,
                 starting_u64,
                 &zsu_amount, &self.interest_for_lendings);       
-            info!("Interest to pay {}", interest_totals);         
-
+                    
             //mint some principal token
             let pt_bucket = 
                 self.pt_resource_manager.mint(zsu_amount); //.as_fungible();
             //maturity in epoch
             let maturity_epoch = Decimal::from(Runtime::current_epoch().number()) + maturity_date;
-            info!("Maturity Epoch  {}", maturity_epoch);   
+            info!("Interest to pay {} at epoch {}", interest_totals, maturity_epoch); 
 
             //updates data on NFT
             let strip = YieldTokenData {
-                underlying_lsu_resource: self.lendings_nft_manager.address(),
-                underlying_lsu_amount: zsu_amount,
-                redemption_value_at_start: interest_totals,
+                underlying_resource: self.nft_manager.address(),
+                underlying_amount: zsu_amount,
+                interest_totals: interest_totals,
                 yield_claimed: Decimal::ZERO,
                 maturity_date: maturity_epoch,
                 principal_returned: false,
             };
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", strip);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", strip);
             
-            self.lendings.put(zsu_token);
+            self.zeros.put(zsu_token);
             info!("Nft Yield data updated and ZSU deposited");   
 
             return (pt_bucket, lender_badge)
@@ -546,15 +549,15 @@ mod lending_dapp {
             yt_redeem_amount: Decimal,
         ) -> (Bucket, Option<Bucket>) {
             let mut data: YieldTokenData = yt_bucket.as_non_fungible().non_fungible().data();    
-            assert!(data.underlying_lsu_amount >= yt_redeem_amount);            
+            assert!(data.underlying_amount >= yt_redeem_amount);            
             assert_eq!(pt_bucket.amount(), yt_redeem_amount);
             assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
             assert_eq!(yt_bucket.resource_address(), self.yt_resource_manager.address());
 
-            let zsu_bucket = self.lendings.take(pt_bucket.amount());
+            let zsu_bucket = self.zeros.take(pt_bucket.amount());
 
-            let option_yt_bucket: Option<Bucket> = if data.underlying_lsu_amount > yt_redeem_amount {
-                data.underlying_lsu_amount -= yt_redeem_amount;
+            let option_yt_bucket: Option<Bucket> = if data.underlying_amount > yt_redeem_amount {
+                data.underlying_amount -= yt_redeem_amount;
                 Some(yt_bucket)
             } else {
                 yt_bucket.burn();
@@ -585,14 +588,15 @@ mod lending_dapp {
             lender_badge: Bucket
         ) -> (Bucket, Bucket) {
 
+            info!("Return PT {}", pt_bucket.amount());   
             //Get info from the CreditScore NFT
             let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
 
             // To redeem PT only, must wait until after maturity.
             assert_eq!(
                 check_maturity(lender_data.yield_token_data.maturity_date), 
-                true, 
-                "The Principal token has reached its maturity!"
+                false, 
+                "The Principal token has NOT reached its maturity!"
             );
 
             assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
@@ -602,14 +606,14 @@ mod lending_dapp {
             self.fee_xrd.put(self.collected_xrd.take(fees));
             info!("Paying fees  {}", fees);   
             //return the amount that was tokenized
-            let bucket_of_zsu = self.lendings.take(pt_bucket.amount()-fees);
+            let bucket_of_zsu = self.zeros.take(pt_bucket.amount()-fees);
             pt_bucket.burn();
 
             //update principal returned
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             let mut yield_data = lender_data.yield_token_data;
             yield_data.principal_returned = true;
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_data);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_data);
 
             return (bucket_of_zsu, lender_badge)
         }
@@ -627,17 +631,17 @@ mod lending_dapp {
             // Can no longer claim yield after maturity.
             assert_eq!(
                 check_maturity(lender_data.yield_token_data.maturity_date), 
-                true, 
-                "The yield token has not reached its maturity!"
+                false, 
+                "The yield token has NOT reached its maturity!"
             );
 
-            let amount_returned = lender_data.yield_token_data.redemption_value_at_start;
+            let interest_totals = lender_data.yield_token_data.interest_totals;
             // Paying fees
-            let fees = calculate_fees(amount_returned);
+            let fees = calculate_fees(interest_totals);
             self.fee_xrd.put(self.collected_xrd.take(fees));
-            info!("Paying fees  {}", fees);   
+            info!("Paying fees, amount_returned  {}  {}", fees, interest_totals);   
             //total net amount to return
-            let net_returned = self.lendings.take(amount_returned-fees);
+            let net_returned = self.zeros.take(interest_totals-fees);
             
             (net_returned, lender_badge)
         }
@@ -733,7 +737,7 @@ mod lending_dapp {
 
         //lend some xrd
         pub fn lend_tokens(&mut self, loan: Bucket, lender_badge: Bucket) -> (Bucket, Bucket) {
-            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
+            assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             let non_fung_bucket = lender_badge.as_non_fungible();
             let nft_local_id: NonFungibleLocalId = non_fung_bucket.non_fungible_local_id();
@@ -749,19 +753,19 @@ mod lending_dapp {
             self.collected_xrd.put(loan);
 
             //prepare a bucket with lnd tokens to give back to the user 
-            let token_received = self.lendings.take(num_xrds);
+            let token_received = self.zeros.take(num_xrds);
 
             // Update the data on the network
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Epoch::of(0));
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "start_lending_epoch", Runtime::current_epoch());
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Epoch::of(0));
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
 
             (token_received, lender_badge)
         }
 
         //gives back the original xrd 
         pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
-            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
+            assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
 
@@ -774,7 +778,7 @@ mod lending_dapp {
 
             //take the LND bucket to close the loan, and returns XRD tokens from the main pool
             let amount_to_be_returned = refund.amount();
-            self.lendings.put(refund);
+            self.zeros.put(refund);
 
             //calculate interest
             let interest_totals = calculate_interests(
@@ -796,18 +800,18 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             if remaining_amount_to_return == dec!("0") {
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Runtime::current_epoch());
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Runtime::current_epoch());
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))                
             } else {
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))
             }
         }
 
         //get some xrd  
         pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket, user_account: String, borrow_expected_length: Decimal,) -> (Bucket, Option<Bucket>) {
-            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
+            assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             // Verify the user has not an open borrow
             let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
@@ -820,6 +824,7 @@ mod lending_dapp {
             // TODO max_limit should be self.collected_xrd.amount() * 50 / 100 (50% of main vault) 
             // or self.max_borrowing_limit * 100 / 100 (100% of what has been specified as max_borrowing_amount by admin)
             borrow_epoch_max_length_checks(self.borrow_epoch_max_lenght,borrow_expected_length);
+            borrow_epoch_min(borrow_expected_length);
 
             //prepare for ordering and looking for the next expiring borrow
             let epoch = Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length;
@@ -842,15 +847,15 @@ mod lending_dapp {
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", epoch);
-            self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", epoch);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
             return (xrd_to_return,Some(lender_badge))                
         }
 
         //repay some xrd  
         pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String) -> (Bucket, Option<Bucket>) {
-            assert_resource(&lender_badge.resource_address(), &self.lendings_nft_manager.address());
+            assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
 
@@ -888,18 +893,18 @@ mod lending_dapp {
                 info!("Setting loan as closed ");  
                 self.collected_xrd.put(loan_repaied.take(total-fees));
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
                 //remove the user account as a current borrower      
                 self.borrowers_accounts.retain(|borrower| borrower.name != user_account);
 
                 //Update epoch on NFT
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", dec!(0));
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());    
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", dec!(0));
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());    
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
-                self.lendings_nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
             }  
             return (loan_repaied,Some(lender_badge))                
         }
@@ -918,6 +923,20 @@ mod lending_dapp {
         }
 
         //for admin only
+        pub fn config(&mut self, reward: Decimal, interest: Decimal
+                , period_length: Decimal
+                , reward_type: String, borrow_epoch_max_lenght: Decimal
+                , max_percentage_allowed_for_account: u32, max_borrowing_limit: Decimal ) {                
+            self.set_reward(reward);
+            self.set_interest(interest);
+            self.set_period_length(period_length);
+            self.set_reward_type(reward_type);
+            self.set_borrow_epoch_max_length(borrow_epoch_max_lenght);
+            self.set_max_percentage_allowed_for_account(max_percentage_allowed_for_account);
+            //without methods
+            self.max_borrowing_limit = max_borrowing_limit;
+        }
+
         // set the reward for lenders
         pub fn set_reward(&mut self, reward: Decimal) {
             self.reward = reward;
@@ -1000,7 +1019,7 @@ mod lending_dapp {
 
         //extend the pool for accept lendings
         pub fn extend_lending_pool(&mut self, size_extended: Decimal) {
-            self.lendings.put(self.zsu_manager.mint(size_extended));
+            self.zeros.put(self.zsu_manager.mint(size_extended));
         }
 
         //extend the maximum amount for allowing borrows

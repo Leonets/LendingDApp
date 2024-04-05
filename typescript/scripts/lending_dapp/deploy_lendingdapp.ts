@@ -17,7 +17,7 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
         ;
         CALL_FUNCTION
             Address("${sugarOraclePackage}")
-            "LendingDApp"
+            "ZeroCollateral"
             "instantiate_lending_dapp"
             Decimal("5")
             Decimal("8")

@@ -153,6 +153,16 @@ pub fn borrow_epoch_max_length_checks(
     );
 }
 
+//for borrowings
+pub fn borrow_epoch_min(borrow_epochs_requested: Decimal){
+    // Check the min borrow epochs length
+    info!("Min length of the borrow in epochs : 1 ");  
+    assert!(
+        borrow_epochs_requested >= dec!(1),
+        "You have to borrow for at least 1 epoch instead of : {:?} ", borrow_epochs_requested
+    );
+}
+
 //for repay
 pub fn repay_checks(allowed_amount: Decimal, repaied_amount: Decimal){
     info!("Minimum amount : {:?} ", allowed_amount);  
@@ -245,8 +255,9 @@ impl FromStr for Reward {
 }
 
 // /// Checks whether maturity date has been reached.
-pub fn check_maturity(maturity_date: Decimal) -> bool {
+pub fn check_maturity(maturity_date: Decimal) -> bool {    
     let maturity = maturity_date.to_string().parse::<u64>().unwrap();
     let current_epoch = Runtime::current_epoch().number();
+    info!("Maturity  {} should be before current epoch {}", maturity, current_epoch);   
     maturity > current_epoch
 }

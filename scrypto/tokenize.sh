@@ -12,7 +12,7 @@ echo "Publishing dapp"
 export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
 echo "Package = " $lendingapp_package
 
-output=`resim call-function $lendingapp_package LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $lendingapp_package ZeroCollateral instantiate_lending_dapp 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
@@ -92,7 +92,7 @@ resim set-current-epoch 1
 resim run rtm/lend_tokens.rtm
 
 
-echo '>>> Tokenize'
+echo '>>> Tokenize 1 @100'
 
 resim set-current-epoch 100
 #resim call-method ${component} tokenize_yield $xrd:100
@@ -100,9 +100,9 @@ resim run rtm/tokenize_yield.rtm
 
 resim show $account
 
-echo '>>> Tokenize'
+echo '>>> Tokenize 2 @150'
 
-resim set-current-epoch 100
+resim set-current-epoch 150
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/tokenize_yield.rtm
 
@@ -118,7 +118,7 @@ resim show $account
 
 echo '>>> redeem_from_pt (After Maturity)'
 
-resim set-current-epoch 150
+resim set-current-epoch 450
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/redeem_from_pt.rtm
 
@@ -126,9 +126,25 @@ resim show $account
 
 echo '>>> Claim Yield (After Maturity)'
 
-resim set-current-epoch 200
+resim set-current-epoch 500
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/claim_yield.rtm
+
+resim show $account
+
+echo '>>> redeem_from_pt, trying again (After Maturity 2)'
+
+resim set-current-epoch 550
+#resim call-method ${component} tokenize_yield $xrd:100
+resim run rtm/redeem_from_pt.rtm
+
+resim show $account
+
+echo '>>> redeem_from_pt, trying again (After Maturity 3)'
+
+resim set-current-epoch 550
+#resim call-method ${component} tokenize_yield $xrd:100
+resim run rtm/redeem_from_pt.rtm
 
 resim show $account
 

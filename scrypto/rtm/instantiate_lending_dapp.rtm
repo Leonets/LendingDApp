@@ -5,7 +5,7 @@ CALL_METHOD
 ;
 CALL_FUNCTION
     Address("${package}")
-    "LendingDApp"
+    "ZeroCollateral"
     "instantiate_lending_dapp"
     Decimal("5")
     Decimal("10")
