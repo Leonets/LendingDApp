@@ -44,8 +44,8 @@ resource2 -> admin_badge
 resource3 -> staff_badge
 resource4 -> benefactor_badge
 resource5 -> bad_payer
-resource6 -> lending_token
-resource7 -> lnd_manager
+resource6 -> zerounit_token
+resource7 -> userdata_nft_manager
 resource8 -> principal_token
 resource9 -> yield_token
 
@@ -55,11 +55,11 @@ Store the returned component addres in the component environment variable
 Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable 
 `export owner_badge=<resource_address>`
 
-Export also the lnd_manager in the environment variable 
-`export lnd_manager=<lnd_resource_address>`
+Export also the userdata_nft_manager in the environment variable 
+`export userdata_nft_manager=<lnd_resource_address>`
 
-Export also the lending_token resource address in the environment variable 
-`export lending_token=<lending_token>`
+Export also the zerounit_token resource address in the environment variable 
+`export zerounit_token=<zerounit_token>`
 That is the resource with the symbol you created the dApp (LendingToken, A token to use to receive back the loan)
 
 
@@ -79,7 +79,7 @@ That file has been built with the following bash command:
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} takes_back $lnd:10 $lnd_manager:1 --manifest rtm/takes_back.rtm`
+`resim call-method ${component} takes_back $lnd:10 $userdata_nft_manager:1 --manifest rtm/takes_back.rtm`
 
 
 To fund the main vault and to fund the development you can run 

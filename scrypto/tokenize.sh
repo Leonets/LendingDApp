@@ -17,10 +17,10 @@ export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
 export staff_badge=`echo $output | cut -d " " -f4`
-export benefactor_badge=`echo $output | cut -d " " -f5`
-export bad_payer=`echo $output | cut -d " " -f6`
-export lending_token=`echo $output | cut -d " " -f7`
-export lnd_manager=`echo $output | cut -d " " -f8`
+export bad_payer=`echo $output | cut -d " " -f5`
+export zerounit_token=`echo $output | cut -d " " -f6`
+export userdata_nft_manager=`echo $output | cut -d " " -f7`
+export credit_score=`echo $output | cut -d " " -f8`
 export pt=`echo $output | cut -d " " -f9`
 export yt=`echo $output | cut -d " " -f10`
 
@@ -33,9 +33,8 @@ echo 'component = '$component
 echo 'owner_badge = '$owner_badge
 echo 'admin_badge = '$admin_badge
 echo 'staff_badge = '$staff_badge
-echo 'lending_token = ' $lending_token
-echo 'lnd_manager = ' $lnd_manager
-echo 'benefactor_badge = ' $benefactor_badge
+echo 'zerounit_token = ' $zerounit_token
+echo 'userdata_nft_manager = ' $userdata_nft_manager
 echo 'bad_payer = ' $bad_payer
 
 echo ' '
@@ -52,14 +51,12 @@ echo ' > admin'
 resim show $admin_badge
 echo ' > staff'
 resim show $staff_badge
-echo ' > benef'
-resim show $benefactor_badge
 echo ' > bad'
 resim show $bad_payer
 echo ' > lnd'
-resim show $lnd_manager
+resim show $userdata_nft_manager
 echo ' > zero unit'
-resim show $lending_token
+resim show $zerounit_token
 echo ' > pt'
 resim show $pt
 echo ' > yt'
@@ -79,9 +76,17 @@ resim run rtm/fund_main_pool_4000.rtm
 # resim run rtm/fund.rtm
 # donations 200
 
+# echo '>>> Register'
+
+# resim run rtm/register.rtm
+
 echo '>>> Register'
 
-resim run rtm/register.rtm
+resim run rtm/register_new.rtm
+
+echo '>>> Register Again'
+
+resim run rtm/register_again.rtm
 
 resim show $account
 

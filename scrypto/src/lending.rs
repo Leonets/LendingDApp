@@ -28,15 +28,13 @@ struct BadPayerBadge {
 
 //struct to store and show info about loan/borrow position in each account wallet
 #[derive(ScryptoSbor, NonFungibleData)]
-pub struct CreditScore {
+pub struct UserPosition {
     #[mutable]
     start_lending_epoch: Epoch,
     #[mutable]
     end_lending_epoch: Epoch,
     #[mutable]
     amount: Decimal,
-    #[mutable]
-    lend_amount_history: Decimal,
     #[mutable]
     start_borrow_epoch: Epoch,
     #[mutable]
@@ -46,9 +44,24 @@ pub struct CreditScore {
     #[mutable]
     borrow_amount: Decimal,
     #[mutable]
+    yield_token_data: YieldTokenData
+}
+
+//struct to store and show info about credit store (soulbound)
+#[derive(ScryptoSbor, NonFungibleData)]
+pub struct CreditScore {
+    #[mutable]
+    lend_epoch_length: Decimal,
+    #[mutable]
+    lend_amount_history: Decimal,
+    #[mutable]
     borrow_amount_history: Decimal,
     #[mutable]
-    yield_token_data: YieldTokenData
+    borrow_epoch_length: Decimal,
+    #[mutable]
+    lender_credit_score: Decimal,
+    #[mutable]
+    borrower_credit_score: Decimal
 }
 
 
@@ -90,6 +103,7 @@ mod lending_dapp {
         },
         methods {
             register => PUBLIC;
+            register_new => PUBLIC;
             unregister => PUBLIC;
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
@@ -105,7 +119,6 @@ mod lending_dapp {
             set_interest => restrict_to: [admin, OWNER];
             set_period_length => restrict_to: [admin, OWNER];
             set_max_percentage_allowed_for_account  => restrict_to: [admin, OWNER];
-            withdraw_earnings => restrict_to: [OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
@@ -128,15 +141,14 @@ mod lending_dapp {
         zeros: Vault,
         collected_xrd: Vault,
         fee_xrd: Vault,
-        donations_xrd: Vault,
         reward: Decimal,
         interest: Decimal,
         borrow_epoch_max_lenght: Decimal,
         max_percentage_allowed_for_account: u32,
         zsu_manager: ResourceManager,
         staff_badge_resource_manager: ResourceManager,
-        benefactor_badge_resource_manager: ResourceManager,
         nft_manager: ResourceManager,
+        creditscore_manager: ResourceManager,
         period_length: Decimal,
         reward_type: String,
         interest_for_lendings: AvlTree<Decimal, Decimal>,
@@ -235,30 +247,6 @@ mod lending_dapp {
                 })
             .create_with_no_initial_supply();
 
-            let benefactor_badge =
-                ResourceBuilder::new_ruid_non_fungible::<BenefactorBadge>(OwnerRole::Updatable(rule!(
-                    require(owner_badge.resource_address())
-                    || require(admin_badge.resource_address())
-                )))
-                .metadata(metadata!(init{
-                    "name" => "ZeroCollateral Benefactor_badge", locked;
-                    "description" => "A badge to be used for rewarding benefactors", locked;
-                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
-                }))
-                .mint_roles(mint_roles! (
-                    minter => rule!(require(global_caller(component_address)));
-                    minter_updater => OWNER;
-                ))
-                .burn_roles(burn_roles! (
-                    burner => rule!(require(admin_badge.resource_address()));
-                    burner_updater => OWNER;
-                ))
-                .recall_roles(recall_roles! {
-                    recaller => rule!(require(admin_badge.resource_address()));
-                    recaller_updater => OWNER;
-                })
-                .create_with_no_initial_supply();
-
             let bad_payer =
                 ResourceBuilder::new_ruid_non_fungible::<BadPayerBadge>(OwnerRole::Updatable(rule!(
                     require(owner_badge.resource_address())
@@ -288,10 +276,10 @@ mod lending_dapp {
             let zeros_bucket = 
                 ResourceBuilder::new_fungible(OwnerRole::None)
                 .metadata(metadata!(init{
-                    "name" => "ZeroUnitToken", locked;
+                    "name" => "LiquidZeroUnit", locked;
                     "symbol" => symbol, locked;
                     "description" => "A token to use to receive back the loan", locked;
-                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/liquidzero.png"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/liquidzero.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -299,16 +287,16 @@ mod lending_dapp {
                 ))
                 .mint_initial_supply(1000);
 
-                        // Create a badge to identify any account that interacts with the dApp
+            // Create a badge to identify any account that interacts with the dApp
             let nft_manager =
-                ResourceBuilder::new_ruid_non_fungible::<CreditScore>(OwnerRole::None)
+                ResourceBuilder::new_ruid_non_fungible::<UserPosition>(OwnerRole::None)
                 .metadata(metadata!(
                     init {
-                        "name" => "ZeroCollateral NFT", locked;
-                        "symbol" => "POSITION and CREDIT_SCORE", locked;
-                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/creditscore.png"), locked;
+                        "name" => "ZeroCollateral UserData NFT", locked;
+                        "symbol" => "Zero UserData", locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/userdata.jpg"), locked;
                         // "icon_url" => Url::of(get_nft_icon_url()), locked;
-                        "description" => "An NFT containing information about your liquidity and your credit score", locked;
+                        "description" => "An NFT containing information about your liquidity", locked;
                         // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
                     }
                 ))
@@ -328,12 +316,47 @@ mod lending_dapp {
                 ))           
                 .create_with_no_initial_supply();
 
+            // Create a badge to identify any account that interacts with the dApp (souldbound !!)
+            let creditscore_manager =
+                ResourceBuilder::new_ruid_non_fungible::<CreditScore>(OwnerRole::None)
+                .metadata(metadata!(
+                    init {
+                        "name" => "ZeroCollateral CreditScore NFT", locked;
+                        "symbol" => "Zero Credit Score", locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/creditscore.jpg"), locked;
+                        // "icon_url" => Url::of(get_nft_icon_url()), locked;
+                        "description" => "An NFT containing information about your credit score", locked;
+                        // "dapp_definitions" => ComponentAddress::try_from_hex("account_tdx_2_12y0nsx972ueel0args3jnapz9qtexyj9vpfqtgh3th4v8z04zht7jl").unwrap(), locked;
+                    }
+                ))
+                .mint_roles(mint_roles!(
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(require(global_caller(component_address)));
+                ))
+                .burn_roles(burn_roles!(
+                    burner => rule!(require(global_caller(component_address)));
+                    burner_updater => OWNER;
+                ))
+                .withdraw_roles(withdraw_roles!(
+                    withdrawer => rule!(deny_all);
+                    withdrawer_updater => rule!(deny_all);
+                ))
+                // Here we are allowing anyone (AllowAll) to update the NFT metadata.
+                // The second parameter (DenyAll) specifies that no one can update this rule.
+                .non_fungible_data_update_roles(non_fungible_data_update_roles!(
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
+                    non_fungible_data_updater_updater => OWNER;
+                ))           
+                .create_with_no_initial_supply();            
+
             let pt_rm: ResourceManager = ResourceBuilder::new_fungible(OwnerRole::None)
                 .divisibility(DIVISIBILITY_MAXIMUM)
                 .metadata(metadata! {
                     init {
                         "name" => "Principal Token", locked;
                         "symbol" => "PT", locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/ptzero.jpg"), locked;
+                        "description" => "A Token containing the Principal Token", locked;
                         "yield_tokenizer_component" => GlobalAddress::from(component_address), locked;
                     }
                 })
@@ -354,6 +377,8 @@ mod lending_dapp {
                     init {
                         "name" => "Yield Receipt", locked;
                         "symbol" => "YT", locked;
+                        "icon_url" => Url::of("https://test.zerocollateral.eu/images/ytzero.jpg"), locked;
+                        "description" => "An NFT containing the Yield Value", locked;
                         "yield_tokenizer_component" => GlobalAddress::from(component_address), locked;
                     }
                 })
@@ -378,14 +403,13 @@ mod lending_dapp {
                     zeros: Vault::with_bucket(zeros_bucket.into()),
                     collected_xrd: Vault::new(XRD),
                     fee_xrd: Vault::new(XRD),
-                    donations_xrd: Vault::new(XRD),
                     reward: reward,
                     interest: interest,
                     borrow_epoch_max_lenght: dec!(518000),
                     max_percentage_allowed_for_account: 3,
                     staff_badge_resource_manager: staff_badge,
-                    benefactor_badge_resource_manager: benefactor_badge,
                     nft_manager: nft_manager,
+                    creditscore_manager: creditscore_manager,
                     period_length: period_length,
                     reward_type: reward_type,
                     interest_for_lendings: lend_tree,
@@ -430,10 +454,10 @@ mod lending_dapp {
             return (component, admin_badge, owner_badge);
         }
 
-
-
-        // register to the platform
+         //
+        //register to the platform
         pub fn register(&mut self) -> Bucket {
+            //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let yield_token = YieldTokenData {
                 underlying_resource: self.nft_manager.address(),
                 underlying_amount: dec!(0),
@@ -446,20 +470,62 @@ mod lending_dapp {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let lender_badge = self.nft_manager
             .mint_ruid_non_fungible(
-                CreditScore {
+                UserPosition {
                     start_lending_epoch: Epoch::of(0),
                     end_lending_epoch: Epoch::of(0),
                     amount: dec!("0"),
-                    lend_amount_history: dec!("0"),
                     start_borrow_epoch: Epoch::of(0),
                     expected_end_borrow_epoch: dec!(0),
                     end_borrow_epoch: Epoch::of(0),
                     borrow_amount: dec!("0"),
-                    borrow_amount_history: dec!("0"),
                     yield_token_data: yield_token
                 }
             );
             lender_badge
+        }         
+        //register to the platform
+        pub fn register_new(&mut self, badge: Option<Bucket>) -> Bucket {
+            match badge {
+                Some(user_nft) => {
+                    // Handle the case when there is a value (Some)
+                    // You can access the fields of the Bucket using 'b'
+                    // Additional logic for handling Some(b) case if needed
+                    info!("Registering with badge: {:?}", user_nft);
+                    assert!(true,"You are already registered !!!");
+                    user_nft
+                }
+                None => {
+                    // Handle the case when there is no value (None)
+                    // Additional logic for handling None case if needed
+                    info!("Registering without badge");
+                    // You need to decide what to return in case of None; here, I'm using a default value
+                    //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+                    let yield_token = YieldTokenData {
+                        underlying_resource: self.nft_manager.address(),
+                        underlying_amount: dec!(0),
+                        interest_totals: dec!(0),
+                        yield_claimed: dec!(0),
+                        maturity_date: dec!(0),
+                        principal_returned: false,
+                    };
+        
+                    //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+                    let lender_badge = self.nft_manager
+                    .mint_ruid_non_fungible(
+                        UserPosition {
+                            start_lending_epoch: Epoch::of(0),
+                            end_lending_epoch: Epoch::of(0),
+                            amount: dec!("0"),
+                            start_borrow_epoch: Epoch::of(0),
+                            expected_end_borrow_epoch: dec!(0),
+                            end_borrow_epoch: Epoch::of(0),
+                            borrow_amount: dec!("0"),
+                            yield_token_data: yield_token
+                        }
+                    );
+                    lender_badge
+                }
+            }
         }
 
     
@@ -468,9 +534,9 @@ mod lending_dapp {
         pub fn unregister(&mut self, lender_badge: Bucket) -> Option<Bucket> {
             //burn the NFT, be sure you'll lose all your tokens not reedemed in advance of this operation
             let non_fung_bucket = lender_badge.as_non_fungible();
-            let amount_lended = non_fung_bucket.non_fungible::<CreditScore>().data().amount;
+            let amount_lended = non_fung_bucket.non_fungible::<UserPosition>().data().amount;
             lend_ongoing(amount_lended, 10);
-            let amount_borrowed = non_fung_bucket.non_fungible::<CreditScore>().data().borrow_amount;
+            let amount_borrowed = non_fung_bucket.non_fungible::<UserPosition>().data().borrow_amount;
             lend_ongoing(amount_borrowed, 10);
             lender_badge.burn();
             None
@@ -590,7 +656,7 @@ mod lending_dapp {
 
             info!("Return PT {}", pt_bucket.amount());   
             //Get info from the CreditScore NFT
-            let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // To redeem PT only, must wait until after maturity.
             assert_eq!(
@@ -626,7 +692,7 @@ mod lending_dapp {
             lender_badge: Bucket
         ) -> (Bucket, Bucket) {
             //Get info from the CreditScore NFT
-            let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // Can no longer claim yield after maturity.
             assert_eq!(
@@ -741,8 +807,8 @@ mod lending_dapp {
 
             let non_fung_bucket = lender_badge.as_non_fungible();
             let nft_local_id: NonFungibleLocalId = non_fung_bucket.non_fungible_local_id();
-            let start_epoch = non_fung_bucket.non_fungible::<CreditScore>().data().start_lending_epoch;
-            let amount_lended = non_fung_bucket.non_fungible::<CreditScore>().data().amount;
+            let start_epoch = non_fung_bucket.non_fungible::<UserPosition>().data().start_lending_epoch;
+            let amount_lended = non_fung_bucket.non_fungible::<UserPosition>().data().amount;
 
             lend_complete_checks(start_epoch.number(),self.period_length, Runtime::current_epoch().number(), amount_lended, self.reward_type.clone());                    
             let num_xrds = loan.amount();
@@ -767,7 +833,7 @@ mod lending_dapp {
         pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
-            let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // Verify the user has requested back at least 20% of its current loan
             take_back_checks(lender_data.amount / 5, &refund.amount());
@@ -807,6 +873,8 @@ mod lending_dapp {
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))
             }
+            // Update the data on the network also on the souldbound CreditScore NFT !!!
+            // TODO
         }
 
         //get some xrd  
@@ -814,7 +882,7 @@ mod lending_dapp {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             // Verify the user has not an open borrow
-            let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // Applying rules: close the previous borrow first, checks the max percentage of the total, checks the max limit 
             borrow_checks(lender_data.borrow_amount, amount_requested, 
@@ -857,7 +925,7 @@ mod lending_dapp {
         pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String) -> (Bucket, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
-            let lender_data: CreditScore = lender_badge.as_non_fungible().non_fungible().data();
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // Verify the user has requested back at least 20% of its current borrowing
             repay_checks(lender_data.amount / 5, loan_repaied.amount());
@@ -906,6 +974,8 @@ mod lending_dapp {
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
             }  
+            // Update the data on the network also on the souldbound CreditScore NFT !!!
+            // TODO
             return (loan_repaied,Some(lender_badge))                
         }
 
@@ -913,7 +983,6 @@ mod lending_dapp {
         pub fn pools(&mut self)  {
             info!("Main Pool: {:?} ", self.collected_xrd.amount());  
             info!("Fees: {:?} ", self.fee_xrd.amount());  
-            info!("Donations: {:?} ", self.donations_xrd.amount());  
         }
 
         //for funding the main pool
@@ -955,11 +1024,6 @@ mod lending_dapp {
             self.period_length = period_length
         }
 
-        //withdraw some of the funds deposited for fund the development
-        pub fn withdraw_earnings(&mut self, amount: Decimal) -> Bucket {
-            self.donations_xrd.take(amount)
-        }
-
         //set the reward type, if fixed or timebased
         pub fn set_reward_type(&mut self, reward_type: String) {
             self.reward_type = reward_type
@@ -995,9 +1059,6 @@ mod lending_dapp {
 
             staff_badge_bucket
         }
-
-
-
 
         //mint some bad payer nfts, this are minted in the account/owner account
         //and these will be used for sending to BadPayer accounts (and hopefully recalling)
@@ -1053,40 +1114,7 @@ mod lending_dapp {
             // }
         }
         // 
-        //
-        //register to the platform
-        // pub fn register(&mut self, badge: Option<Bucket>) -> Bucket {
-        //     match badge {
-        //         Some(user_nft) => {
-        //             // Handle the case when there is a value (Some)
-        //             // You can access the fields of the Bucket using 'b'
-        //             // Additional logic for handling Some(b) case if needed
-        //             println!("Registering with badge: {:?}", user_nft);
-        //             assert!(true,"You are already registerd !!!");
-        //             user_nft
-        //         }
-        //         None => {
-        //             // Handle the case when there is no value (None)
-        //             // Additional logic for handling None case if needed
-        //             println!("Registering without badge");
-        //             // You need to decide what to return in case of None; here, I'm using a default value
-        //             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
-        //             let lender_badge = self.lendings_nft_manager
-        //             .mint_ruid_non_fungible(
-        //                 CreditScore {
-        //                     start_lending_epoch: Epoch::of(0),
-        //                     end_lending_epoch: Epoch::of(0),
-        //                     amount: dec!("0"),
-        //                     start_borrow_epoch: Epoch::of(0),
-        //                     expected_end_borrow_epoch: dec!(0),
-        //                     end_borrow_epoch: Epoch::of(0),
-        //                     borrow_amount: dec!("0")
-        //                 }
-        //             );
-        //             lender_badge
-        //         }
-        //     }
-        // }
+       
         //
         //TODO code not working
         // pub fn recall_staff_badge(&mut self) {

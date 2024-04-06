@@ -3,33 +3,21 @@ CALL_METHOD
     "lock_fee"
     Decimal("5000")
 ;
-# CALL_METHOD
-#     Address("${account}")
-#     "withdraw"
-#     Address("${yt}")
-#     Decimal("1")
-# ;
-# TAKE_FROM_WORKTOP
-#     Address("${yt}")
-#     Decimal("1")
-#     Bucket("bucket1")
-# ;
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
 ;
 TAKE_FROM_WORKTOP
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
-    Bucket("bucket2")
+    Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${component}")
     "claim_yield"
-    # Bucket("bucket1")
-    Bucket("bucket2")
+    Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${account}")

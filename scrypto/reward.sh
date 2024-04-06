@@ -17,10 +17,10 @@ export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
 export staff_badge=`echo $output | cut -d " " -f4`
-export benefactor_badge=`echo $output | cut -d " " -f5`
-export bad_payer=`echo $output | cut -d " " -f6`
-export lending_token=`echo $output | cut -d " " -f7`
-export lnd_manager=`echo $output | cut -d " " -f8`
+export bad_payer=`echo $output | cut -d " " -f5`
+export zerounit_token=`echo $output | cut -d " " -f6`
+export userdata_nft_manager=`echo $output | cut -d " " -f7`
+export credit_score=`echo $output | cut -d " " -f8`
 export pt=`echo $output | cut -d " " -f9`
 export yt=`echo $output | cut -d " " -f10`
 
@@ -31,9 +31,8 @@ echo 'component = '$component
 echo 'owner_badge = '$owner_badge
 echo 'admin_badge = '$admin_badge
 echo 'staff_badge = '$staff_badge
-echo 'lending_token = ' $lending_token
-echo 'lnd_manager = ' $lnd_manager
-echo 'benefactor_badge = ' $benefactor_badge
+echo 'zerounit_token = ' $zerounit_token
+echo 'userdata_nft_manager = ' $userdata_nft_manager
 
 echo ' '
 echo 'account = ' $account
@@ -95,7 +94,7 @@ echo '>>> Takes back'
 # 96.360 epoch = 1year
 
 # resim set-current-epoch 96360
-#resim call-method ${component} takes_back $lending_token:100
+#resim call-method ${component} takes_back $zerounit_token:100
 resim run rtm/takes_back.rtm
 # fee 10
 

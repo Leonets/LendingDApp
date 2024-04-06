@@ -6,22 +6,22 @@ CALL_METHOD
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${lending_token}")
+    Address("${zerounit_token}")
     Decimal("80")
 ;
 TAKE_FROM_WORKTOP
-    Address("${lending_token}")
+    Address("${zerounit_token}")
     Decimal("80")
     Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
 ;
 TAKE_FROM_WORKTOP
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
     Bucket("bucket2")
 ;

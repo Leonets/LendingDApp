@@ -5,32 +5,16 @@ CALL_METHOD
 ;
 CALL_METHOD
     Address("${account}")
-    "withdraw"
-    Address("${pt}")
-    Decimal("50")
-;
-TAKE_FROM_WORKTOP
-    Address("${pt}")
-    Decimal("50")
-    Bucket("bucket1")
-;
-CALL_METHOD
-    Address("${account}")
-    "withdraw"
+    "withdraw"    
     Address("${userdata_nft_manager}")
-    Decimal("1")
-;
-TAKE_FROM_WORKTOP
+    Decimal("1");
+TAKE_ALL_FROM_WORKTOP
     Address("${userdata_nft_manager}")
-    Decimal("1")
-    Bucket("bucket2")
-;
+    Bucket("nft");    
 CALL_METHOD
     Address("${component}")
-    "redeem_from_pt"
-    Bucket("bucket1")
-    Bucket("bucket2")
-;
+    "register_new"
+    Some(Bucket("nft"));   
 CALL_METHOD
     Address("${account}")
     "try_deposit_batch_or_refund"
