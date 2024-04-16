@@ -430,6 +430,51 @@ mod lending_dapp {
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
                     owner_badge.resource_address()
                 ))))
+                .enable_component_royalties(component_royalties! {
+                    // The roles section is optional, if missing, all roles default to OWNER
+                    roles {
+                        royalty_setter => rule!(allow_all);
+                        royalty_setter_updater => OWNER;
+                        royalty_locker => OWNER;
+                        royalty_locker_updater => rule!(deny_all);
+                        royalty_claimer => OWNER;
+                        royalty_claimer_updater => rule!(deny_all);
+                    },
+                    init {
+                        register => Free, locked;
+                        register_new => Free, locked;
+                        unregister => Free, locked;
+                        lend_tokens => Xrd(10.into()), updatable;
+                        takes_back => Xrd(10.into()), updatable;
+                        borrow => Xrd(10.into()), updatable;
+                        repay => Free, locked;
+
+                        asking_repay => Free, locked;
+                        clean_data => Free, locked;
+                        pools => Free, locked;
+                        fund_main_pool => Free, locked;
+                        set_reward => Free, locked;
+                        set_reward_type => Free, locked;
+                        set_borrow_epoch_max_length => Free, locked;
+                        set_interest => Free, locked;
+                        set_period_length => Free, locked;
+                        set_max_percentage_allowed_for_account => Free, locked;
+                        withdraw_fees => Free, locked;
+                        extend_lending_pool => Free, locked;
+                        extend_borrowing_pool => Free, locked;
+                        mint_staff_badge => Free, locked;
+                        // recall_staff_badge => Free, locked;
+                        mint_bad_payer => Free, locked;
+                        mint_bad_payer_vault => Free, locked;
+                        // config
+                        config => Free, locked;
+
+                        tokenize_yield => Xrd(10.into()), updatable;
+                        redeem => Usd(10.into()), updatable;
+                        redeem_from_pt => Usd(10.into()), updatable;
+                        claim_yield => Usd(10.into()), updatable;
+                    }
+                })                
                 .metadata(metadata!(
                     // roles {
                     //     metadata_setter => rule!(require(owner_badge.resource_address()));
@@ -667,12 +712,12 @@ mod lending_dapp {
 
             assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
 
-            // Paying fees
-            let fees = calculate_fees(pt_bucket.amount());
-            self.fee_xrd.put(self.collected_xrd.take(fees));
-            info!("Paying fees  {}", fees);   
+            // Paying fees //TODO not in this way
+            // let fees = calculate_fees(pt_bucket.amount());
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
+            // info!("Paying fees  {}", fees);   
             //return the amount that was tokenized
-            let bucket_of_zsu = self.zeros.take(pt_bucket.amount()-fees);
+            let bucket_of_zsu = self.zeros.take(pt_bucket.amount());
             pt_bucket.burn();
 
             //update principal returned
@@ -702,12 +747,18 @@ mod lending_dapp {
             );
 
             let interest_totals = lender_data.yield_token_data.interest_totals;
-            // Paying fees
-            let fees = calculate_fees(interest_totals);
-            self.fee_xrd.put(self.collected_xrd.take(fees));
-            info!("Paying fees, amount_returned  {}  {}", fees, interest_totals);   
+            // Paying fees //TODO not in this way
+            // let fees = calculate_fees(interest_totals);
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
+            // info!("Paying fees, amount_returned  {}  {}", fees, interest_totals);   
             //total net amount to return
-            let net_returned = self.zeros.take(interest_totals-fees);
+            let net_returned = self.zeros.take(interest_totals);
+
+            //update claimed yield
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            let mut yield_data = lender_data.yield_token_data;
+            yield_data.interest_totals = dec!(0);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_data);
             
             (net_returned, lender_badge)
         }
@@ -927,7 +978,7 @@ mod lending_dapp {
 
             let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
-            // Verify the user has requested back at least 20% of its current borrowing
+            // Verify the user has repaied back at least 20% of its current borrowing
             repay_checks(lender_data.amount / 5, loan_repaied.amount());
 
             //paying fees

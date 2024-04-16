@@ -9,14 +9,16 @@ SET_METADATA
     "claimed_entities"
     Enum<136u8>(
         Array<Address>(
-            Address("component_tdx_2_1cpsp0uxyh8v4d5ysaqc9a2xty2nn57t0gawdyjhndnj4cexsr9j452"),
-            Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt"),
-            Address("resource_tdx_2_1thup7den26gjg743rfg22czappj8u5f2n3ppsv0x832k2vx9ujat2a"),
-            Address("resource_tdx_2_1nfd40gr4cc6sn7xe9mfq02k8zxk5p8luf4cmu8ryup34kf25euqr74"),
-            Address("resource_tdx_2_1ntzu2ggxt2wtlj52n3ua3ghrt5gk87truw3thlrdx26qytdr0fsy92"),
-            Address("resource_tdx_2_1ntjs6z7p26pn88t9kce2hr3twzxwnlq08f6900xf3dnatsv7wf87pm"),
-            Address("resource_tdx_2_1thgn6psvkajgxwksedlnyzg7pehnthet8jknxfdpv8k666trmc52a5"),
-            Address("resource_tdx_2_1ngv5x9ntaqz2vt3lnefr4sghudxwhdzxafyrcjnwujfpaegsj9ep86")
+            Address("component_tdx_2_1cq2245e7pjxzl0xjve8cv70m2lswumu9p0hju4ac9yf47upvk2m7wg"),
+            Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw"),
+            Address("resource_tdx_2_1t5rmhtyxu0pjv67j23h0pkj9ftl8axds5t6w0hkhp259zlan0dw8wn"),
+            Address("resource_tdx_2_1nt39jg8x0m8cdx6qh9xna75vpxslr2w787wpgvdx4gr3pncuzs6xaw"),
+            Address("resource_tdx_2_1n2rl0mka28l2006m9etzeh7ya5l92erecnn6ylkvpayglely7z0pnf"),
+            Address("resource_tdx_2_1thxzf69chntswm576g9lpqxkdeela966w8t8thq2j86h8phh3srp0d"),
+            Address("resource_tdx_2_1nfetha5wv63kg979hd07e6ql3p50ah03hremexgg5f7ft9vf23fn4t"),
+            Address("resource_tdx_2_1nfetha5wv63kg979hd07e6ql3p50ah03hremexgg5f7ft9vf23fn4t"),
+            Address("resource_tdx_2_1tk9cghwj6dp2tdhkce77dwxsvylmndxz0ummpwrcw23d8y6ncf3egq"),
+            Address("resource_tdx_2_1ntnud5yacqxy5g4097gac7t5jx7gqkg9h80rnw8vhlh9slyx3y2908")
         )
     )
 ;
@@ -28,11 +30,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("component_tdx_2_1cpsp0uxyh8v4d5ysaqc9a2xty2nn57t0gawdyjhndnj4cexsr9j452")
+    Address("component_tdx_2_1cq2245e7pjxzl0xjve8cv70m2lswumu9p0hju4ac9yf47upvk2m7wg")
      #Address("COMP_ADDRESS")
     "dapp_definition"
     Enum<8u8>(
@@ -54,11 +56,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     "dapp_definitions"
     Enum<136u8>(
@@ -77,11 +79,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1thup7den26gjg743rfg22czappj8u5f2n3ppsv0x832k2vx9ujat2a")
+    Address("resource_tdx_2_1t5rmhtyxu0pjv67j23h0pkj9ftl8axds5t6w0hkhp259zlan0dw8wn")
     #Address("ADMIN_BADGE")
     "dapp_definitions"
     Enum<136u8>(
@@ -99,11 +101,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1nfd40gr4cc6sn7xe9mfq02k8zxk5p8luf4cmu8ryup34kf25euqr74")
+    Address("resource_tdx_2_1nt39jg8x0m8cdx6qh9xna75vpxslr2w787wpgvdx4gr3pncuzs6xaw")
     #Address("STAFF_BADGE")
     "dapp_definitions"
     Enum<136u8>(
@@ -113,17 +115,7 @@ SET_METADATA
         )
     )
 ;
-SET_METADATA
-    Address("resource_tdx_2_1ntzu2ggxt2wtlj52n3ua3ghrt5gk87truw3thlrdx26qytdr0fsy92")
-    #Address("BENEFACTOR_BADGE_ADDRESS")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
-            #Address("DAPP_ID")
-        )
-    )
-;
+
 
 # e su questi nemmeno
 # Unauthorized(Unauthorized { failed_access_rules: RoleList([(RoleKey { key: \'metadata_setter\' }, [DenyAll])]
@@ -132,11 +124,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1thgn6psvkajgxwksedlnyzg7pehnthet8jknxfdpv8k666trmc52a5")
+    Address("resource_tdx_2_1thxzf69chntswm576g9lpqxkdeela966w8t8thq2j86h8phh3srp0d")
     #Address("LND_TOKEN")
     "dapp_definitions"
     Enum<136u8>(
@@ -153,11 +145,11 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1ngv5x9ntaqz2vt3lnefr4sghudxwhdzxafyrcjnwujfpaegsj9ep86")
+    Address("resource_tdx_2_1nfetha5wv63kg979hd07e6ql3p50ah03hremexgg5f7ft9vf23fn4t")
     #Address("LEND_NFT_MANAGER")
     "dapp_definitions"
     Enum<136u8>(
@@ -174,12 +166,47 @@ CALL_METHOD
     Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
     #Address("OWNER_ADDRESS_DEL_CONTRATTO")
     "create_proof_of_amount"    
-    Address("resource_tdx_2_1t5zsdsv9v9msxkf7uxrda4gcjcyf77r44g7cq9h2537klrj5yuysyt")
+    Address("resource_tdx_2_1thjvntrk4rrvrwdrw8dl8a6suwcfa04v03hk4zys45xv0guaaj2sdw")
     #Address("OWNER_BADGE")
     Decimal("1");
 SET_METADATA
-    Address("resource_tdx_2_1ntjs6z7p26pn88t9kce2hr3twzxwnlq08f6900xf3dnatsv7wf87pm")
+    Address("resource_tdx_2_1n2rl0mka28l2006m9etzeh7ya5l92erecnn6ylkvpayglely7z0pnf")
     #Address("BAD_PAYER")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            #Address("DAPP_ID")
+        )
+    )
+;
+
+# Unauthorized ??
+SET_METADATA
+    Address("resource_tdx_2_1nfetha5wv63kg979hd07e6ql3p50ah03hremexgg5f7ft9vf23fn4t")
+    #Address("VITE_CREDIT_SCORE_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("resource_tdx_2_1tk9cghwj6dp2tdhkce77dwxsvylmndxz0ummpwrcw23d8y6ncf3egq")
+    #Address("VITE_PT_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("account_tdx_2_12870m7gklv3p90004zjnm39jrhpf2vseejrgpncptl7rhsagz8yjm9")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("resource_tdx_2_1ntnud5yacqxy5g4097gac7t5jx7gqkg9h80rnw8vhlh9slyx3y2908")
+    #Address("VITE_YT_RESOURCE_ADDRESS")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(

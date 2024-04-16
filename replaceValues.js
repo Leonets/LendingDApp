@@ -17,12 +17,12 @@ fs.readFile('scrypto/dapp_definition/dynamic_claimed_entities.rtm', 'utf8', (err
   });
 
   // Write the updated content to a new file
-  fs.writeFile('scrypto/dapp_definition/claimed_entities_v1.rtm', replacedData, 'utf8', err => {
+  fs.writeFile('scrypto/dapp_definition/claimed_entities_filled.rtm', replacedData, 'utf8', err => {
     if (err) {
       console.error('Error writing updated file:', err);
       return;
     }
-    console.log('File entities_v1 updated successfully!');
+    console.log('File claimed_entities_filled updated successfully!');
   });
 });
 
@@ -39,11 +39,11 @@ fs.readFile('scrypto/dapp_definition/dynamic_claimed_website.rtm', 'utf8', (err,
   });
 
   // Write the updated content to a new file
-  fs.writeFile('scrypto/dapp_definition/claimed_website_v1.rtm', replacedData, 'utf8', err => {
+  fs.writeFile('scrypto/dapp_definition/claimed_website_filled.rtm', replacedData, 'utf8', err => {
     if (err) {
       console.error('Error writing updated file:', err);
       return;
     }
-    console.log('File website_v1 updated successfully!');
+    console.log('File claimed_website_filled updated successfully!');
   });
 });

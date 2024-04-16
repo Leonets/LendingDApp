@@ -67,7 +67,7 @@ ResultAsync.combine([
   )
   .andThen((result) => {
     logger.info('Deployed package', result)
-    return instantiateLendingDapp(result.packageAddress, "LENDAPP")
+    return instantiateLendingDapp(result.packageAddress, "ZEROCOLLATERAL")
   })
   .mapErr((error) => {
     logger.error(error)

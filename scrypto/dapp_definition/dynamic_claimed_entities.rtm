@@ -13,10 +13,12 @@ SET_METADATA
             Address("$VITE_OWNER_BADGE$"),
             Address("$VITE_ADMIN_BADGE$"),
             Address("$VITE_STAFF_BADGE_ADDRESS$"),
-            Address("$VITE_BENEFACTOR_BADGE_ADDRESS$"),
             Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$"),
             Address("$VITE_LND_TOKEN_ADDRESS$"),
-            Address("$VITE_LND_RESOURCE_ADDRESS$")
+            Address("$VITE_LND_RESOURCE_ADDRESS$"),
+            Address("$VITE_CREDIT_SCORE_RESOURCE_ADDRESS$"),
+            Address("$VITE_PT_RESOURCE_ADDRESS$"),
+            Address("$VITE_YT_RESOURCE_ADDRESS$")
         )
     )
 ;
@@ -113,17 +115,7 @@ SET_METADATA
         )
     )
 ;
-SET_METADATA
-    Address("$VITE_BENEFACTOR_BADGE_ADDRESS$")
-    #Address("BENEFACTOR_BADGE_ADDRESS")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("$DAPP_ID$")
-            #Address("DAPP_ID")
-        )
-    )
-;
+
 
 # e su questi nemmeno
 # Unauthorized(Unauthorized { failed_access_rules: RoleList([(RoleKey { key: \'metadata_setter\' }, [DenyAll])]
@@ -180,6 +172,39 @@ CALL_METHOD
 SET_METADATA
     Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$")
     #Address("BAD_PAYER")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_CREDIT_SCORE_RESOURCE_ADDRESS$")
+    #Address("VITE_CREDIT_SCORE_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_PT_RESOURCE_ADDRESS$")
+    #Address("VITE_PT_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_YT_RESOURCE_ADDRESS$")
+    #Address("VITE_YT_RESOURCE_ADDRESS")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(
