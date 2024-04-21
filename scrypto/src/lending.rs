@@ -18,11 +18,7 @@ struct BenefactorBadge {
 //todo nft now is send without info about account/amount/epoch
 #[derive(NonFungibleData, ScryptoSbor)]
 struct BadPayerBadge {
-    account: String,
-    #[mutable]
-    amount_to_refund: Decimal,
-    #[mutable]
-    expected_borrow_epoch_timeline: Decimal,
+    message: String
 }
 
 
@@ -107,17 +103,18 @@ mod lending_dapp {
             unregister => PUBLIC;
             lend_tokens => PUBLIC;
             takes_back => PUBLIC;
+            takes_back_npl => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
             asking_repay => restrict_to: [admin, OWNER];
             clean_data => restrict_to: [admin, OWNER];
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
-            set_reward => restrict_to: [admin, OWNER];
+            set_reward => restrict_to: [staff, admin, OWNER];
             set_reward_type => restrict_to: [admin, OWNER];
-            set_borrow_epoch_max_length => restrict_to: [admin, OWNER];
-            set_interest => restrict_to: [admin, OWNER];
-            set_period_length => restrict_to: [admin, OWNER];
+            set_borrow_epoch_max_length => restrict_to: [staff, admin, OWNER];
+            set_interest => restrict_to: [staff, admin, OWNER];
+            set_period_length => restrict_to: [staff, admin, OWNER];
             set_max_percentage_allowed_for_account  => restrict_to: [admin, OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
@@ -164,11 +161,15 @@ mod lending_dapp {
         late_payers_accounts_history: Vec<String>,
         pt_resource_manager: ResourceManager,
         yt_resource_manager: ResourceManager,
+        current_loans: Decimal,
+        current_borrows: Decimal,
+        current_npl: Decimal,
+        max_percentage_for_currentborrows_vs_currentloans: u32,
     }
 
     impl ZeroCollateral {
         // given a reward, interest level,symbol name, reward_type, max_borrowing_limit creates a ready-to-use Lending dApp
-        pub fn instantiate_lending_dapp(
+        pub fn instantiate(
             reward: Decimal,
             interest: Decimal,
             symbol: String,
@@ -212,7 +213,7 @@ mod lending_dapp {
                 .metadata(metadata!(init{
                     "name"=>"ZeroCollateral Admin badge", locked;
                     "symbol" => "Zero Admin", locked;
-                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/admin.jpg"), locked;
                     "description" => "A badge to be used for some special administrative function", locked;
                 }))
                 .mint_roles(mint_roles! (
@@ -231,7 +232,7 @@ mod lending_dapp {
                     "name" => "ZeroCollateral Staff_badge", locked;
                     "symbol" => "Zero Staff", locked;
                     "description" => "A badge to be used for some administrative function", locked;
-                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/logo.jpg"), locked;
+                    "icon_url" => Url::of("https://test.zerocollateral.eu/images/staff.jpg"), locked;
                 }))
                 .mint_roles(mint_roles! (
                          minter => rule!(require(global_caller(component_address)));
@@ -262,6 +263,10 @@ mod lending_dapp {
                     minter => rule!(require(global_caller(component_address)));
                     minter_updater => OWNER;
                 ))
+                .withdraw_roles(withdraw_roles! {
+                    withdrawer => rule!(require(admin_badge.resource_address()));
+                    withdrawer_updater => OWNER;
+                })
                 .burn_roles(burn_roles! (
                     burner => rule!(require(admin_badge.resource_address()));
                     burner_updater => OWNER;
@@ -274,7 +279,10 @@ mod lending_dapp {
 
             // create a new LND resource, with a fixed quantity of 1000
             let zeros_bucket = 
-                ResourceBuilder::new_fungible(OwnerRole::None)
+                ResourceBuilder::new_fungible(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
                 .metadata(metadata!(init{
                     "name" => "LiquidZeroUnit", locked;
                     "symbol" => symbol, locked;
@@ -289,7 +297,10 @@ mod lending_dapp {
 
             // Create a badge to identify any account that interacts with the dApp
             let nft_manager =
-                ResourceBuilder::new_ruid_non_fungible::<UserPosition>(OwnerRole::None)
+                ResourceBuilder::new_ruid_non_fungible::<UserPosition>(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
                 .metadata(metadata!(
                     init {
                         "name" => "ZeroCollateral UserData NFT", locked;
@@ -318,7 +329,10 @@ mod lending_dapp {
 
             // Create a badge to identify any account that interacts with the dApp (souldbound !!)
             let creditscore_manager =
-                ResourceBuilder::new_ruid_non_fungible::<CreditScore>(OwnerRole::None)
+                ResourceBuilder::new_ruid_non_fungible::<CreditScore>(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
                 .metadata(metadata!(
                     init {
                         "name" => "ZeroCollateral CreditScore NFT", locked;
@@ -333,14 +347,21 @@ mod lending_dapp {
                     minter => rule!(require(global_caller(component_address)));
                     minter_updater => rule!(require(global_caller(component_address)));
                 ))
+                //if I set this withdraw rule -> then the user' account cannot withdraw this badge
+                // to execute for example a 'take_back' with the dApp
+                //I'd want only that he cannot send it to another account but to the dApp yes
+                // .withdraw_roles(withdraw_roles! {
+                //     withdrawer => rule!(require(global_caller(component_address)));
+                //     withdrawer_updater => OWNER;
+                // })                
                 .burn_roles(burn_roles!(
                     burner => rule!(require(global_caller(component_address)));
                     burner_updater => OWNER;
                 ))
-                .withdraw_roles(withdraw_roles!(
-                    withdrawer => rule!(deny_all);
-                    withdrawer_updater => rule!(deny_all);
-                ))
+                // .withdraw_roles(withdraw_roles!(
+                //     withdrawer => rule!(require(global_caller(component_address)));
+                //     withdrawer_updater => OWNER;
+                // ))
                 // Here we are allowing anyone (AllowAll) to update the NFT metadata.
                 // The second parameter (DenyAll) specifies that no one can update this rule.
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
@@ -349,7 +370,10 @@ mod lending_dapp {
                 ))           
                 .create_with_no_initial_supply();            
 
-            let pt_rm: ResourceManager = ResourceBuilder::new_fungible(OwnerRole::None)
+            let pt_rm: ResourceManager = ResourceBuilder::new_fungible(OwnerRole::Updatable(rule!(
+                require(owner_badge.resource_address())
+                    || require(admin_badge.resource_address())
+            )))
                 .divisibility(DIVISIBILITY_MAXIMUM)
                 .metadata(metadata! {
                     init {
@@ -372,7 +396,10 @@ mod lending_dapp {
                 .create_with_no_initial_supply();
 
             let yt_rm: ResourceManager = 
-                ResourceBuilder::new_ruid_non_fungible::<YieldTokenData>(OwnerRole::None)
+                ResourceBuilder::new_ruid_non_fungible::<YieldTokenData>(OwnerRole::Updatable(rule!(
+                    require(owner_badge.resource_address())
+                        || require(admin_badge.resource_address())
+                )))
                 .metadata(metadata! {
                     init {
                         "name" => "Yield Receipt", locked;
@@ -424,7 +451,11 @@ mod lending_dapp {
                     badpayer_vault: Vault::new(bad_payer.address()),
                     late_payers_accounts_history: late_payers_accounts_history,
                     pt_resource_manager: pt_rm,
-                    yt_resource_manager: yt_rm
+                    yt_resource_manager: yt_rm,
+                    current_loans: dec!(0),
+                    current_borrows: dec!(0),
+                    current_npl: dec!(0),
+                    max_percentage_for_currentborrows_vs_currentloans: 30,
                 }
                 .instantiate()
                 .prepare_to_globalize(OwnerRole::Updatable(rule!(require(
@@ -446,6 +477,7 @@ mod lending_dapp {
                         unregister => Free, locked;
                         lend_tokens => Xrd(10.into()), updatable;
                         takes_back => Xrd(10.into()), updatable;
+                        takes_back_npl => Xrd(10.into()), updatable;
                         borrow => Xrd(10.into()), updatable;
                         repay => Free, locked;
 
@@ -501,7 +533,7 @@ mod lending_dapp {
 
          //
         //register to the platform
-        pub fn register(&mut self) -> Bucket {
+        pub fn register(&mut self) -> (Bucket, Bucket) {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let yield_token = YieldTokenData {
                 underlying_resource: self.nft_manager.address(),
@@ -526,7 +558,21 @@ mod lending_dapp {
                     yield_token_data: yield_token
                 }
             );
-            lender_badge
+
+            //mint an NFT for registering loan/borrowing amount and starting/ending epoch
+            let creditscore_badge = self.creditscore_manager
+            .mint_ruid_non_fungible(
+                CreditScore {
+                    lend_epoch_length: dec!(0),
+                    lend_amount_history: dec!(0),
+                    borrow_amount_history: dec!(0),
+                    borrow_epoch_length: dec!(0),
+                    lender_credit_score: dec!(0),
+                    borrower_credit_score: dec!(0)
+                }
+            );
+
+            (lender_badge, creditscore_badge)
         }         
         //register to the platform
         pub fn register_new(&mut self, badge: Option<Bucket>) -> Bucket {
@@ -643,6 +689,7 @@ mod lending_dapp {
                 principal_returned: false,
             };
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            let _lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
             self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", strip);
             
             self.zeros.put(zsu_token);
@@ -758,6 +805,7 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             let mut yield_data = lender_data.yield_token_data;
             yield_data.interest_totals = dec!(0);
+            yield_data.yield_claimed = interest_totals;
             self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_data);
             
             (net_returned, lender_badge)
@@ -811,6 +859,10 @@ mod lending_dapp {
                             if !self.late_payers_accounts_history.contains(&value.account) {
                                 self.late_payers_accounts_history.push(value.account.clone());
                             }
+
+                            //add the amount as a NPL
+                            self.current_npl += value.amount_borrowed;
+                            info!("Current NPL amount {} ", self.current_npl);
                         }
                         false => {
                             //payment is not yet late
@@ -877,11 +929,14 @@ mod lending_dapp {
             self.nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Epoch::of(0));
             self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", num_xrds);
 
+            //add the amount
+            self.current_loans += num_xrds;
+
             (token_received, lender_badge)
         }
 
         //gives back the original xrd 
-        pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+        pub fn takes_back(&mut self, refund: Bucket, lender_badge: Bucket, creditscore_badge: Bucket) -> (Bucket, Option<Bucket>, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
@@ -914,6 +969,77 @@ mod lending_dapp {
             //total net amount to return
             let net_returned = self.collected_xrd.take(amount_returned-fees);
 
+            //remove the amount
+            self.current_loans -= amount_returned;
+            info!("Current amount lended in  {} ", self.current_loans);
+
+            let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
+            // Update the data on the network
+            if remaining_amount_to_return == dec!("0") {
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "end_lending_epoch", Runtime::current_epoch());
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+
+                // Update the data on the network also on the souldbound CreditScore NFT !!!
+                let creditscore_local_id: NonFungibleLocalId = creditscore_badge.as_non_fungible().non_fungible_local_id();
+                let score_data: CreditScore = creditscore_badge.as_non_fungible().non_fungible().data();
+                let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
+                //calculate total amount and total lenght
+                let total_amount = score_data.lend_amount_history + remaining_amount_to_return;
+                let total_length = score_data.lend_epoch_length + Runtime::current_epoch().number() - lender_data.start_lending_epoch.number();
+                let total_score = score_data.lender_credit_score + 1;
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "lend_amount_history", total_amount);
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "lend_epoch_length", total_length);
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "lender_credit_score", total_score);
+
+                return (net_returned,Some(lender_badge),Some(creditscore_badge))                
+            } else {
+                self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
+                return (net_returned,Some(lender_badge),Some(creditscore_badge))                
+            }
+        }
+
+        //gives back the original xrd in the available percentage considering the current level of npl
+        pub fn takes_back_npl(&mut self, refund: Bucket, lender_badge: Bucket) -> (Bucket, Option<Bucket>) {
+            assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
+
+            let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
+
+            let npl_level = 100 - (self.current_npl * 100 / self.current_loans);
+            let available_refund = refund.amount() * npl_level / 100;
+            info!("Returning back less tokens because of {:?}% of npl {:?} ", npl_level, available_refund);   
+
+            // Verify the user has requested back at least 20% of its current loan
+            take_back_checks(lender_data.amount / 5, &refund.amount());
+
+            // Update the amount field
+            let remaining_amount_to_return = lender_data.amount - refund.amount(); 
+            info!("Remaining tokens to return: {:?} ", remaining_amount_to_return);   
+
+            //take the LND bucket to close the loan, and returns XRD tokens from the main pool
+            let amount_to_be_returned = refund.amount();
+            self.zeros.put(refund);
+
+            //calculate interest
+            let interest_totals = calculate_interests(
+                &self.reward_type, &self.reward,
+                lender_data.start_lending_epoch.number(),
+                &amount_to_be_returned, &self.interest_for_lendings);
+            info!("Calculated interest {} ", interest_totals);
+
+            //total amount to return 
+            let amount_returned = available_refund + interest_totals;
+            info!("XRD tokens given back: {:?} ", amount_returned);  
+
+            // Paying fees
+            let fees = calculate_fees(amount_returned);
+            self.fee_xrd.put(self.collected_xrd.take(fees));
+            //total net amount to return
+            let net_returned = self.collected_xrd.take(amount_returned-fees);
+
+            //remove the amount
+            self.current_loans -= amount_returned;
+            info!("Current amount lended in  {} ", self.current_loans);
+
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
             if remaining_amount_to_return == dec!("0") {
@@ -923,9 +1049,7 @@ mod lending_dapp {
             } else {
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "amount", remaining_amount_to_return);
                 return (net_returned,Some(lender_badge))
-            }
-            // Update the data on the network also on the souldbound CreditScore NFT !!!
-            // TODO
+            }            
         }
 
         //get some xrd  
@@ -935,13 +1059,16 @@ mod lending_dapp {
             // Verify the user has not an open borrow
             let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
+            // borrow_amount: Decimal, amount_requested: Decimal, 
+            // max_amount_allowed: Decimal, current_loans: Decimal, current_borrows: Decimal, max_limit_percentage: u32, 
+            // current_number_of_badpayer: Decimal, max_borrowing_limit: Decimal){
+
             // Applying rules: close the previous borrow first, checks the max percentage of the total, checks the max limit 
             borrow_checks(lender_data.borrow_amount, amount_requested, 
                 self.collected_xrd.amount() * self.max_percentage_allowed_for_account / 100,
-                self.collected_xrd.amount() * 50 / 100,
-                self.badpayer_vault.amount(), self.max_percentage_allowed_for_account);
-            // TODO max_limit should be self.collected_xrd.amount() * 50 / 100 (50% of main vault) 
-            // or self.max_borrowing_limit * 100 / 100 (100% of what has been specified as max_borrowing_amount by admin)
+                self.current_loans, self.current_borrows, self.max_percentage_for_currentborrows_vs_currentloans,
+                self.late_payers_accounts.len().into(), self.max_borrowing_limit);
+            // TODO max_limit has been calculated over current_loans
             borrow_epoch_max_length_checks(self.borrow_epoch_max_lenght,borrow_expected_length);
             borrow_epoch_min(borrow_expected_length);
 
@@ -969,17 +1096,31 @@ mod lending_dapp {
             self.nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Runtime::current_epoch());
             self.nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", epoch);
             self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
+
+            //remove the amount
+            self.current_borrows += amount_requested-fees;
+            info!("Current amount borrowed out {} ", self.current_borrows);
+
             return (xrd_to_return,Some(lender_badge))                
         }
 
+
         //repay some xrd  
-        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String) -> (Bucket, Option<Bucket>) {
+        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String, creditscore_badge: Bucket, bad_payer: Option<Bucket>) -> (Bucket, Option<Bucket>, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
             // Verify the user has repaied back at least 20% of its current borrowing
             repay_checks(lender_data.amount / 5, loan_repaied.amount());
+
+            //remove the amount as a NPL if the repay is late in respect of the expected_end_borrow_epoch
+            let current_epoch = Runtime::current_epoch().number(); 
+            let epoch = current_epoch.try_into().unwrap();
+            if lender_data.expected_end_borrow_epoch <= epoch {
+                self.current_npl -= lender_data.expected_end_borrow_epoch;
+                info!("Current NPL amount {} ", self.current_npl);
+            }
 
             //paying fees
             let fees = calculate_fees(loan_repaied.amount());
@@ -1020,6 +1161,31 @@ mod lending_dapp {
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "expected_end_borrow_epoch", dec!(0));
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "end_borrow_epoch", Runtime::current_epoch());    
+
+                // Update the data on the network also on the souldbound CreditScore NFT !!!
+                let creditscore_local_id: NonFungibleLocalId = creditscore_badge.as_non_fungible().non_fungible_local_id();
+                let score_data: CreditScore = creditscore_badge.as_non_fungible().non_fungible().data();
+                let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
+                //calculate total amount and total lenght
+                let total_amount = score_data.borrow_amount_history + amount_returned;
+                let total_length = score_data.borrow_epoch_length + Runtime::current_epoch().number() - lender_data.start_lending_epoch.number();
+                let total_score = score_data.borrower_credit_score + 1;
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "borrow_amount_history", total_amount);
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "borrow_epoch_length", total_length);
+                self.creditscore_manager.update_non_fungible_data(&creditscore_local_id, "borrower_credit_score", total_score);
+
+                match bad_payer {
+                    Some(user_nft) => {
+                        // Handle the case when there is a value (Some)
+                        // You can access the fields of the Bucket using 'b'
+                        // Additional logic for handling Some(b) case if needed
+                        info!("If you were a NFT... now you'r not anymore... NFT burned ");
+                        user_nft.burn();
+                    }
+                    None => {
+                    }
+                }
+                
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
                 self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
@@ -1027,7 +1193,12 @@ mod lending_dapp {
             }  
             // Update the data on the network also on the souldbound CreditScore NFT !!!
             // TODO
-            return (loan_repaied,Some(lender_badge))                
+
+            //remove the amount
+            self.current_borrows += amount_returned;
+            info!("Current amount borrowed out {} ", self.current_borrows);            
+
+            return (loan_repaied,Some(lender_badge), Some(creditscore_badge))                
         }
 
         //vault size
@@ -1039,7 +1210,10 @@ mod lending_dapp {
         //for funding the main pool
         pub fn fund_main_pool(&mut self, fund: Bucket)  {
             info!("Fund received to fund the main vault: {:?} ", fund.amount());  
+            let num = fund.amount();
             self.collected_xrd.put(fund);
+
+            self.current_loans += num;
         }
 
         //for admin only
@@ -1120,9 +1294,7 @@ mod lending_dapp {
                 let nft = self
                 .badpayer_badge_resource_manager
                 .mint_ruid_non_fungible(BadPayerBadge {
-                    account: index.to_string(),
-                    amount_to_refund: dec!(1),
-                    expected_borrow_epoch_timeline: dec!(1),
+                    message: " Your loan has expired, please repay it back to avoid in incoming cost ! ".to_string()
                 });
                 bad_payer_bucket.put(nft);
             }

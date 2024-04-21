@@ -113,31 +113,33 @@ pub fn take_back_checks(allowed_amount: Decimal, amount_to_be_returned: &Decimal
 //for borrowings
 pub fn borrow_checks(
         borrow_amount: Decimal, amount_requested: Decimal, 
-        max_amount_allowed: Decimal, max_limit: Decimal, 
-        current_number_of_badpayer: Decimal, max_percentage_allowed_for_account: u32){
+        max_amount_allowed: Decimal, current_loans: Decimal, current_borrows: Decimal, max_limit_percentage: u32, 
+        current_number_of_badpayer: Decimal, _max_borrowing_limit: Decimal){
 
     assert!(borrow_amount == dec!("0"), "You cannot borrow before repaying back first");
     info!("Amount of token borrowed : {:?} ", amount_requested);   
     
-    // Check the first limit  
+    // Check the first limit  (OK)
     info!("Maximum amount allowed : {:?} ", max_amount_allowed);  
     assert!(
         max_amount_allowed >= amount_requested,
         "You cannot borrow more than amount allowed : {:?} ", max_amount_allowed
     );
-    // Calculate the second limit  
-    info!("Max limit : {:?} ", max_limit);  
+    // Calculate the second limit (??) 
+    let max_limit = current_loans * max_limit_percentage / 100;    
+    info!("Max limit : {:?} over current loans amount {} ", max_limit, current_loans);  
     assert!(
-        max_limit + amount_requested >= max_limit,
-        "There is not availabilty for new borrowings!"
+        max_limit + amount_requested >= current_borrows,
+        "There is not availabilty for new borrowings because of cap limit is reached! {}% of current loans amount {} ", max_limit_percentage, current_loans
     );
 
-    //Calculate how many BadPayer are out
-    let max_number_of_badpayer = 50 / max_percentage_allowed_for_account;
+    //Calculate how many BadPayer could be possibile being out at the same time
+    // let max_bo_limit: u32 = max_borrowing_limit.try_into().unwrap();
+    let max_number_of_badpayer = max_limit / max_amount_allowed;
     info!("Current number of BadPayer: {:?} Max number accepted {:?} ", current_number_of_badpayer, max_number_of_badpayer);  
     assert!(
         Decimal::from(max_number_of_badpayer) >= current_number_of_badpayer + 1,
-        "There is not availabilty for new borrowings because of current number of BadPayer is high!"
+        "There is not availabilty for new borrowings because of current number of BadPayer is high! current BadPayers n. {} ", current_number_of_badpayer
     );
     
 }

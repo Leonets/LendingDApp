@@ -26,12 +26,24 @@ TAKE_FROM_WORKTOP
     Bucket("bucket2")
 ;
 CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${creditscore_nft_manager}")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("${creditscore_nft_manager}")
+    Decimal("1")
+    Bucket("bucket3")
+;
+CALL_METHOD
     Address("${component}")
     "repay"
     Bucket("bucket1")
     Bucket("bucket2")
     "account_address1"
-;
+    Bucket("bucket3")
+    None; 
 CALL_METHOD
     Address("${account}")
     "try_deposit_batch_or_refund"

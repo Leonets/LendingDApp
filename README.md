@@ -23,7 +23,7 @@ At this point we can instantiate our Lending dApp locally
 `resim run rtm/instantiate_lending_dapp.rtm`
 
 That file has been built with the following bash command:
-`$ resim call-function ${package} LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
+`$ resim call-function ${package} LendingDApp instantiate 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
 
 The output of the instantiate is the following resources builded:
 New Entities: 6
@@ -162,6 +162,12 @@ Let's describe which is the architecture of the whole dApp
 
 resim publish . --package-address $package
 
+//Cast Decimal to u64
+
+let dec = dec!("10");
+
+let num: u64 = dec.try_into().unwrap();
+
 # Managing Smart Contract Upgrade
 At the moment of this writing there is no upgradability in the smart contract so until this gets deployed in the mainnet each new smart contract overrides the preceding one, this are the operation needed in the e layers:
 
@@ -199,4 +205,7 @@ At the moment of this writing there is no upgradability in the smart contract so
     - fill the new values in the .env* file (seed phrase present!!)
     - [MANUALLY] send .env to the server (it is not managed with Terraform)
     - [OPT] executes the export if any of the dApp process have been changed (/deploy/export.sh)
+
+
+
 
