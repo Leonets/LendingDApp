@@ -9,10 +9,10 @@ echo "Account = " $account
 echo "XRD = " $xrd
 
 echo "Publishing dapp"
-export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
-echo "Package = " $lendingapp_package
+export dapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
+echo "Package = " $dapp_package
 
-output=`resim call-function $lendingapp_package ZeroCollateral instantiate 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $dapp_package ZeroCollateral instantiate 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`

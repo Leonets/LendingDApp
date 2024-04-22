@@ -82,13 +82,13 @@ pub fn lend_ongoing(num_xrds: Decimal, max: u16){
     );
 }
 
-pub fn lend_amount_checks(num_xrds: Decimal, min: u16, max: u16){
+pub fn lend_amount_checks(num_xrds: Decimal, min: Decimal, max: Decimal){
     assert!(
-        num_xrds <= Decimal::from(max),
+        num_xrds <= max,
         "No loan approved over 1000xrd at this time!"
     );
     assert!(
-        num_xrds >= Decimal::from(min),
+        num_xrds >= min,
         "No loan approved below 100xrd at this time!"
     );
 }
@@ -216,7 +216,7 @@ pub fn calculate_interests(
                     let last = current_epoch - total_amount.1;
                     let accumulated_interest =
                         calculate_interest(Decimal::from(last), total_amount.2, amount);
-                    info!("Adding accumulated_interest {} for the period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount.0 + accumulated_interest, total_amount.1, current_epoch);
+                    info!("Adding accumulated_interest {} for the last period, totalling {} from epoch {} until epoch {} ", accumulated_interest, total_amount.0 + accumulated_interest, total_amount.1, current_epoch);
     
                     total_amount.0 + accumulated_interest
                 }
@@ -232,7 +232,7 @@ pub fn calculate_interests(
 
 
 //calculate the interest for the epochs at the percentage given with the capital provided
-fn calculate_interest(epochs: Decimal, percentage: Decimal, capital: Decimal) -> Decimal {
+pub fn calculate_interest(epochs: Decimal, percentage: Decimal, capital: Decimal) -> Decimal {
     // Calculate daily rate
     let daily_rate = percentage / dec!(100) / dec!(105120);
 

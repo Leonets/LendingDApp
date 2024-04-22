@@ -9,10 +9,10 @@ echo "Account = " $account
 echo "XRD = " $xrd
 
 echo "Publishing dapp"
-export lendingapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
-echo "Package = " $lendingapp_package
+export dapp_package=$(resim publish . | sed -nr "s/Success! New Package: ([[:alnum:]_]+)/\1/p")
+echo "Package = " $dapp_package
 
-output=`resim call-function $lendingapp_package ZeroCollateral instantiate 5 10 LND 1728 timebased 1000 | awk '/Component: |Resource: / {print $NF}'`
+output=`resim call-function $dapp_package ZeroCollateral instantiate 5 10 LZU 1728 timebased 10000 | awk '/Component: |Resource: / {print $NF}'`
 export component=`echo $output | cut -d " " -f1`
 export owner_badge=`echo $output | cut -d " " -f2`
 export admin_badge=`echo $output | cut -d " " -f3`
@@ -67,8 +67,12 @@ echo '>>> Fund Main Vault'
 resim run rtm/fund_main_pool.rtm
 resim run rtm/fund_main_pool.rtm
 # main pool 200
-resim run rtm/fund_main_pool_4000.rtm
+# resim run rtm/fund_main_pool_4000.rtm
 # main pool 4200
+
+echo '>>> Extend Lending Pool High'
+
+resim run rtm/extend_lending_pool_high.rtm
 
 # echo '>>> Donate'
 
@@ -90,24 +94,33 @@ resim run rtm/register_again.rtm
 
 resim show $account
 
-echo '>>> Lend tokens (amount 100)'
+echo '>>> Lend tokens (amount 5000)'
 
 resim set-current-epoch 1
 #resim call-method ${component} lend_tokens $xrd:100
-resim run rtm/lend_tokens.rtm
+resim run rtm/lend_tokens_high.rtm
 
 
-echo '>>> Tokenize 1 @100 (amount 50)'
 
+echo '>>> Set Reward 4 at epoch 100'
 resim set-current-epoch 100
+resim run rtm/set_reward_4.rtm
+
+
+
+
+
+echo '>>> Tokenize 1 @100 (amount 2500)'
+
+resim set-current-epoch 5000
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/tokenize_yield.rtm
 
 resim show $account
 
-echo '>>> Tokenize 2 @150 (amount 50)'
+echo '>>> Tokenize 2 @150 (amount 2500)'
 
-resim set-current-epoch 150
+resim set-current-epoch 5100
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/tokenize_yield.rtm
 
@@ -123,7 +136,7 @@ resim show $account
 
 echo '>>> redeem_from_pt (After Maturity) (amount 50)'
 
-resim set-current-epoch 450
+resim set-current-epoch 9500
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/redeem_from_pt.rtm
 
@@ -131,7 +144,7 @@ resim show $account
 
 echo '>>> Claim Yield (After Maturity)'
 
-resim set-current-epoch 500
+resim set-current-epoch 10000
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/claim_yield.rtm
 
@@ -139,7 +152,7 @@ resim show $account
 
 echo '>>> Claim Yield (After Maturity2) '
 
-resim set-current-epoch 600
+resim set-current-epoch 11000
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/claim_yield.rtm
 
@@ -147,7 +160,7 @@ resim show $account
 
 echo '>>> redeem_from_pt, trying again (After Maturity 2) (amount 50)'
 
-resim set-current-epoch 550
+resim set-current-epoch 9500
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/redeem_from_pt.rtm
 
@@ -155,7 +168,7 @@ resim show $account
 
 echo '>>> redeem_from_pt, trying again (After Maturity 3) (amount 100)'
 
-resim set-current-epoch 550
+resim set-current-epoch 9500
 #resim call-method ${component} tokenize_yield $xrd:100
 resim run rtm/redeem_from_pt.rtm
 

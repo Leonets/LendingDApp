@@ -151,6 +151,7 @@ mod lending_dapp {
         interest_for_lendings: AvlTree<Decimal, Decimal>,
         interest_for_borrowings: AvlTree<Decimal, Decimal>,
         max_borrowing_limit: Decimal,
+        max_loan_limit: Decimal,
         borrowers_positions: AvlTree<Decimal, BorrowerData>,
         staff: AvlTree<u16, NonFungibleLocalId>,
         borrowers_accounts: Vec<Borrower>,
@@ -263,10 +264,13 @@ mod lending_dapp {
                     minter => rule!(require(global_caller(component_address)));
                     minter_updater => OWNER;
                 ))
-                .withdraw_roles(withdraw_roles! {
-                    withdrawer => rule!(require(admin_badge.resource_address()));
-                    withdrawer_updater => OWNER;
-                })
+                //if I set this withdraw rule -> then the user' account cannot withdraw this badge
+                // to execute for example a 'repay' with the dApp
+                //I'd want only that he cannot send it to another account but to the dApp yes
+                // .withdraw_roles(withdraw_roles! {
+                //     withdrawer => rule!(require(admin_badge.resource_address()));
+                //     withdrawer_updater => OWNER;
+                // })
                 .burn_roles(burn_roles! (
                     burner => rule!(require(admin_badge.resource_address()));
                     burner_updater => OWNER;
@@ -432,7 +436,7 @@ mod lending_dapp {
                     fee_xrd: Vault::new(XRD),
                     reward: reward,
                     interest: interest,
-                    borrow_epoch_max_lenght: dec!(518000),
+                    borrow_epoch_max_lenght: dec!(518000),//how many days ??
                     max_percentage_allowed_for_account: 3,
                     staff_badge_resource_manager: staff_badge,
                     nft_manager: nft_manager,
@@ -442,6 +446,7 @@ mod lending_dapp {
                     interest_for_lendings: lend_tree,
                     interest_for_borrowings: borrow_tree,
                     max_borrowing_limit: max_borrowing_limit,
+                    max_loan_limit: dec!(10001),
                     borrowers_positions: borrowers_positions,
                     staff: staff,
                     borrowers_accounts: borrowers_accounts,
@@ -502,9 +507,9 @@ mod lending_dapp {
                         config => Free, locked;
 
                         tokenize_yield => Xrd(10.into()), updatable;
-                        redeem => Usd(10.into()), updatable;
-                        redeem_from_pt => Usd(10.into()), updatable;
-                        claim_yield => Usd(10.into()), updatable;
+                        redeem => Xrd(10.into()), updatable;
+                        redeem_from_pt => Xrd(10.into()), updatable;
+                        claim_yield => Xrd(10.into()), updatable;
                     }
                 })                
                 .metadata(metadata!(
@@ -646,15 +651,27 @@ mod lending_dapp {
         //     )
         // }
 
+        // pub fn function(&mut self, proof: Proof) {
+        //     let non_fungible_local_id = proof
+        //         .check(self.nft_manager.address())
+        //         .as_non_fungible()
+        //         .non_fungible_local_id();
+        //     self.nft_manager
+        //         .update_non_fungible_data(&non_fungible_local_id, "reward", dec!(10));
+        // }
+
         // tokenize
         pub fn tokenize_yield(
             &mut self, 
             zsu_token: Bucket,
-            maturity_date: Decimal,
+            tokenize_expected_length: Decimal,
             lender_badge: Bucket
         ) -> (Bucket, Bucket) {
             // assert_ne!(self.check_maturity(), true, "The expiry date has passed!");
             assert_eq!(zsu_token.resource_address(), self.zsu_manager.address());
+
+            borrow_epoch_max_length_checks(self.borrow_epoch_max_lenght,tokenize_expected_length);
+            borrow_epoch_min(tokenize_expected_length);
 
             let zsu_amount = zsu_token.amount();
             // let redemption_value = zsu_token.amount();
@@ -664,26 +681,30 @@ mod lending_dapp {
             //when you tokenize you fix the interest until the maturity date
             //calculate interest
             let current_epoch = Runtime::current_epoch().number();
-            let starting_epoch = current_epoch - (maturity_date - current_epoch);
-            let extra_interest = self.reward + dec!(2);
-            let starting_u64 = starting_epoch.to_string().parse::<u64>().unwrap();
-            let interest_totals = calculate_interests(
-                &String::from("Fixed"), &extra_interest,
-                starting_u64,
-                &zsu_amount, &self.interest_for_lendings);       
+            let starting_epoch = current_epoch - tokenize_expected_length;
+            let extra_interest = self.reward + dec!(5);
+            info!("Starting epoch {} with extra interest  {}", starting_epoch, extra_interest); 
+            // let starting_u64 = starting_epoch.to_string().parse::<u64>().unwrap();
+            // let interest_totals = calculate_interests(
+            //     &String::from("TimeBased"), &extra_interest,
+            //     starting_u64,
+            //     &zsu_amount, &self.interest_for_lendings);     
                     
             //mint some principal token
             let pt_bucket = 
                 self.pt_resource_manager.mint(zsu_amount); //.as_fungible();
             //maturity in epoch
-            let maturity_epoch = Decimal::from(Runtime::current_epoch().number()) + maturity_date;
-            info!("Interest to pay {} at epoch {}", interest_totals, maturity_epoch); 
+            let maturity_epoch = Decimal::from(Runtime::current_epoch().number()) + tokenize_expected_length;
+            // info!("Interest to pay {} at epoch {}", interest_totals, maturity_epoch); 
+
+            let accumulated_interest = calculate_interest(tokenize_expected_length, extra_interest, zsu_amount);  
+            info!("Simple Interest to pay {} at epoch {}", accumulated_interest, maturity_epoch);
 
             //updates data on NFT
             let strip = YieldTokenData {
                 underlying_resource: self.nft_manager.address(),
                 underlying_amount: zsu_amount,
-                interest_totals: interest_totals,
+                interest_totals: accumulated_interest,
                 yield_claimed: Decimal::ZERO,
                 maturity_date: maturity_epoch,
                 principal_returned: false,
@@ -794,9 +815,10 @@ mod lending_dapp {
             );
 
             let interest_totals = lender_data.yield_token_data.interest_totals;
+            info!("Paying back interest {} ", interest_totals); 
             // Paying fees //TODO not in this way
             // let fees = calculate_fees(interest_totals);
-            // self.fee_xrd.put(self.collected_xrd.take(fees));
+            // self.fee_xrd.put(self.collected_xrd.take(fees));p
             // info!("Paying fees, amount_returned  {}  {}", fees, interest_totals);   
             //total net amount to return
             let net_returned = self.zeros.take(interest_totals);
@@ -915,7 +937,7 @@ mod lending_dapp {
 
             lend_complete_checks(start_epoch.number(),self.period_length, Runtime::current_epoch().number(), amount_lended, self.reward_type.clone());                    
             let num_xrds = loan.amount();
-            lend_amount_checks(num_xrds, 100, 1000);
+            lend_amount_checks(num_xrds, dec!(100), self.max_loan_limit);
             info!("Amount of token received: {:?} ", num_xrds);   
 
             //take the XRD bucket as a new loan and put xrd token in main pool
@@ -1220,15 +1242,17 @@ mod lending_dapp {
         pub fn config(&mut self, reward: Decimal, interest: Decimal
                 , period_length: Decimal
                 , reward_type: String, borrow_epoch_max_lenght: Decimal
-                , max_percentage_allowed_for_account: u32, max_borrowing_limit: Decimal ) {                
+                , max_percentage_allowed_for_account: u32
+                , max_borrowing_limit: Decimal, max_loan_limit: Decimal ) {                
             self.set_reward(reward);
             self.set_interest(interest);
             self.set_period_length(period_length);
             self.set_reward_type(reward_type);
-            self.set_borrow_epoch_max_length(borrow_epoch_max_lenght);
+            self.set_borrow_epoch_max_length(borrow_epoch_max_lenght);//max length of borrow and tokenize
             self.set_max_percentage_allowed_for_account(max_percentage_allowed_for_account);
             //without methods
-            self.max_borrowing_limit = max_borrowing_limit;
+            self.max_borrowing_limit = max_borrowing_limit; //max limit for token borrows
+            self.max_loan_limit = max_loan_limit; //max limit for token loans
         }
 
         // set the reward for lenders
