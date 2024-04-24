@@ -271,12 +271,19 @@ mod lending_dapp {
                 //     withdrawer => rule!(require(admin_badge.resource_address()));
                 //     withdrawer_updater => OWNER;
                 // })
+                .deposit_roles(deposit_roles! {
+                    depositor => rule!(require(admin_badge.resource_address())
+                                    || require(global_caller(component_address)));
+                    depositor_updater => OWNER;
+                })                
                 .burn_roles(burn_roles! (
-                    burner => rule!(require(admin_badge.resource_address()));
+                    burner => rule!(require(admin_badge.resource_address())
+                                    || require(global_caller(component_address)) );
                     burner_updater => OWNER;
                 ))
                 .recall_roles(recall_roles! {
-                    recaller => rule!(require(admin_badge.resource_address()));
+                    recaller => rule!(require(admin_badge.resource_address())
+                                    || require(global_caller(component_address)) );
                     recaller_updater => OWNER;
                 })
                 .create_with_no_initial_supply();
@@ -323,6 +330,10 @@ mod lending_dapp {
                     burner => rule!(require(global_caller(component_address)));
                     burner_updater => OWNER;
                 ))
+                // .withdraw_roles(withdraw_roles! {
+                //     withdrawer => rule!(AllowAll);
+                //     withdrawer_updater => OWNER;
+                // })
                 // Here we are allowing anyone (AllowAll) to update the NFT metadata.
                 // The second parameter (DenyAll) specifies that no one can update this rule.
                 .non_fungible_data_update_roles(non_fungible_data_update_roles!(
@@ -357,9 +368,16 @@ mod lending_dapp {
                 // .withdraw_roles(withdraw_roles! {
                 //     withdrawer => rule!(require(global_caller(component_address)));
                 //     withdrawer_updater => OWNER;
-                // })                
+                // })             
+                //TODO !!!
+                // .deposit_roles(deposit_roles! {
+                //     depositor => rule!(require(admin_badge.resource_address())
+                //                     || require(global_caller(component_address)));
+                //     depositor_updater => OWNER;
+                // })                        
                 .burn_roles(burn_roles!(
-                    burner => rule!(require(global_caller(component_address)));
+                    burner => rule!(require(admin_badge.resource_address())
+                                    || require(global_caller(component_address)));
                     burner_updater => OWNER;
                 ))
                 // .withdraw_roles(withdraw_roles!(
@@ -1199,9 +1217,7 @@ mod lending_dapp {
                 match bad_payer {
                     Some(user_nft) => {
                         // Handle the case when there is a value (Some)
-                        // You can access the fields of the Bucket using 'b'
-                        // Additional logic for handling Some(b) case if needed
-                        info!("If you were a NFT... now you'r not anymore... NFT burned ");
+                        info!("If you own this NFT... now you don't own it anymore... NFT burned ");
                         user_nft.burn();
                     }
                     None => {
@@ -1240,19 +1256,45 @@ mod lending_dapp {
 
         //for admin only
         pub fn config(&mut self, reward: Decimal, interest: Decimal
-                , period_length: Decimal
-                , reward_type: String, borrow_epoch_max_lenght: Decimal
+                , borrow_epoch_max_lenght: Decimal
                 , max_percentage_allowed_for_account: u32
-                , max_borrowing_limit: Decimal, max_loan_limit: Decimal ) {                
+                , max_borrowing_limit: Decimal, max_loan_limit: Decimal
+                , max_percentage_for_currentborrows_vs_currentloans: u32 ) {                
             self.set_reward(reward);
             self.set_interest(interest);
-            self.set_period_length(period_length);
-            self.set_reward_type(reward_type);
+            // self.set_reward_type(reward_type);
             self.set_borrow_epoch_max_length(borrow_epoch_max_lenght);//max length of borrow and tokenize
             self.set_max_percentage_allowed_for_account(max_percentage_allowed_for_account);
             //without methods
             self.max_borrowing_limit = max_borrowing_limit; //max limit for token borrows
             self.max_loan_limit = max_loan_limit; //max limit for token loans
+            //set current_loan/current_borrows
+            self.max_percentage_for_currentborrows_vs_currentloans = max_percentage_for_currentborrows_vs_currentloans;
+
+            assert!(
+                interest >= reward,
+                "% {:?} for borrowings must be higher than % {:?} for supplying liquidity  ", interest, reward
+            );
+            assert!(
+                dec!(518000) >= borrow_epoch_max_lenght,
+                "Max lenght of a borrow/tokenize in epochs must be lower than {:?} ", borrow_epoch_max_lenght
+            );
+            assert!(
+                dec!(100000) >= max_borrowing_limit,
+                "Maximum number of tokens that can be borrowed {:?} ", 100000
+            );            
+            assert!(
+                dec!(100000) >= max_loan_limit,
+                "Maximum number of tokens that can be deposited in liquidity {:?} ", 100000
+            );
+            assert!(
+                dec!(6) >= max_percentage_allowed_for_account.into(),
+                "Maximum percentage an account can borrow of total liquidity {:?} ", max_percentage_allowed_for_account
+            );             
+            assert!(
+                dec!(61) >= max_percentage_for_currentborrows_vs_currentloans.into(),
+                "Maximum ratio between loans received and loans granted {:?} ", max_percentage_for_currentborrows_vs_currentloans
+            );                                      
         }
 
         // set the reward for lenders
@@ -1346,19 +1388,17 @@ mod lending_dapp {
         //TODO perhaps to be removed
         //init the bad payer vault with the amount of maximum badpayer allowed
         pub fn mint_bad_payer_vault(&mut self) {
-            let _max = 50 / self.max_percentage_allowed_for_account;
-            info!("Ready to mint BadPayer: {}", _max);
-            // for index in 1..= max  {
-            //     info!("Current number: {}", index);
-            //     let nft = self
-            //     .badpayer_badge_resource_manager
-            //     .mint_ruid_non_fungible(BadPayerBadge {
-            //         account: index.to_string(),
-            //         amount_to_refund: dec!(0),
-            //         expected_borrow_epoch_timeline: dec!(0),
-            //     });
-            //     self.badpayer_vault.put(nft);
-            // }
+            let max = 50 / self.max_percentage_allowed_for_account;
+            info!("Ready to mint BadPayer: {}", max);
+            for index in 1..= max  {
+                info!("Current number: {}", index);
+                let nft = self
+                .badpayer_badge_resource_manager
+                .mint_ruid_non_fungible(BadPayerBadge {
+                    message: " Your loan has expired, please repay it back to avoid in incoming cost ! ".to_string()
+                });
+                self.badpayer_vault.put(nft);
+            }
         }
         // 
        

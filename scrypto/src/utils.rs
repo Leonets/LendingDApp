@@ -113,7 +113,7 @@ pub fn take_back_checks(allowed_amount: Decimal, amount_to_be_returned: &Decimal
 //for borrowings
 pub fn borrow_checks(
         borrow_amount: Decimal, amount_requested: Decimal, 
-        max_amount_allowed: Decimal, current_loans: Decimal, current_borrows: Decimal, max_limit_percentage: u32, 
+        max_amount_allowed: Decimal, current_loans: Decimal, current_borrows: Decimal, max_percentage_for_currentborrows_vs_currentloans: u32, 
         current_number_of_badpayer: Decimal, _max_borrowing_limit: Decimal){
 
     assert!(borrow_amount == dec!("0"), "You cannot borrow before repaying back first");
@@ -126,16 +126,19 @@ pub fn borrow_checks(
         "You cannot borrow more than amount allowed : {:?} ", max_amount_allowed
     );
     // Calculate the second limit (??) 
-    let max_limit = current_loans * max_limit_percentage / 100;    
+    let max_limit = current_loans * max_percentage_for_currentborrows_vs_currentloans / 100;    
     info!("Max limit : {:?} over current loans amount {} ", max_limit, current_loans);  
     assert!(
         max_limit + amount_requested >= current_borrows,
-        "There is not availabilty for new borrowings because of cap limit is reached! {}% of current loans amount {} ", max_limit_percentage, current_loans
+        "There is not availabilty for new borrowings because of cap limit is reached! {}% of current loans amount {} ", max_percentage_for_currentborrows_vs_currentloans, current_loans
     );
 
     //Calculate how many BadPayer could be possibile being out at the same time
     // let max_bo_limit: u32 = max_borrowing_limit.try_into().unwrap();
-    let max_number_of_badpayer = max_limit / max_amount_allowed;
+    //
+    let available_token_for_borrows = max_limit - current_borrows;
+    info!("available_token_for_borrows  {:?} ", available_token_for_borrows); 
+    let max_number_of_badpayer = available_token_for_borrows / max_amount_allowed;
     info!("Current number of BadPayer: {:?} Max number accepted {:?} ", current_number_of_badpayer, max_number_of_badpayer);  
     assert!(
         Decimal::from(max_number_of_badpayer) >= current_number_of_badpayer + 1,

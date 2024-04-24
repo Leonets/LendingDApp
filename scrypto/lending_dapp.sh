@@ -6,6 +6,7 @@ echo "Resetting environment"
 resim reset
 export account=$(resim new-account | sed -nr "s/Account component address: ([[:alnum:]_]+)/\1/p")
 echo "Account = " $account
+
 echo "XRD = " $xrd
 
 echo "Publishing dapp"
@@ -33,7 +34,10 @@ echo 'admin_badge = '$admin_badge
 echo 'staff_badge = '$staff_badge
 echo 'zerounit_token = ' $zerounit_token
 echo 'userdata_nft_manager = ' $userdata_nft_manager
-echo 'benefactor_badge = ' $benefactor_badge
+echo 'bad_payer = ' $bad_payer
+echo 'creditscore_nft_manager = ' $creditscore_nft_manager
+echo 'pt = ' $pt
+echo 'yt = ' $yt
 
 echo ' '
 echo 'account = ' $account
@@ -121,6 +125,10 @@ resim run rtm/borrow.rtm
 # fee 10
 # main pool -100
 
+echo '>>> Repay'
+
+resim run rtm/repay.rtm
+
 # echo '>>> Lend tokens again before next available epoch slot'
 # resim run rtm/lend_tokens.rtm
 
@@ -158,6 +166,32 @@ resim run rtm/pools.rtm
 # donations vault -> 180
 # main pool -> 100
 
-# echo '>>> Init BadPayer Vault'
+echo '>>> Init BadPayer Vault'
 
 # resim run rtm/init_badpayer.rtm
+resim run rtm/mint_bad_payer.rtm
+
+
+export account2=$(resim new-account | sed -nr "s/Account component address: ([[:alnum:]_]+)/\1/p")
+echo "Account 2 = " $account2
+
+echo '>>> Register'
+resim run rtm/register_account.rtm
+
+resim set-current-epoch 100
+echo '>>> Borrow Again for Not Repaying'
+
+resim run rtm/borrow_account.rtm
+
+echo '>>> Send BadPayer'
+
+resim run rtm/send_badpayer.rtm
+
+resim show $account
+
+resim set-current-epoch 1000
+echo '>>> Repay'
+
+resim run rtm/repay_badpayer.rtm
+
+resim show $account
