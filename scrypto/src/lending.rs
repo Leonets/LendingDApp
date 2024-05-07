@@ -80,7 +80,7 @@ pub struct Borrower {
 
 #[derive(ScryptoSbor, NonFungibleData)]
 pub struct YieldTokenData {
-    underlying_resource: ResourceAddress,
+    extra_reward: Decimal,
     underlying_amount: Decimal,
     interest_totals: Decimal,
     yield_claimed: Decimal,
@@ -111,11 +111,12 @@ mod lending_dapp {
             pools => restrict_to: [admin, OWNER];
             fund_main_pool => restrict_to: [admin, OWNER];
             set_reward => restrict_to: [staff, admin, OWNER];
+            set_extra_reward => restrict_to: [admin, OWNER];
             set_reward_type => restrict_to: [admin, OWNER];
             set_borrow_epoch_max_length => restrict_to: [staff, admin, OWNER];
             set_interest => restrict_to: [staff, admin, OWNER];
             set_period_length => restrict_to: [staff, admin, OWNER];
-            set_max_percentage_allowed_for_account  => restrict_to: [admin, OWNER];
+            set_max_percentage_allowed_for_account  => restrict_to: [staff, admin, OWNER];
             withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
@@ -124,7 +125,7 @@ mod lending_dapp {
             mint_bad_payer  => restrict_to: [admin, OWNER];
             mint_bad_payer_vault  => restrict_to: [admin, OWNER];
             //config
-            config  => restrict_to: [admin, OWNER];
+            config  => restrict_to: [staff, admin, OWNER];
             //new
             // maturity_date  => restrict_to: [admin, OWNER];
             // check_maturity  => restrict_to: [admin, OWNER];
@@ -139,6 +140,7 @@ mod lending_dapp {
         collected_xrd: Vault,
         fee_xrd: Vault,
         reward: Decimal,
+        extra_reward: Decimal,
         interest: Decimal,
         borrow_epoch_max_lenght: Decimal,
         max_percentage_allowed_for_account: u32,
@@ -453,6 +455,7 @@ mod lending_dapp {
                     collected_xrd: Vault::new(XRD),
                     fee_xrd: Vault::new(XRD),
                     reward: reward,
+                    extra_reward: dec!(10),
                     interest: interest,
                     borrow_epoch_max_lenght: dec!(518000),//how many days ??
                     max_percentage_allowed_for_account: 3,
@@ -509,6 +512,7 @@ mod lending_dapp {
                         pools => Free, locked;
                         fund_main_pool => Free, locked;
                         set_reward => Free, locked;
+                        set_extra_reward => Free, locked;
                         set_reward_type => Free, locked;
                         set_borrow_epoch_max_length => Free, locked;
                         set_interest => Free, locked;
@@ -559,7 +563,7 @@ mod lending_dapp {
         pub fn register(&mut self) -> (Bucket, Bucket) {
             //mint an NFT for registering loan/borrowing amount and starting/ending epoch
             let yield_token = YieldTokenData {
-                underlying_resource: self.nft_manager.address(),
+                extra_reward: dec!(0),
                 underlying_amount: dec!(0),
                 interest_totals: dec!(0),
                 yield_claimed: dec!(0),
@@ -615,7 +619,7 @@ mod lending_dapp {
                     // You need to decide what to return in case of None; here, I'm using a default value
                     //mint an NFT for registering loan/borrowing amount and starting/ending epoch
                     let yield_token = YieldTokenData {
-                        underlying_resource: self.nft_manager.address(),
+                        extra_reward: dec!(0),
                         underlying_amount: dec!(0),
                         interest_totals: dec!(0),
                         yield_claimed: dec!(0),
@@ -700,8 +704,9 @@ mod lending_dapp {
             //calculate interest
             let current_epoch = Runtime::current_epoch().number();
             let starting_epoch = current_epoch - tokenize_expected_length;
-            let extra_interest = self.reward + dec!(5);
-            info!("Starting epoch {} with extra interest  {}", starting_epoch, extra_interest); 
+            //when you tokenize you fix the interest until the maturity date
+            let extra_interest = self.extra_reward;
+            info!("Starting epoch {} with extra interest  {} ", starting_epoch, extra_interest); 
             // let starting_u64 = starting_epoch.to_string().parse::<u64>().unwrap();
             // let interest_totals = calculate_interests(
             //     &String::from("TimeBased"), &extra_interest,
@@ -720,7 +725,7 @@ mod lending_dapp {
 
             //updates data on NFT
             let strip = YieldTokenData {
-                underlying_resource: self.nft_manager.address(),
+                extra_reward: self.extra_reward,
                 underlying_amount: zsu_amount,
                 interest_totals: accumulated_interest,
                 yield_claimed: Decimal::ZERO,
@@ -742,29 +747,73 @@ mod lending_dapp {
         pub fn redeem(
             &mut self, 
             pt_bucket: Bucket, 
-            yt_bucket: Bucket, 
-            yt_redeem_amount: Decimal,
-        ) -> (Bucket, Option<Bucket>) {
-            let mut data: YieldTokenData = yt_bucket.as_non_fungible().non_fungible().data();    
-            assert!(data.underlying_amount >= yt_redeem_amount);            
-            assert_eq!(pt_bucket.amount(), yt_redeem_amount);
+            userdata_nft: NonFungibleBucket,
+            token_type: ResourceAddress
+        ) -> (Bucket, Option<NonFungibleBucket>) {
+            // let mut data: YieldTokenData = userdata_nft.as_non_fungible().non_fungible().data();    
+            //Get info from the CreditScore NFT
+            let lender_data: UserPosition = userdata_nft.as_non_fungible().non_fungible().data();
+            let data = lender_data.yield_token_data;
+
+            let pt_redeem_amount = pt_bucket.amount();
             assert_eq!(pt_bucket.resource_address(), self.pt_resource_manager.address());
-            assert_eq!(yt_bucket.resource_address(), self.yt_resource_manager.address());
+            assert_eq!(userdata_nft.resource_address(), self.nft_manager.address());
 
-            let zsu_bucket = self.zeros.take(pt_bucket.amount());
+            // let zsu_bucket = self.zeros.take(pt_bucket.amount());
 
-            let option_yt_bucket: Option<Bucket> = if data.underlying_amount > yt_redeem_amount {
-                data.underlying_amount -= yt_redeem_amount;
-                Some(yt_bucket)
-            } else {
-                yt_bucket.burn();
-                None
-            };
+            // let option_yt_bucket: Option<Bucket> = if data.underlying_amount > yt_redeem_amount {
+            //     data.underlying_amount -= yt_redeem_amount;
+            //     Some(yt_bucket)
+            // } else {
+            //     yt_bucket.burn();
+            //     None
+            // };
+
+            // //burn principal token because they have been returned as an equivalent 
+            // pt_bucket.burn();
+
+
+            info!("Swap tokens, current_epoch = {:?}, amount = {:?} , interest {:?}, maturity date {:?}, type  {:?}, ", 
+            Runtime::current_epoch().number(), pt_redeem_amount, data.interest_totals, data.maturity_date, token_type);
+
+            assert_eq!(pt_redeem_amount, data.underlying_amount,
+                "You need to swap all your tokenized value!");
+            // total at maturity * (1/(1+0.08)) -> 10,240 * 0.9259 -> 9,481
+            // maucalay duration = 9,481/10,000 -> 0.948
+            // modified duration = maucalay duration / (1+0.08) -> 0,948 / 1,08 = 0,877
+            let fixed_reward = data.extra_reward/dec!(100);
+            let total_at_maturity =  (data.underlying_amount+data.interest_totals) * (1/(1+fixed_reward));         //data.underlying_amount          
+            info!("total at maturity {:?}", total_at_maturity);
+            let maucalay_duration = total_at_maturity/data.underlying_amount; //data.underlying_amount
+            info!("maucalay duration {:?}", maucalay_duration);
+            let modified_duration = maucalay_duration / (1+fixed_reward);
+            info!("modified duration {:?}", modified_duration);
+
+            //differences in % from the time when the tokenize occurred and now
+            //positive value means that % has been lowered -> PT value has risen
+            //negative value means that % has been raised -> PT value has decreased
+            let diff_reward = data.extra_reward - self.extra_reward;
+            info!("tokenized reward {}% actual extra_reward {}% diff_reward {:?}%", data.extra_reward, self.extra_reward, diff_reward);
+
+            //update principal returned
+            let nft_local_id: NonFungibleLocalId = userdata_nft.as_non_fungible().non_fungible_local_id();
+            let yield_token = self.init_yield();
+            // yield_data.insert(token_type.clone(), yield_token);
+            self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_token);
 
             //burn principal token because they have been returned as an equivalent 
             pt_bucket.burn();
+            //return back the amount priced at the current value
+            let diff = diff_reward*modified_duration;
+            info!("returned value is higher/lower of about {:?} %", diff);
+            let priced_amount = (data.underlying_amount+data.interest_totals)*(dec!(100)+diff)/dec!(100);
+            //The actualized price of the tokenized supply will be returned
+            info!("tokens returned {:?}", priced_amount);
+            //unlock the tokens                    
+            let zsu_bucket = self.zeros.take(priced_amount);
 
-            return (zsu_bucket, option_yt_bucket)
+            return (zsu_bucket, Some(userdata_nft))
+            // return (zsu_bucket, option_yt_bucket)
         }
 
         // redeem YT
@@ -810,6 +859,8 @@ mod lending_dapp {
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             let mut yield_data = lender_data.yield_token_data;
             yield_data.principal_returned = true;
+            yield_data.extra_reward = dec!(0);
+            yield_data.underlying_amount = dec!(0);
             self.nft_manager.update_non_fungible_data(&nft_local_id, "yield_token_data", yield_data);
 
             return (bucket_of_zsu, lender_badge)
@@ -1221,6 +1272,7 @@ mod lending_dapp {
                         user_nft.burn();
                     }
                     None => {
+                        info!("No BadPayer available to burn ... No need to burn ! ");
                     }
                 }
                 
@@ -1303,6 +1355,11 @@ mod lending_dapp {
             self.interest_for_lendings.insert(Decimal::from(Runtime::current_epoch().number()), reward);
         }
 
+        // set the reward for tokenize
+        pub fn set_extra_reward(&mut self, extra_reward: Decimal) {
+            self.extra_reward = extra_reward;
+        }
+
         // set the reward for borrowers
         pub fn set_interest(&mut self, interest: Decimal) {
             self.interest = interest;
@@ -1380,6 +1437,17 @@ mod lending_dapp {
             );
             // adds to the level
             self.max_borrowing_limit = self.max_borrowing_limit + size_extended;
+        }
+
+        fn init_yield(&mut self) -> YieldTokenData {
+            return YieldTokenData {
+                extra_reward: dec!(0),
+                underlying_amount: dec!(0),
+                interest_totals: dec!(0),
+                yield_claimed: dec!(0),
+                maturity_date: dec!(0),
+                principal_returned: true,
+            };    
         }
 
 

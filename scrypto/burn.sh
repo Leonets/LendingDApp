@@ -61,58 +61,6 @@ resim run rtm/register.rtm
 
 resim show $account
 
-echo '>>> Lend tokens'
-
-resim set-current-epoch 1
-#resim call-method ${component} lend_tokens $xrd:100
-resim run rtm/lend_tokens.rtm
-
-resim show $account
-
-echo '>>> Set Reward 4 at epoch 100'
-resim set-current-epoch 100
-resim run rtm/set_reward_4.rtm
-
-echo '>>> Set Reward 8 at epoch 200'
-resim set-current-epoch 200
-resim run rtm/set_reward_8.rtm
-
-echo '>>> Set Reward 12 at epoch 300'
-resim set-current-epoch 300
-resim run rtm/set_reward_12.rtm
-
-# echo '>>> Show Reward Values along epochs'
-# resim run rtm/lend_reward.rtm
-
-resim set-current-epoch 400
-
-echo '>>> Takes back'
-
-# 1 epoch = 5min
-# 12 epoch = 1h
-# 264 epoch = 1d
-# 7920 epoch = 1month
-# 96.360 epoch = 1year
-
-# resim set-current-epoch 96360
-#resim call-method ${component} takes_back $zerounit_token:100
-resim run rtm/takes_back.rtm
-# fee 10
-
-resim show $account
-
-echo '>>> zerounit_token'
-resim show $zerounit_token
-echo '>>> userdata_nft_manager'
-resim show $userdata_nft_manager
-
-echo '>>> Takes back remaining'
-
-resim run rtm/takes_back_20.rtm
-# fee 10 
-# main pool -5
-
-resim show $component
 
 
 echo '>>> Set Interest'
@@ -127,45 +75,25 @@ resim run rtm/borrow.rtm
 
 resim show $account
 
-echo '>>> Set Interest 5 at epoch 100'
-resim set-current-epoch 100
-resim run rtm/set_interest_5.rtm
 
-
-echo '>>> Set Interest 15 at epoch 200'
-resim set-current-epoch 200
-resim run rtm/set_interest_15.rtm
-
-echo '>>> Set Interest 10 at epoch 300'
 resim set-current-epoch 300
-resim run rtm/set_interest.rtm
-
-# echo '>>> Show Interest Values along epochs'
-# resim run rtm/borrow_interest.rtm
-
-resim set-current-epoch 100
-echo '>>> Someone is late ?'
-resim run rtm/asking_repay.rtm
-
-resim set-current-epoch 400
-echo '>>> Someone is late ?'
-resim run rtm/asking_repay.rtm
-
-resim set-current-epoch 500
 echo '>>> Someone is late ?'
 resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 600
-echo '>>> Someone is late ?'
-resim run rtm/asking_repay.rtm
-
-resim set-current-epoch 2000
 echo '>>> Now someone should be late '
 resim run rtm/asking_repay.rtm
 
+echo '>>> Mint Some BadPayer'
+resim run rtm/mint_bad_payer.rtm
+
+echo '>>> Simulate Send BadPayer'
+# To simulate the send... it needs another account here in this script
+# resim run rtm/send_bad_payer.rtm
+
 echo '>>> Repay'
 
-resim run rtm/repay.rtm
+resim run rtm/repay_badpayer.rtm
 # fee 10
 # main pool 5
 

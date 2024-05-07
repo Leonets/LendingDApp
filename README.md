@@ -23,7 +23,7 @@ At this point we can instantiate our Lending dApp locally
 `resim run rtm/instantiate_lending_dapp.rtm`
 
 That file has been built with the following bash command:
-`$ resim call-function ${package} LendingDApp instantiate 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
+`$ resim call-function ${package} ZeroCollateral instantiate 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
 
 The output of the instantiate is the following resources builded:
 New Entities: 6

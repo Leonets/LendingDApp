@@ -105,7 +105,8 @@ resim run rtm/takes_back_20.rtm
 resim show $component
 
 echo '>>> Borrow'
-
+export amount='100'
+export length='500'
 resim run rtm/borrow.rtm
 # fee 10
 
@@ -120,7 +121,8 @@ resim run rtm/repay.rtm
 resim show $account
 
 echo '>>> Borrow Again'
-
+export amount='100'
+export length='500'
 resim run rtm/borrow.rtm
 # fee 10
 # main pool -100

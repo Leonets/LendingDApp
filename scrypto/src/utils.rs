@@ -130,7 +130,7 @@ pub fn borrow_checks(
     info!("Max limit : {:?} over current loans amount {} ", max_limit, current_loans);  
     assert!(
         max_limit + amount_requested >= current_borrows,
-        "There is not availabilty for new borrowings because of cap limit is reached! {}% of current loans amount {} ", max_percentage_for_currentborrows_vs_currentloans, current_loans
+        "There is not availability for new borrowings because of cap limit is reached! {}% of current loans amount {} ", max_percentage_for_currentborrows_vs_currentloans, current_loans
     );
 
     //Calculate how many BadPayer could be possibile being out at the same time

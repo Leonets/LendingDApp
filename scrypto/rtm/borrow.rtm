@@ -17,10 +17,10 @@ TAKE_FROM_WORKTOP
 CALL_METHOD
     Address("${component}")
     "borrow"
-    Decimal("100")
+    Decimal("${amount}")
     Bucket("bucket2")
     "account_address1"
-    Decimal("500")
+    Decimal("${length}")
 ;
 CALL_METHOD
     Address("${account}")
