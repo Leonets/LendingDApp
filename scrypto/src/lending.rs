@@ -91,7 +91,7 @@ pub struct YieldTokenData {
 
 
 #[blueprint]
-mod lending_dapp {
+mod zerocollateral {
     enable_method_auth! {
         roles {
             admin => updatable_by: [OWNER];
@@ -117,7 +117,7 @@ mod lending_dapp {
             set_interest => restrict_to: [staff, admin, OWNER];
             set_period_length => restrict_to: [staff, admin, OWNER];
             set_max_percentage_allowed_for_account  => restrict_to: [staff, admin, OWNER];
-            withdraw_fees => restrict_to: [admin, OWNER];
+            // withdraw_fees => restrict_to: [admin, OWNER];
             extend_lending_pool => restrict_to: [staff, admin, OWNER];
             extend_borrowing_pool => restrict_to: [staff, admin, OWNER];
             mint_staff_badge => restrict_to: [admin, OWNER];
@@ -138,7 +138,6 @@ mod lending_dapp {
     struct ZeroCollateral<> {
         zeros: Vault,
         collected_xrd: Vault,
-        fee_xrd: Vault,
         reward: Decimal,
         extra_reward: Decimal,
         interest: Decimal,
@@ -344,6 +343,7 @@ mod lending_dapp {
                 ))           
                 .create_with_no_initial_supply();
 
+
             // Create a badge to identify any account that interacts with the dApp (souldbound !!)
             let creditscore_manager =
                 ResourceBuilder::new_ruid_non_fungible::<CreditScore>(OwnerRole::Updatable(rule!(
@@ -453,7 +453,6 @@ mod lending_dapp {
                     zsu_manager: zeros_bucket.resource_manager(),
                     zeros: Vault::with_bucket(zeros_bucket.into()),
                     collected_xrd: Vault::new(XRD),
-                    fee_xrd: Vault::new(XRD),
                     reward: reward,
                     extra_reward: dec!(10),
                     interest: interest,
@@ -518,7 +517,7 @@ mod lending_dapp {
                         set_interest => Free, locked;
                         set_period_length => Free, locked;
                         set_max_percentage_allowed_for_account => Free, locked;
-                        withdraw_fees => Free, locked;
+                        // withdraw_fees => Free, locked;
                         extend_lending_pool => Free, locked;
                         extend_borrowing_pool => Free, locked;
                         mint_staff_badge => Free, locked;
@@ -1055,10 +1054,10 @@ mod lending_dapp {
             info!("XRD tokens given back: {:?} ", amount_returned);  
 
             // Paying fees
-            let fees = calculate_fees(amount_returned);
-            self.fee_xrd.put(self.collected_xrd.take(fees));
+            // let fees = calculate_fees(amount_returned);
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
             //total net amount to return
-            let net_returned = self.collected_xrd.take(amount_returned-fees);
+            let net_returned = self.collected_xrd.take(amount_returned);
 
             //remove the amount
             self.current_loans -= amount_returned;
@@ -1122,10 +1121,10 @@ mod lending_dapp {
             info!("XRD tokens given back: {:?} ", amount_returned);  
 
             // Paying fees
-            let fees = calculate_fees(amount_returned);
-            self.fee_xrd.put(self.collected_xrd.take(fees));
+            // let fees = calculate_fees(amount_returned);
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
             //total net amount to return
-            let net_returned = self.collected_xrd.take(amount_returned-fees);
+            let net_returned = self.collected_xrd.take(amount_returned);
 
             //remove the amount
             self.current_loans -= amount_returned;
@@ -1176,11 +1175,11 @@ mod lending_dapp {
             info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.clone(), amount_requested, epoch);  
 
             //paying fees in advance
-            let fees = calculate_fees(amount_requested);
-            self.fee_xrd.put(self.collected_xrd.take(fees));
+            // let fees = calculate_fees(amount_requested);
+            // self.fee_xrd.put(self.collected_xrd.take(fees));
 
             //take the XRD from the main pool to borrow to the user
-            let xrd_to_return = self.collected_xrd.take(amount_requested-fees);
+            let xrd_to_return = self.collected_xrd.take(amount_requested);
 
             let nft_local_id: NonFungibleLocalId = lender_badge.as_non_fungible().non_fungible_local_id();
             // Update the data on the network
@@ -1189,7 +1188,7 @@ mod lending_dapp {
             self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", amount_requested);
 
             //remove the amount
-            self.current_borrows += amount_requested-fees;
+            self.current_borrows += amount_requested;
             info!("Current amount borrowed out {} ", self.current_borrows);
 
             return (xrd_to_return,Some(lender_badge))                
@@ -1214,7 +1213,7 @@ mod lending_dapp {
             }
 
             //paying fees
-            let fees = calculate_fees(loan_repaied.amount());
+            // let fees = calculate_fees(loan_repaied.amount());
             //calculate interest
             let amount_returned = loan_repaied.amount();
             
@@ -1228,11 +1227,11 @@ mod lending_dapp {
             let amount_to_be_returned = lender_data.borrow_amount + interest_totals;
             info!("Actual amount to be repaied (without interest): {:?} ", lender_data.borrow_amount); 
             info!("Amount to be repaied with interest: {:?} ", amount_to_be_returned);
-            let total = amount_to_be_returned + fees;
+            let total = amount_to_be_returned;
             info!("Total Amount to repay with interest and fees: {:?} ", total);  
 
             //paying fees
-            self.fee_xrd.put(loan_repaied.take(fees));
+            // self.fee_xrd.put(loan_repaied.take(fees));
 
             let remaining:Decimal = total-amount_returned;
             info!("Amount repaied : {:?}  Amount remaining : {:?} ", amount_returned, remaining);   
@@ -1242,7 +1241,7 @@ mod lending_dapp {
             //repay the loan
             if remaining <= dec!("0") {
                 info!("Setting loan as closed ");  
-                self.collected_xrd.put(loan_repaied.take(total-fees));
+                self.collected_xrd.put(loan_repaied.take(total));
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
                 //remove the user account as a current borrower      
@@ -1278,7 +1277,7 @@ mod lending_dapp {
                 
             } else  {
                 info!("Missing token to close loan  {:?} ", remaining);
-                self.collected_xrd.put(loan_repaied.take(loan_repaied.amount()-fees)); 
+                self.collected_xrd.put(loan_repaied.take(loan_repaied.amount())); 
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", remaining);
             }  
             // Update the data on the network also on the souldbound CreditScore NFT !!!
@@ -1294,7 +1293,6 @@ mod lending_dapp {
         //vault size
         pub fn pools(&mut self)  {
             info!("Main Pool: {:?} ", self.collected_xrd.amount());  
-            info!("Fees: {:?} ", self.fee_xrd.amount());  
         }
 
         //for funding the main pool
@@ -1388,9 +1386,9 @@ mod lending_dapp {
         }
 
         //withdraw the fees generated by the component
-        pub fn withdraw_fees(&mut self, amount: Decimal) -> Bucket {
-            self.fee_xrd.take(amount)
-        }
+        // pub fn withdraw_fees(&mut self, amount: Decimal) -> Bucket {
+        //     self.fee_xrd.take(amount)
+        // }
 
         //mint a staff for a new staff member
         pub fn mint_staff_badge(&mut self, username: String) -> Bucket {

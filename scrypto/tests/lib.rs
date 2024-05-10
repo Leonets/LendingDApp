@@ -1,11 +1,11 @@
-use lending_dapp::lending::test_bindings::*;
-// use lending_dapp::lending::lending_dapp::*;
-// use lending_dapp::LenderData;
+use zerocollateral::lending::test_bindings::*;
+// use zerocollateral::lending::zerocollateral::*;
+// use zerocollateral::LenderData;
 use scrypto::*;
 use scrypto_test::prelude::*;
 
 #[test]
-fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
+fn zerocollateral_lend_tokens_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
@@ -44,7 +44,7 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
 
 
 #[test]
-fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
+fn zerocollateral_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
 

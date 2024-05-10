@@ -1,5 +1,5 @@
 [package]
-name = "lending_dapp"
+name = "zerocollateral"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,7 +12,7 @@ scrypto_avltree = { git = "https://github.com/ociswap/scrypto-avltree", version 
 # qrcode = "0.13.0"
 
 [dev-dependencies]
-lending_dapp = { path = ".", features = ["test"] }
+zerocollateral = { path = ".", features = ["test"] }
 transaction = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
 radix-engine = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }
 scrypto-unit = { git = "https://github.com/radixdlt/radixdlt-scrypto", tag = "v1.1.1" }

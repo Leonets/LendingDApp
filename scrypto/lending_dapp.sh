@@ -150,9 +150,9 @@ echo '>>> Mint Staff Badge'
 
 resim run rtm/mint_staff_badge.rtm
 
-echo '>>> Withdraw Fees'
+# echo '>>> Withdraw Fees'
 
-resim run rtm/withdraw_fees.rtm
+# resim run rtm/withdraw_fees.rtm
 
 echo '>>> Withdraw Earnings'
 # fee -20

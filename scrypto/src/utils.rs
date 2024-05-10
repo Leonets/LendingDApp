@@ -93,13 +93,13 @@ pub fn lend_amount_checks(num_xrds: Decimal, min: Decimal, max: Decimal){
     );
 }
 
-pub fn calculate_fees(amount_returned: Decimal) -> Decimal {
-    return if amount_returned > Decimal::from_str("10.0").unwrap() {
-        Decimal::from_str("10.0").unwrap()
-    } else {
-        Decimal::from_str("0.0").unwrap()
-    };
-}
+// pub fn calculate_fees(amount_returned: Decimal) -> Decimal {
+//     return if amount_returned > Decimal::from_str("10.0").unwrap() {
+//         Decimal::from_str("10.0").unwrap()
+//     } else {
+//         Decimal::from_str("0.0").unwrap()
+//     };
+// }
 
 //for take_back
 pub fn take_back_checks(allowed_amount: Decimal, amount_to_be_returned: &Decimal){
