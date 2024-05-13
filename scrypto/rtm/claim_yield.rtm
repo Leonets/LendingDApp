@@ -1,17 +1,23 @@
 CALL_METHOD
     Address("${component_test}")
     "lock_fee"
-    Decimal("10")
+    Decimal("5000")
 ;
 CALL_METHOD
     Address("${account}")
-    "create_proof_of_amount"    
-    Address("${admin_badge}")
-    Decimal("1");
+    "withdraw"
+    Address("${userdata_nft_manager}")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("${userdata_nft_manager}")
+    Decimal("1")
+    Bucket("bucket1")
+;
 CALL_METHOD
     Address("${component}")
-    "set_reward"
-    Decimal("8")
+    "claim_yield"
+    Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${account}")

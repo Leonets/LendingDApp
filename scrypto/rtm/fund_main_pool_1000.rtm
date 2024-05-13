@@ -9,9 +9,20 @@ CALL_METHOD
     Address("${admin_badge}")
     Decimal("1");
 CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${xrd}")
+    Decimal("1000")
+;
+TAKE_FROM_WORKTOP
+    Address("${xrd}")
+    Decimal("1000")
+    Bucket("bucket1")
+;
+CALL_METHOD
     Address("${component}")
-    "set_reward"
-    Decimal("8")
+    "fund_main_pool"
+    Bucket("bucket1")
 ;
 CALL_METHOD
     Address("${account}")

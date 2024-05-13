@@ -6,7 +6,6 @@ echo "Resetting environment"
 resim reset
 export account=$(resim new-account | sed -nr "s/Account component address: ([[:alnum:]_]+)/\1/p")
 echo "Account = " $account
-
 echo "XRD = " $xrd
 
 echo "Publishing dapp"
@@ -25,7 +24,6 @@ export creditscore_nft_manager=`echo $output | cut -d " " -f8`
 export pt=`echo $output | cut -d " " -f9`
 export yt=`echo $output | cut -d " " -f10`
 
-
 export component_test=component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh
 
 echo 'component = '$component
@@ -34,10 +32,8 @@ echo 'admin_badge = '$admin_badge
 echo 'staff_badge = '$staff_badge
 echo 'zerounit_token = ' $zerounit_token
 echo 'userdata_nft_manager = ' $userdata_nft_manager
+echo 'benefactor_badge = ' $benefactor_badge
 echo 'bad_payer = ' $bad_payer
-echo 'creditscore_nft_manager = ' $creditscore_nft_manager
-echo 'pt = ' $pt
-echo 'yt = ' $yt
 
 echo ' '
 echo 'account = ' $account
@@ -50,7 +46,7 @@ echo '>>> Fund Main Vault'
 resim run rtm/fund_main_pool.rtm
 resim run rtm/fund_main_pool.rtm
 # main pool 200
-resim run rtm/fund_main_pool_4000.rtm
+resim run rtm/fund_main_pool_1000.rtm
 # main pool 4200
 
 # echo '>>> Donate'
@@ -71,10 +67,24 @@ resim set-current-epoch 1
 #resim call-method ${component} lend_tokens $xrd:100
 resim run rtm/lend_tokens.rtm
 
-#enable this to test the unregister function
-#resim run rtm/unregister.rtm
-
 resim show $account
+
+echo '>>> Set Reward 4 at epoch 100'
+resim set-current-epoch 100
+resim run rtm/set_reward_4.rtm
+
+echo '>>> Set Reward 8 at epoch 200'
+resim set-current-epoch 200
+resim run rtm/set_reward_8.rtm
+
+echo '>>> Set Reward 12 at epoch 300'
+resim set-current-epoch 300
+resim run rtm/set_reward_12.rtm
+
+# echo '>>> Show Reward Values along epochs'
+# resim run rtm/lend_reward.rtm
+
+resim set-current-epoch 400
 
 echo '>>> Takes back'
 
@@ -84,7 +94,7 @@ echo '>>> Takes back'
 # 7920 epoch = 1month
 # 96.360 epoch = 1year
 
-resim set-current-epoch 96360
+# resim set-current-epoch 96360
 #resim call-method ${component} takes_back $zerounit_token:100
 resim run rtm/takes_back.rtm
 # fee 10
@@ -104,96 +114,39 @@ resim run rtm/takes_back_20.rtm
 
 resim show $component
 
+
+echo '>>> Set Interest'
+resim set-current-epoch 0
+
 echo '>>> Borrow'
-export amount='100'
-export length='500'
-resim run rtm/borrow.rtm
+resim set-current-epoch 10
+resim run rtm/borrow_30.rtm
 # fee 10
 
 resim show $account
 
-echo '>>> Repay'
-
-resim run rtm/repay.rtm
-# fee 10
-# main pool 5
-
-resim show $account
-
-echo '>>> Borrow Again'
-export amount='100'
-export length='500'
-resim run rtm/borrow.rtm
-# fee 10
-# main pool -100
-
-echo '>>> Repay'
-
-resim run rtm/repay.rtm
-
-# echo '>>> Lend tokens again before next available epoch slot'
-# resim run rtm/lend_tokens.rtm
-
-echo '>>> Set Reward'
-
-resim run rtm/set_reward.rtm
-
-echo '>>> Set Period Length Pool'
-
-resim run rtm/set_period_length.rtm
-
-echo '>>> Extend Lending Pool'
-
-resim run rtm/extend_lending_pool.rtm
-
-echo '>>> Mint Staff Badge'
-
-resim run rtm/mint_staff_badge.rtm
-
-# echo '>>> Withdraw Fees'
-
-# resim run rtm/withdraw_fees.rtm
-
-echo '>>> Withdraw Earnings'
-# fee -20
-
-# resim run rtm/withdraw_earnings.rtm
-# donations -20
-
-echo '>>> Pools'
-
-resim run rtm/pools.rtm
-
-# fee vault -> 30
-# donations vault -> 180
-# main pool -> 100
-
-echo '>>> Init BadPayer Vault'
-
-# resim run rtm/init_badpayer.rtm
-resim run rtm/mint_bad_payer.rtm
-
-
-export account2=$(resim new-account | sed -nr "s/Account component address: ([[:alnum:]_]+)/\1/p")
-echo "Account 2 = " $account2
-
-echo '>>> Register'
-resim run rtm/register_account.rtm
-
+echo '>>> Set Interest 5 at epoch 100'
 resim set-current-epoch 100
-echo '>>> Borrow Again for Not Repaying'
+resim run rtm/set_interest_5.rtm
 
-resim run rtm/borrow_account.rtm
 
-echo '>>> Send BadPayer'
+echo '>>> Set Interest 15 at epoch 200'
+resim set-current-epoch 200
+resim run rtm/set_interest_15.rtm
 
-resim run rtm/send_badpayer.rtm
+echo '>>> Set Interest 10 at epoch 300'
+resim set-current-epoch 300
+resim run rtm/set_interest.rtm
 
-resim show $account
+# echo '>>> Show Interest Values along epochs'
+# resim run rtm/borrow_interest.rtm
 
-resim set-current-epoch 1000
-echo '>>> Repay'
+resim set-current-epoch 2000
+echo '>>> Now someone should be late '
+resim run rtm/asking_repay.rtm
 
-resim run rtm/repay_badpayer.rtm
+echo '>>> Repay with high amount'
+
+resim run rtm/repay_high.rtm
 
 resim show $account

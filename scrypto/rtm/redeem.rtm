@@ -1,28 +1,36 @@
 CALL_METHOD
     Address("${component_test}")
     "lock_fee"
-    Decimal("10")
+    Decimal("5000")
 ;
-CALL_METHOD
-    Address("${account}")
-    "create_proof_of_amount"    
-    Address("${admin_badge}")
-    Decimal("1");
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${xrd}")
-    Decimal("100")
+    Address("${pt}")
+    Decimal("50")
 ;
 TAKE_FROM_WORKTOP
-    Address("${xrd}")
-    Decimal("100")
+    Address("${pt}")
+    Decimal("50")
     Bucket("bucket1")
 ;
 CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${yt}")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("${yt}")
+    Decimal("1")
+    Bucket("bucket2")
+;
+CALL_METHOD
     Address("${component}")
-    "fund_main_pool"
+    "redeem"
     Bucket("bucket1")
+    Bucket("bucket2")
+    Decimal("50")
 ;
 CALL_METHOD
     Address("${account}")

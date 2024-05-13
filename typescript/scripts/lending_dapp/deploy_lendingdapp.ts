@@ -17,8 +17,8 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
         ;
         CALL_FUNCTION
             Address("${sugarOraclePackage}")
-            "LendingDApp"
-            "instantiate_lending_dapp"
+            "ZeroCollateral"
+            "instantiate"
             Decimal("5")
             Decimal("8")
             "${tokenSymbol}"
@@ -67,7 +67,7 @@ ResultAsync.combine([
   )
   .andThen((result) => {
     logger.info('Deployed package', result)
-    return instantiateLendingDapp(result.packageAddress, "LENDAPP")
+    return instantiateLendingDapp(result.packageAddress, "LZU")
   })
   .mapErr((error) => {
     logger.error(error)
@@ -80,10 +80,12 @@ ResultAsync.combine([
     "VITE_OWNER_BADGE",
     "VITE_ADMIN_BADGE",
     "VITE_STAFF_BADGE_ADDRESS",
-    "VITE_BENEFACTOR_BADGE_ADDRESS",
     "VITE_BAD_PAYER_RESOURCE_ADDRESS",
     "VITE_LND_TOKEN_ADDRESS",
-    "VITE_LND_RESOURCE_ADDRESS"
+    "VITE_LND_RESOURCE_ADDRESS",
+    "VITE_CREDITSCORE_RESOURCE_ADDRESS",
+    "VITE_PT_RESOURCE_ADDRESS",
+    "VITE_YT_RESOURCE_ADDRESS"
     ];
 
 

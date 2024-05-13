@@ -10,8 +10,8 @@ CALL_METHOD
     Decimal("1");
 CALL_METHOD
     Address("${component}")
-    "set_reward"
-    Decimal("8")
+    "extend_lending_pool"
+    Decimal("5000")
 ;
 CALL_METHOD
     Address("${account}")

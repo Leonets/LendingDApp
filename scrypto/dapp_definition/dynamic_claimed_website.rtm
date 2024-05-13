@@ -10,7 +10,7 @@ SET_METADATA
     Address("$DAPP_ID$")
     "name"
     Enum<0u8>(
-        "Lending dApp"
+        "ZeroCollateral"
     )
 ;
 

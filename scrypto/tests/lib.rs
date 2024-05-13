@@ -1,11 +1,11 @@
-use lending_dapp::lending::test_bindings::*;
-// use lending_dapp::lending::lending_dapp::*;
-// use lending_dapp::LenderData;
+use zerocollateral::lending::test_bindings::*;
+// use zerocollateral::lending::zerocollateral::*;
+// use zerocollateral::LenderData;
 use scrypto::*;
 use scrypto_test::prelude::*;
 
 #[test]
-fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
+fn zerocollateral_lend_tokens_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
@@ -24,11 +24,11 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
     let period_length = Decimal::from(1728);
     let reward_type = "fixed";
 
-    let (mut lendingdapp, _admin_badge, _staff_badge) = LendingDApp::instantiate_lending_dapp(
+    let (mut lendingdapp, _admin_badge, _staff_badge) = ZeroCollateral::instantiate(
         reward, interest,symbol, period_length, reward_type.to_string(), dec!(1000), package_address, &mut env,)?;
 
     // Act
-    let user_nft = lendingdapp.register(&mut env)?;
+    let (user_nft, credit_score_nft) = lendingdapp.register(&mut env)?;
     // Act
     let (lnd_bucket, nft_bucket) = lendingdapp.lend_tokens(bucket1, user_nft, &mut env)?;
 
@@ -44,7 +44,7 @@ fn lending_dapp_lend_tokens_test() -> Result<(), RuntimeError> {
 
 
 #[test]
-fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
+fn zerocollateral_takes_back_test() -> Result<(), RuntimeError> {
     // Arrange
     let mut env = TestEnvironment::new();
 
@@ -67,7 +67,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     let period_length = Decimal::from(1728);
     let reward_type = "fixed";
 
-    let (mut lendingdapp, _admin_badge, _owner_badge) = LendingDApp::instantiate_lending_dapp(
+    let (mut lendingdapp, _admin_badge, _owner_badge) = ZeroCollateral::instantiate(
         reward, interest, symbol, period_length, reward_type.to_owned(), dec!(1000), package_address, &mut env,)?;
     
     // Act
@@ -77,7 +77,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
         /* Kernel modules are reset just after this point. */
     });
     // Act
-    let user_nft = lendingdapp.register(&mut env)?;
+    let (user_nft, credit_score_nft) = lendingdapp.register(&mut env)?;
     // Act
     let (lnd_bucket, received_nft) = lendingdapp.lend_tokens(bucket1, user_nft, &mut env)?;
 
@@ -88,7 +88,7 @@ fn lending_dapp_takes_back_test() -> Result<(), RuntimeError> {
     info!("Nft: {:?} ", _nft_bucket);  
 
     // Act
-    let (xrd_bucket, nft_option) = lendingdapp.takes_back(lnd_bucket, received_nft, &mut env)?;
+    let (xrd_bucket, nft_option, credit_score_option) = lendingdapp.takes_back(lnd_bucket, received_nft, credit_score_nft, &mut env)?;
 
     match nft_option {
         Some(nft) => {

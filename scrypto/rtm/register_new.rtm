@@ -1,20 +1,12 @@
 CALL_METHOD
     Address("${component_test}")
     "lock_fee"
-    Decimal("5000")
-;
-CALL_METHOD
-    Address("${account}")
-    "withdraw"    
-    Address("${lnd_manager}")
-    Decimal("1");
-TAKE_ALL_FROM_WORKTOP
-    Address("${lnd_manager}")
-    Bucket("nft");    
+    Decimal("10")
+;  
 CALL_METHOD
     Address("${component}")
-    "register"
-    Bucket("nft");   
+    "register_new"
+    None;   
 CALL_METHOD
     Address("${account}")
     "try_deposit_batch_or_refund"

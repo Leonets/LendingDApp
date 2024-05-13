@@ -3,20 +3,15 @@ CALL_METHOD
     "lock_fee"
     Decimal("5000")
 ;
-# CALL_METHOD
-#     Address("${account}")
-#     "create_proof_of_amount"    
-#     Address("${admin_badge}")
-#     Decimal("1");
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${zerounit_token}")
-    Decimal("80")
+    Address("${xrd}")
+    Decimal("8000")
 ;
 TAKE_FROM_WORKTOP
-    Address("${zerounit_token}")
-    Decimal("80")
+    Address("${xrd}")
+    Decimal("8000")
     Bucket("bucket1")
 ;
 CALL_METHOD
@@ -43,9 +38,10 @@ TAKE_FROM_WORKTOP
 ;
 CALL_METHOD
     Address("${component}")
-    "takes_back"
+    "repay"
     Bucket("bucket1")
     Bucket("bucket2")
+    "account_address1"
     Bucket("bucket3")
 ;
 CALL_METHOD

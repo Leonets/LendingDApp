@@ -13,10 +13,12 @@ SET_METADATA
             Address("$VITE_OWNER_BADGE$"),
             Address("$VITE_ADMIN_BADGE$"),
             Address("$VITE_STAFF_BADGE_ADDRESS$"),
-            Address("$VITE_BENEFACTOR_BADGE_ADDRESS$"),
             Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$"),
             Address("$VITE_LND_TOKEN_ADDRESS$"),
-            Address("$VITE_LND_RESOURCE_ADDRESS$")
+            Address("$VITE_LND_RESOURCE_ADDRESS$"),
+            Address("$VITE_CREDITSCORE_RESOURCE_ADDRESS$"),
+            Address("$VITE_PT_RESOURCE_ADDRESS$"),
+            Address("$VITE_YT_RESOURCE_ADDRESS$")
         )
     )
 ;
@@ -91,17 +93,6 @@ SET_METADATA
         )
     )
 ;
-
-
-
-# sui due badge benefactor e staff invece funziona
-CALL_METHOD
-    Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
-    #Address("OWNER_ADDRESS_DEL_CONTRATTO")
-    "create_proof_of_amount"    
-    Address("$VITE_OWNER_BADGE$")
-    #Address("OWNER_BADGE")
-    Decimal("1");
 SET_METADATA
     Address("$VITE_STAFF_BADGE_ADDRESS$")
     #Address("STAFF_BADGE")
@@ -114,28 +105,6 @@ SET_METADATA
     )
 ;
 SET_METADATA
-    Address("$VITE_BENEFACTOR_BADGE_ADDRESS$")
-    #Address("BENEFACTOR_BADGE_ADDRESS")
-    "dapp_definitions"
-    Enum<136u8>(
-        Array<Address>(
-            Address("$DAPP_ID$")
-            #Address("DAPP_ID")
-        )
-    )
-;
-
-# e su questi nemmeno
-# Unauthorized(Unauthorized { failed_access_rules: RoleList([(RoleKey { key: \'metadata_setter\' }, [DenyAll])]
-#lnd token
-CALL_METHOD
-    Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
-    #Address("OWNER_ADDRESS_DEL_CONTRATTO")
-    "create_proof_of_amount"    
-    Address("$VITE_OWNER_BADGE$")
-    #Address("OWNER_BADGE")
-    Decimal("1");
-SET_METADATA
     Address("$VITE_LND_TOKEN_ADDRESS$")
     #Address("LND_TOKEN")
     "dapp_definitions"
@@ -146,16 +115,6 @@ SET_METADATA
         )
     )
 ;
-
-#nft manager
-# Unauthorized ??
-CALL_METHOD
-    Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
-    #Address("OWNER_ADDRESS_DEL_CONTRATTO")
-    "create_proof_of_amount"    
-    Address("$VITE_OWNER_BADGE$")
-    #Address("OWNER_BADGE")
-    Decimal("1");
 SET_METADATA
     Address("$VITE_LND_RESOURCE_ADDRESS$")
     #Address("LEND_NFT_MANAGER")
@@ -167,19 +126,42 @@ SET_METADATA
         )
     )
 ;
-
-
-#BAD_PAYER
-CALL_METHOD
-    Address("account_tdx_2_128gpncka85tmpztygfc7ewjrzvvgyc9mlnc47uxtxlk0av0ngp2anz")
-    #Address("OWNER_ADDRESS_DEL_CONTRATTO")
-    "create_proof_of_amount"    
-    Address("$VITE_OWNER_BADGE$")
-    #Address("OWNER_BADGE")
-    Decimal("1");
 SET_METADATA
     Address("$VITE_BAD_PAYER_RESOURCE_ADDRESS$")
     #Address("BAD_PAYER")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_CREDITSCORE_RESOURCE_ADDRESS$")
+    #Address("VITE_CREDITSCORE_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_PT_RESOURCE_ADDRESS$")
+    #Address("VITE_PT_RESOURCE_ADDRESS")
+    "dapp_definitions"
+    Enum<136u8>(
+        Array<Address>(
+            Address("$DAPP_ID$")
+            #Address("DAPP_ID")
+        )
+    )
+;
+SET_METADATA
+    Address("$VITE_YT_RESOURCE_ADDRESS$")
+    #Address("VITE_YT_RESOURCE_ADDRESS")
     "dapp_definitions"
     Enum<136u8>(
         Array<Address>(

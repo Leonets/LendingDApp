@@ -23,7 +23,7 @@ At this point we can instantiate our Lending dApp locally
 `resim run rtm/instantiate_lending_dapp.rtm`
 
 That file has been built with the following bash command:
-`$ resim call-function ${package} LendingDApp instantiate_lending_dapp 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
+`$ resim call-function ${package} ZeroCollateral instantiate 5 10 LND 1728 timebased 1000 --manifest rtm/instantiate_lending_dapp.rtm`
 
 The output of the instantiate is the following resources builded:
 New Entities: 6
@@ -41,9 +41,11 @@ resource1 -> owner_badge
 resource2 -> admin_badge
 resource3 -> staff_badge
 resource4 -> benefactor_badge
-resource5 -> lending_token
-resource6 -> lnd_manager
-resource7 -> bad_payer
+resource5 -> bad_payer
+resource6 -> zerounit_token
+resource7 -> userdata_nft_manager
+resource8 -> principal_token
+resource9 -> yield_token
 
 Store the returned component addres in the component environment variable 
 `export component=<component_address>`
@@ -51,27 +53,31 @@ Store the returned component addres in the component environment variable
 Run `resim show $account` and find the admin badge resource address and store it in the admin_badge environment variable `export admin_badge=<resource_address>` and the owner_badge environment variable 
 `export owner_badge=<resource_address>`
 
-Export also the lnd_manager in the environment variable 
-`export lnd_manager=<lnd_resource_address>`
+Export also the userdata_nft_manager in the environment variable 
+`export userdata_nft_manager=<lnd_resource_address>`
 
-Export also the lending_token resource address in the environment variable 
-`export lending_token=<lending_token>`
+Export also the zerounit_token resource address in the environment variable 
+`export zerounit_token=<zerounit_token>`
 That is the resource with the symbol you created the dApp (LendingToken, A token to use to receive back the loan)
 
 
 Let's also set the xrd address as an environment variable 
 `export xrd=resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3`
 
+You can now register to the platform
+`resim call-method ${component} register  --manifest rtm/register.rtm`
+Then export the resource received (CreditScore Nft) as $badge
+
 You can also run the lend_tokens.rtm transaction manifest to takes back the XRD loan `resim run rtm/lend_tokens.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} lend_tokens $xrd:100  --manifest rtm/lend_tokens.rtm`
+`resim call-method ${component} lend_tokens $xrd:100 $badge:1 --manifest rtm/lend_tokens.rtm`
 
 
 You can also run the takes_back.rtm transaction manifest to takes back the XRD loan `resim run rtm/takes_back.rtm`
 
 That file has been built with the following bash command:
-`resim call-method ${component} takes_back $lnd:10 $lnd_manager:1 --manifest rtm/takes_back.rtm`
+`resim call-method ${component} takes_back $lnd:10 $userdata_nft_manager:1 --manifest rtm/takes_back.rtm`
 
 
 To fund the main vault and to fund the development you can run 
@@ -154,6 +160,12 @@ Let's describe which is the architecture of the whole dApp
 
 resim publish . --package-address $package
 
+//Cast Decimal to u64
+
+let dec = dec!("10");
+
+let num: u64 = dec.try_into().unwrap();
+
 # Managing Smart Contract Upgrade
 At the moment of this writing there is no upgradability in the smart contract so until this gets deployed in the mainnet each new smart contract overrides the preceding one, this are the operation needed in the e layers:
 
@@ -191,4 +203,7 @@ At the moment of this writing there is no upgradability in the smart contract so
     - fill the new values in the .env* file (seed phrase present!!)
     - [MANUALLY] send .env to the server (it is not managed with Terraform)
     - [OPT] executes the export if any of the dApp process have been changed (/deploy/export.sh)
+
+
+
 

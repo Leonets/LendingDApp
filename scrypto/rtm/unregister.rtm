@@ -6,11 +6,11 @@ CALL_METHOD
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
 ;
 TAKE_FROM_WORKTOP
-    Address("${lnd_manager}")
+    Address("${userdata_nft_manager}")
     Decimal("1")
     Bucket("bucket1")
 ;

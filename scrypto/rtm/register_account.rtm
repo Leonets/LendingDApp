@@ -3,18 +3,17 @@ CALL_METHOD
     "lock_fee"
     Decimal("10")
 ;
-CALL_METHOD
-    Address("${account}")
-    "create_proof_of_amount"    
-    Address("${admin_badge}")
-    Decimal("1");
+# CALL_METHOD
+#     Address("${account}")
+#     "create_proof_of_amount"    
+#     Address("${admin_badge}")
+#     Decimal("1");
 CALL_METHOD
     Address("${component}")
-    "set_reward"
-    Decimal("8")
+    "register"
 ;
 CALL_METHOD
-    Address("${account}")
+    Address("${account2}")
     "try_deposit_batch_or_refund"
     Expression("ENTIRE_WORKTOP")
     Enum<0u8>()

@@ -1,0 +1,27 @@
+CALL_METHOD
+    Address("${account}")
+    "lock_fee"
+    Decimal("10")
+;      
+CALL_METHOD
+    Address("${account}")
+    "create_proof_of_amount"    
+    Address("${admin_badge}")
+    Decimal("1");     
+CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("${bad_payer}")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("${bad_payer}")
+    Decimal("1")
+    Bucket("bucket_0")
+;
+CALL_METHOD
+    Address("${account2}")
+    "try_deposit_or_abort"
+    Bucket("bucket_0")
+    Enum<0u8>()
+;

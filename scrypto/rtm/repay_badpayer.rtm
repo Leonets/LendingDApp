@@ -11,12 +11,12 @@ CALL_METHOD
 CALL_METHOD
     Address("${account}")
     "withdraw"
-    Address("${zerounit_token}")
-    Decimal("80")
+    Address("${xrd}")
+    Decimal("215")
 ;
 TAKE_FROM_WORKTOP
-    Address("${zerounit_token}")
-    Decimal("80")
+    Address("${xrd}")
+    Decimal("215")
     Bucket("bucket1")
 ;
 CALL_METHOD
@@ -41,13 +41,23 @@ TAKE_FROM_WORKTOP
     Decimal("1")
     Bucket("bucket3")
 ;
+CALL_METHOD
+    Address("${account}")
+    "withdraw"    
+    Address("${bad_payer}")
+    Decimal("1");
+TAKE_FROM_WORKTOP
+    Address("${bad_payer}")
+    Decimal("1")
+    Bucket("bad"); 
 CALL_METHOD
     Address("${component}")
-    "takes_back"
+    "repay"
     Bucket("bucket1")
     Bucket("bucket2")
+    "account_address1"
     Bucket("bucket3")
-;
+    Some(Bucket("bad"));
 CALL_METHOD
     Address("${account}")
     "try_deposit_batch_or_refund"
