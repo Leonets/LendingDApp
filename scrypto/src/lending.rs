@@ -925,18 +925,23 @@ mod zerocollateral {
                             //Now, the BadPayer is sent by the component's account holder by using RET (using nom run lending:send_bad_payer_nft)
 
                             //mint a nft as 'bad payer' and send it to the account
-                            // let nft = self
-                            // .badpayer_badge_resource_manager
-                            // .mint_ruid_non_fungible(BadPayerBadge {
-                            //     account: value.account.clone(),
-                            //     amount_to_refund: value.amount_borrowed,
-                            //     expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
-                            // });
-                            
-                            //TODO here... we send an NFT to an Account having know its address
-                            //it can't be used here because we should be sent more NFT to different accounts
-                            // let accountComp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
-                            // let comp: Global<AnyComponent> = Global::from(accountComp);
+                            let nft = self
+                            .badpayer_badge_resource_manager
+                                .mint_ruid_non_fungible(BadPayerBadge {
+                                    // account: value.account.clone(),
+                                    // amount_to_refund: value.amount_borrowed,
+                                    // expected_borrow_epoch_timeline: value.epoch_limit_for_repaying,
+                                    message: "Your account is late in repaying ".to_owned() + value.amount_borrowed.to_string().as_str() 
+                                        + " due at epoch " + value.epoch_limit_for_repaying.to_string().as_str(),
+                                });
+
+                                
+                            // let account_component = ComponentAddress::new_or_panic(value.account.as_bytes());
+                            info!("Account where dApp will send some NFTs: {}  ", value.account);
+                            let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
+                            let mut destination_address: Global<Account> = Global::from(account_comp);
+                            destination_address.deposit(nft);
+                            // Global::<Account>::try_from(value.account).try_deposit_batch_or_abort(vec![lucky_shite], None);
                             //TODO how to create a NonFungibleBucket instead of a Bucket
                             // let bucket: Option<Bucket> = comp.call::<(Bucket,Option<ResourceOrNonFungible>),_>("try_deposit_or_refund", &(nft, None));
 

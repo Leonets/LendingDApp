@@ -144,24 +144,27 @@ resim run rtm/set_interest.rtm
 # resim run rtm/borrow_interest.rtm
 
 resim set-current-epoch 100
-echo '>>> Someone is late ?'
+echo '>>> Someone is late 1 ?'
 resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 400
-echo '>>> Someone is late ?'
+echo '>>> Someone is late 2 ?'
 resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 500
-echo '>>> Someone is late ?'
+echo '>>> Someone is late 3 ?'
 resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 600
-echo '>>> Someone is late ?'
+echo "Account = " $account
+echo '>>> Someone is late 4 ?'
 resim run rtm/asking_repay.rtm
 
 resim set-current-epoch 2000
 echo '>>> Now someone should be late '
 resim run rtm/asking_repay.rtm
+
+resim show $account
 
 echo '>>> Repay'
 
