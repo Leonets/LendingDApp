@@ -19,7 +19,7 @@ CALL_METHOD
     "borrow"
     Decimal("${amount}")
     Bucket("bucket2")
-    "${account}"
+    Address("${account}")
     Decimal("${length}")
 ;
 CALL_METHOD

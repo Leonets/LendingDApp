@@ -92,6 +92,7 @@ pub struct YieldTokenData {
 
 #[blueprint]
 mod zerocollateral {
+
     enable_method_auth! {
         roles {
             admin => updatable_by: [OWNER];
@@ -106,6 +107,7 @@ mod zerocollateral {
             takes_back_npl => PUBLIC;
             borrow => PUBLIC;
             repay => PUBLIC;
+            adds_account => PUBLIC;
             asking_repay => restrict_to: [admin, OWNER];
             clean_data => restrict_to: [admin, OWNER];
             pools => restrict_to: [admin, OWNER];
@@ -135,6 +137,26 @@ mod zerocollateral {
             claim_yield => PUBLIC;
         }
     }
+
+    // extern_blueprint!(
+    //     "package_rdx1pkgxxxxxxxxxfaucetxxxxxxxxx000034355863xxxxxxxxxfaucet",
+    //     Faucet as FiFi {
+    //         fn new(
+    //             address_reservation: GlobalAddressReservation,
+    //             bucket: Bucket
+    //         ) -> Global<FiFi>;
+
+    //         fn lock_fee(&self, amount: Decimal);
+    //     }
+    // );
+
+    // const FAUCET: Global<FiFi> = global_component!(
+    //     FiFi,
+    //     "component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh"
+    // );
+    // const SOME_RESOURCE: ResourceManager =
+    // resource_manager!("resource_sim1t5qqqqqqqyqszqgqqqqqqqgpqyqsqqqqqyqszqgqqqqqqqgpvd0xc6");
+
     struct ZeroCollateral<> {
         zeros: Vault,
         collected_xrd: Vault,
@@ -168,6 +190,8 @@ mod zerocollateral {
         current_npl: Decimal,
         max_percentage_for_currentborrows_vs_currentloans: u32,
     }
+
+
 
     impl ZeroCollateral {
         // given a reward, interest level,symbol name, reward_type, max_borrowing_limit creates a ready-to-use Lending dApp
@@ -506,6 +530,7 @@ mod zerocollateral {
                         borrow => Xrd(10.into()), updatable;
                         repay => Free, locked;
 
+                        adds_account => Free, locked;
                         asking_repay => Free, locked;
                         clean_data => Free, locked;
                         pools => Free, locked;
@@ -936,11 +961,29 @@ mod zerocollateral {
                                 });
 
                                 
+
+                                
                             // let account_component = ComponentAddress::new_or_panic(value.account.as_bytes());
-                            info!("Account where dApp will send some NFTs: {}  ", value.account);
-                            let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
-                            let mut destination_address: Global<Account> = Global::from(account_comp);
-                            destination_address.deposit(nft);
+                            // Runtime::bech32_encode_address(address)
+                            // let global = GlobalAddress::from(value.account);
+                            // const FAUCET: Global<Account> = global_component!(
+                            //     Account,
+                            //     value.account.as_str()
+                            // );
+                            // info!("Resource Address FAUCET ? {:?} ", FAUCET.unwrap());
+
+
+                            // let add = ResourceAddress::try_from_hex(&value.account);
+                            // info!("Resource Address ? {:?} ", add.unwrap());
+                            
+                            // let add_comp = ComponentAddress::try_from_hex(&value.account);
+                            // let mut dest: Global<Account> = Global::from(add_comp.unwrap());
+
+
+                            // let global_address = GlobalAddress::from(ResourceAddress::from(value.account));
+                            // let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
+                            // let mut destination_address: Global<Account> = Global::from(account_comp);
+                            // destination_address.deposit(nft);
                             // Global::<Account>::try_from(value.account).try_deposit_batch_or_abort(vec![lucky_shite], None);
                             //TODO how to create a NonFungibleBucket instead of a Bucket
                             // let bucket: Option<Bucket> = comp.call::<(Bucket,Option<ResourceOrNonFungible>),_>("try_deposit_or_refund", &(nft, None));
@@ -1147,8 +1190,11 @@ mod zerocollateral {
             }            
         }
 
+        pub fn adds_account(&mut self, account: Global<Account>) {
+            //adds to Vec or a data container
+        }
         //get some xrd  
-        pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket, user_account: String, borrow_expected_length: Decimal,) -> (Bucket, Option<Bucket>) {
+        pub fn borrow(&mut self, amount_requested: Decimal, lender_badge: Bucket, user_account: Global<Account>, borrow_expected_length: Decimal,) -> (Bucket, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
 
             // Verify the user has not an open borrow
@@ -1176,7 +1222,7 @@ mod zerocollateral {
             };
             self.borrowers_positions.insert(epoch, credit_score);
             //saving the current account as a borrower account
-            self.borrowers_accounts.push(Borrower { name: String::from(user_account.clone()), /* other fields... */ });
+            self.borrowers_accounts.push(Borrower { name: String::from(user_account), /* other fields... */ });
             info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.clone(), amount_requested, epoch);  
 
             //paying fees in advance
