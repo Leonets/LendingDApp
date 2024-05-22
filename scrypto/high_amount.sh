@@ -120,7 +120,10 @@ resim set-current-epoch 0
 
 echo '>>> Borrow'
 resim set-current-epoch 10
-resim run rtm/borrow_30.rtm
+export amount='30'
+export amount_repaied='5000'
+export length='500'
+resim run rtm/borrow.rtm
 # fee 10
 
 resim show $account

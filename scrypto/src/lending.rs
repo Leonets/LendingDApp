@@ -2,6 +2,12 @@ use scrypto::prelude::*;
 use scrypto_avltree::AvlTree;
 use crate::utils::*;
 
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct NonPerformingLoanEvent {
+    account: String,
+    amount: Decimal,
+}
+
 #[derive(NonFungibleData, ScryptoSbor)]
 struct StaffBadge {
     username: String
@@ -92,6 +98,7 @@ pub struct YieldTokenData {
 
 
 #[blueprint]
+#[events(NonPerformingLoanEvent)]
 mod zerocollateral {
 
     enable_method_auth! {
@@ -964,6 +971,8 @@ mod zerocollateral {
                             value.account.try_deposit_or_refund(nft, None);
                             info!("Send NFT to BadPayer !! ");
 
+                            Runtime::emit_event(NonPerformingLoanEvent { account: value.account.address().to_hex(), amount: value.amount_borrowed });
+
                             // let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
                             // let mut destination_address: Global<Account> = Global::from(account_comp);
                             // destination_address.deposit(nft);
@@ -1256,8 +1265,10 @@ mod zerocollateral {
 
 
         //repay some xrd  
-        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: String, creditscore_badge: Bucket, bad_payer: Option<Bucket>) -> (Bucket, Option<Bucket>, Option<Bucket>) {
+        pub fn repay(&mut self, mut loan_repaied: Bucket, lender_badge: Bucket, user_account: Global<Account>, creditscore_badge: Bucket, bad_payer: Option<Bucket>) -> (Bucket, Option<Bucket>, Option<Bucket>) {
             assert_resource(&lender_badge.resource_address(), &self.nft_manager.address());
+
+            let name = user_account.address().to_hex();
 
             let lender_data: UserPosition = lender_badge.as_non_fungible().non_fungible().data();
 
@@ -1305,7 +1316,7 @@ mod zerocollateral {
                 info!("Exceed Amount returned back to user : {:?}  ", loan_repaied.amount()); 
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "borrow_amount", dec!("0"));
                 //remove the user account as a current borrower      
-                self.borrowers_accounts.retain(|borrower| borrower.name != user_account);
+                self.borrowers_accounts.retain(|borrower| borrower.name != name);
 
                 //Update epoch on NFT
                 self.nft_manager.update_non_fungible_data(&nft_local_id, "start_borrow_epoch", Epoch::of(0));
@@ -1332,7 +1343,9 @@ mod zerocollateral {
 
                         //new
                         // Remove the account also from the late_payers_accounts 
-                        self.late_payers_accounts.retain(|account| account != &user_account);
+                        info!("How Many BadPayers until now {} " , self.late_payers_accounts.len() );
+                        self.late_payers_accounts.retain(|account| account != &name);
+                        info!("How Many BadPayers now ? {} " , self.late_payers_accounts.len() );
                     }
                     None => {
                         info!("No BadPayer available to burn ... No need to burn ! ");

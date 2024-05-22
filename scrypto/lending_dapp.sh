@@ -107,6 +107,7 @@ resim show $component
 echo '>>> Borrow'
 export amount='100'
 export length='500'
+export amount_repaied='120'
 resim run rtm/borrow.rtm
 # fee 10
 

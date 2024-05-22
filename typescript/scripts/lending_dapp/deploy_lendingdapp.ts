@@ -59,8 +59,8 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
     )
 
 ResultAsync.combine([
-  loadBinaryFromPath('/scrypto/target/wasm32-unknown-unknown/release/lending_dapp.wasm'),
-  loadBinaryFromPath('/scrypto/target/wasm32-unknown-unknown/release/lending_dapp.rpd'),
+  loadBinaryFromPath('/scrypto/target/wasm32-unknown-unknown/release/zerocollateral.wasm'),
+  loadBinaryFromPath('/scrypto/target/wasm32-unknown-unknown/release/zerocollateral.rpd'),
 ])
   .andThen(([wasmBuffer, rpdBuffer]) =>
     deployPackage({ wasmBuffer, rpdBuffer, lockFee: 200 })

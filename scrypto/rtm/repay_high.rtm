@@ -41,8 +41,9 @@ CALL_METHOD
     "repay"
     Bucket("bucket1")
     Bucket("bucket2")
-    "account_address1"
+    Address("${account}")
     Bucket("bucket3")
+    None
 ;
 CALL_METHOD
     Address("${account}")
