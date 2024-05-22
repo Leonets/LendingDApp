@@ -121,6 +121,7 @@ resim set-current-epoch 0
 echo '>>> Borrow'
 resim set-current-epoch 10
 export amount='100'
+export amount_repaied='120'
 export length='500'
 resim run rtm/borrow.rtm
 # fee 10
@@ -168,7 +169,7 @@ resim show $account
 
 echo '>>> Repay'
 
-resim run rtm/repay.rtm
+resim run rtm/repay_badpayer.rtm
 # fee 10
 # main pool 5
 

@@ -12,11 +12,11 @@ CALL_METHOD
     Address("${account}")
     "withdraw"
     Address("${xrd}")
-    Decimal("215")
+    Decimal("${amount_repaied}")
 ;
 TAKE_FROM_WORKTOP
     Address("${xrd}")
-    Decimal("215")
+    Decimal("${amount_repaied}")
     Bucket("bucket1")
 ;
 CALL_METHOD

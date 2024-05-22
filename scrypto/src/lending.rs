@@ -65,7 +65,7 @@ pub struct CreditScore {
 //used for calculate when a loan does not get repaid in time
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct BorrowerData {
-    account: String,
+    account: Global<Account>,
     #[mutable]
     amount_borrowed: Decimal,
     #[mutable]
@@ -76,6 +76,7 @@ pub struct BorrowerData {
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 pub struct Borrower {
     name: String,
+    account: Global<Account>,
 }
 
 #[derive(ScryptoSbor, NonFungibleData)]
@@ -933,18 +934,19 @@ mod zerocollateral {
             //Looks for loan that are expiring between current_epoch and end_epoch
             info!("Fetching BorrowersPosition from epoch: {} to epoch: {} ",start_epoch, current_epoch);
             // let bad_payer_bucket: Option<Bucket>;
-            for (_key, value, _next_key) in self.borrowers_positions.range(start_epoch..current_epoch) {
-                info!("Expiration epoch of borrow {} of account {}", _key, value.account);
+            for (_key, mut value, _next_key) in self.borrowers_positions.range(start_epoch..current_epoch) {
+                let account = value.account.address().to_hex();//todo address of the account
+                info!("Expiration epoch of borrow {} of account {}", _key, account);
                 // Check if the account still exists in the vector of borrowers
                 // This means that first we need to check if the borrower has already repaid its loan
-                if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.name == value.account) {
+                if let Some(_index) = self.borrowers_accounts.iter().position(|borrower| borrower.account == value.account) {
                     // If found, check if it needs to repay
-                    info!("Account {} is already a borrower", value.account);
+                    info!("Account {} is already a borrower", account);
                     match current_epoch > value.epoch_limit_for_repaying {
                         true => {
                             //payment is late
                             info!("user_account is late in paying back: {} amount: {} due at epoch: {} current epoch: {} ", 
-                            value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
+                            account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                             
                             //TODO better not to mint a BadPayer until it will be possible to directly send it to the account!!
                             //Now, the BadPayer is sent by the component's account holder by using RET (using nom run lending:send_bad_payer_nft)
@@ -959,8 +961,14 @@ mod zerocollateral {
                                     message: "Your account is late in repaying ".to_owned() + value.amount_borrowed.to_string().as_str() 
                                         + " due at epoch " + value.epoch_limit_for_repaying.to_string().as_str(),
                                 });
+                            value.account.try_deposit_or_refund(nft, None);
+                            info!("Send NFT to BadPayer !! ");
 
-                                
+                            // let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
+                            // let mut destination_address: Global<Account> = Global::from(account_comp);
+                            // destination_address.deposit(nft);
+
+
 
                                 
                             // let account_component = ComponentAddress::new_or_panic(value.account.as_bytes());
@@ -991,11 +999,11 @@ mod zerocollateral {
                             //TODO send an nft to the bad payer directly from the smart contract !! 
                             //Now this only prepare a vector that then will be used to send an nft (using a tx manifest build with an npm process)
                             //Check if the element is not already in the vector before pushing it
-                            if !self.late_payers_accounts.contains(&value.account) {
-                                self.late_payers_accounts.push(value.account.clone());
+                            if !self.late_payers_accounts.contains(&account) {
+                                self.late_payers_accounts.push(account.clone());
                             }
-                            if !self.late_payers_accounts_history.contains(&value.account) {
-                                self.late_payers_accounts_history.push(value.account.clone());
+                            if !self.late_payers_accounts_history.contains(&account) {
+                                self.late_payers_accounts_history.push(account.clone());
                             }
 
                             //add the amount as a NPL
@@ -1005,13 +1013,13 @@ mod zerocollateral {
                         false => {
                             //payment is not yet late
                             info!("user_account: {} should repay amount: {} before : {} current epoch: {} ", 
-                            value.account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
+                            account, value.amount_borrowed, value.epoch_limit_for_repaying, current_epoch);
                         }
                     }
                 } else {
                     // If not found, it does need to be removed also from borrowers_positions !!
                     // self.borrowers_accounts.push(Borrower { name: String::from(user_account), /* other fields if any */ });
-                    info!("Account {} and its position has to be removed as a borrower", value.account);
+                    info!("Account {} and its position has to be removed as a borrower", value.account.address().to_hex());
                 }
             }
             info!("Late payers accounts before reorg {:?}", self.late_payers_accounts);
@@ -1190,7 +1198,7 @@ mod zerocollateral {
             }            
         }
 
-        pub fn adds_account(&mut self, account: Global<Account>) {
+        pub fn adds_account(&mut self, _account: Global<Account>) {
             //adds to Vec or a data container
         }
         //get some xrd  
@@ -1216,14 +1224,15 @@ mod zerocollateral {
             //prepare for ordering and looking for the next expiring borrow
             let epoch = Decimal::from(Runtime::current_epoch().number()) + borrow_expected_length;
             let credit_score = BorrowerData {
-                account: user_account.clone(),
+                account: user_account,
                 amount_borrowed: amount_requested,
                 epoch_limit_for_repaying: epoch,
             };
             self.borrowers_positions.insert(epoch, credit_score);
             //saving the current account as a borrower account
-            self.borrowers_accounts.push(Borrower { name: String::from(user_account), /* other fields... */ });
-            info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.clone(), amount_requested, epoch);  
+            let name = user_account.address().to_hex();
+            self.borrowers_accounts.push(Borrower { name: name, account: user_account /* other fields... */ });
+            info!("Register borrower user account: {:?} amount {:?} epoch for repaying {:?} ", user_account.address().to_hex().clone(), amount_requested, epoch);  
 
             //paying fees in advance
             // let fees = calculate_fees(amount_requested);
@@ -1320,6 +1329,10 @@ mod zerocollateral {
                         // Handle the case when there is a value (Some)
                         info!("If you own this NFT... now you don't own it anymore... NFT burned ");
                         user_nft.burn();
+
+                        //new
+                        // Remove the account also from the late_payers_accounts 
+                        self.late_payers_accounts.retain(|account| account != &user_account);
                     }
                     None => {
                         info!("No BadPayer available to burn ... No need to burn ! ");
