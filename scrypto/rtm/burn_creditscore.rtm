@@ -1,0 +1,20 @@
+CALL_METHOD
+    Address("account_tdx_2_12y07tt00flw9x4ndw2z4e29z2cwuwz4ptlq3tpekxf6jmhlnj402es")
+    "create_proof_of_amount"
+    Address("resource_tdx_2_1t5nacrz29jnfntlge03zg96cfpq8vy9ge0tn39hl7ms549jt83vych")
+    Decimal("1")
+;
+CALL_METHOD
+    Address("account_tdx_2_128neaaauwg33as80yuyw3nzzuqn9h7z24pmh4z2j4w5zg55r3d5dvf")
+    "withdraw"
+    Address("resource_tdx_2_1n26vmr0uzdcyg8vkkdpyeycklvt340vk7ct9u2shxgz2v22afc3rsy")
+    Decimal("1")
+;
+TAKE_FROM_WORKTOP
+    Address("resource_tdx_2_1n26vmr0uzdcyg8vkkdpyeycklvt340vk7ct9u2shxgz2v22afc3rsy")
+    Decimal("1")
+    Bucket("bucket1")
+;
+BURN_RESOURCE
+    Bucket("bucket1")
+;
