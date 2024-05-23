@@ -8,10 +8,10 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
   radixEngineClient
     .getManifestBuilder()
     .andThen(
-      ({ wellKnownAddresses, convertStringManifest, submitTransaction }) =>
+      ({  convertStringManifest, submitTransaction }) =>
         convertStringManifest(`
         CALL_METHOD
-            Address("${wellKnownAddresses.accountAddress}")
+            Address("account_tdx_2_12y07tt00flw9x4ndw2z4e29z2cwuwz4ptlq3tpekxf6jmhlnj402es")
             "lock_fee"
             Decimal("10")
         ;
@@ -27,7 +27,7 @@ const instantiateLendingDapp = (sugarOraclePackage: string, tokenSymbol: string)
             Decimal("2000")
         ;
         CALL_METHOD
-            Address("${wellKnownAddresses.accountAddress}")
+            Address("account_tdx_2_12y07tt00flw9x4ndw2z4e29z2cwuwz4ptlq3tpekxf6jmhlnj402es")
             "deposit_batch"
             Expression("ENTIRE_WORKTOP")
         ;
@@ -63,7 +63,7 @@ ResultAsync.combine([
   loadBinaryFromPath('/scrypto/target/wasm32-unknown-unknown/release/zerocollateral.rpd'),
 ])
   .andThen(([wasmBuffer, rpdBuffer]) =>
-    deployPackage({ wasmBuffer, rpdBuffer, lockFee: 200 })
+    deployPackage({ wasmBuffer, rpdBuffer, lockFee: 100 })
   )
   .andThen((result) => {
     logger.info('Deployed package', result)

@@ -1,6 +1,9 @@
 import { bufferToUnit8Array, getOwnerBadge, hash } from '.'
 import { radixEngineClient } from '../config'
 
+
+// Address("${wellKnownAddresses.accountAddress}")
+
 export const deployPackage = ({
   wasmBuffer,
   rpdBuffer,
@@ -26,13 +29,13 @@ export const deployPackage = ({
         rpdDecoded,
         convertStringManifest,
         submitTransaction,
-        wellKnownAddresses,
+        
       }) => {
         const wasmHash = hash(wasmBuffer).toString('hex')
 
         return convertStringManifest(`
           CALL_METHOD
-            Address("${wellKnownAddresses.accountAddress}")
+            Address("account_tdx_2_12y07tt00flw9x4ndw2z4e29z2cwuwz4ptlq3tpekxf6jmhlnj402es")
             "lock_fee"
             Decimal("${lockFee}")
           ;
@@ -44,7 +47,7 @@ export const deployPackage = ({
           ;
           
           CALL_METHOD
-            Address("${wellKnownAddresses.accountAddress}")
+            Address("account_tdx_2_12y07tt00flw9x4ndw2z4e29z2cwuwz4ptlq3tpekxf6jmhlnj402es")
             "deposit_batch"
             Expression("ENTIRE_WORKTOP")
           ;
