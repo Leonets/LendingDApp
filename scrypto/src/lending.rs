@@ -973,11 +973,9 @@ mod zerocollateral {
 
                             Runtime::emit_event(NonPerformingLoanEvent { account: value.account.address().to_hex(), amount: value.amount_borrowed });
 
-                            // let account_comp = ComponentAddress::try_from_hex(value.account.as_str()).unwrap();     
-                            // let mut destination_address: Global<Account> = Global::from(account_comp);
-                            // destination_address.deposit(nft);
-
-
+                            let account_comp = ComponentAddress::try_from_hex(&value.account.address().to_hex()).unwrap();     
+                            let mut destination_address: Global<AccountLocker> = Global::from(account_comp);
+                            destination_address.deposit(nft);
 
                                 
                             // let account_component = ComponentAddress::new_or_panic(value.account.as_bytes());
